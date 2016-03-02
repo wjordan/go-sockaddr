@@ -8,22 +8,14 @@ import (
 	"strings"
 )
 
-type netAddrType int
-
 const (
 	IPv4len = 4
 	IPv6len = 16
 )
 
-const (
-	netAddrTypeIP netAddrType = iota
-	netAddrTypeNet
-)
-
 type NetAddr struct {
-	AddrType netAddrType
-	Address  net.IP
-	Network  *net.IPNet
+	Address net.IP
+	Network *net.IPNet
 }
 
 func (na *NetAddr) BroadcastAddress() *NetAddr {
