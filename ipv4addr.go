@@ -19,9 +19,6 @@ type IPv4Addr struct {
 	IPPort  uint16
 }
 
-// IPv4Addrs is a collection of IPv4Addrs
-type IPv4Addrs []IPv4Addr
-
 // Address returns the address as a net.IP (should be presized for IPv4).
 func (ipv4 IPv4Addr) Address() *net.IP {
 	return &ipv4.address
