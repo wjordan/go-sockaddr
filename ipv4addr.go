@@ -34,9 +34,10 @@ type IPv4Addr struct {
 }
 
 // NewIPv4Addr creates an IPv4Addr from a string.  String can be in the form
-// of either an IPv4 address (e.g. `1.2.3.4`), an IP:port (e.g. `1.2.3.4:80`,
-// in which case the mask is assumed to be a /32), or an IPv4 CIDR
-// (e.g. `1.2.3.4/24`).  ipv4Str can not be a hostname.
+// of either an IPv4:port (e.g. `1.2.3.4:80`, in which case the mask is
+// assumed to be a `/32`), an IPv4 address (e.g. `1.2.3.4`, also with a `/32`
+// mask), or an IPv4 CIDR (e.g. `1.2.3.4/24`, which has its IP port
+// initialized to zero).  ipv4Str can not be a hostname.
 //
 // NOTE: Many net.*() routines will initialize and return an IPv6 address.
 // To create uint32 values from net.IP, always test to make sure the address
@@ -127,6 +128,28 @@ func (ipv4 IPv4Addr) BroadcastAddress() IPv4Address {
 	return IPv4Address(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
 }
 
+// DialPacketArgs returns the arguments required to be passed to
+// net.DialUDP().  If the Mask of ipv4 is not a /32 or the Port is 0,
+// DialPacketArgs() will fail.  See Host() to create an IPv4Addr with its
+// mask set to /32.
+func (ipv4 IPv4Addr) DialPacketArgs() (network, dialArgs string) {
+	if ipv4.Mask != IPv4HostMask || ipv4.Port == 0 {
+		return "udp4", ""
+	}
+	return "udp4", fmt.Sprintf("%s:%d", ipv4.NetIP().String(), ipv4.Port)
+}
+
+// DialStreamArgs returns the arguments required to be passed to
+// net.DialTCP().  If the Mask of ipv4 is not a /32 or the Port is 0,
+// DialStreamArgs() will fail.  See Host() to create an IPv4Addr with its
+// mask set to /32.
+func (ipv4 IPv4Addr) DialStreamArgs() (network, dialArgs string) {
+	if ipv4.Mask != IPv4HostMask || ipv4.Port == 0 {
+		return "tcp4", ""
+	}
+	return "tcp4", fmt.Sprintf("%s:%d", ipv4.NetIP().String(), ipv4.Port)
+}
+
 // Equal returns true if a SockAddr is equal to the receiving IPv4Addr.
 func (ipv4 IPv4Addr) Equal(sa SockAddr) bool {
 	if sa.Type() != TypeIPv4 {
@@ -177,7 +200,8 @@ func (ipv4 IPv4Addr) FirstUsable() IPAddr {
 }
 
 // Host returns a copy of ipv4 with its mask set to /32 so that it can be
-// used by ListenTCPArgs() or ListenUDPArgs().
+// used by DialPacketArgs(), DialStreamArgs(), ListenPacketArgs(), or
+// ListenStreamArgs().
 func (ipv4 IPv4Addr) Host() IPAddr {
 	// Nothing should listen on a broadcast address.
 	return IPv4Addr{
@@ -209,24 +233,24 @@ func (ipv4 IPv4Addr) LastUsable() IPAddr {
 	}
 }
 
-// ListenTCPArgs returns the arguments required to be passed to net.Listen().
-// If the Mask of ipv4 is not a /32, ListenTCPArgs() will fail.  See Host()
-// to create an IPv4Addr with its mask set to /32.
-func (ipv4 IPv4Addr) ListenTCPArgs() (network, listenArgs string) {
-	if ipv4.Mask != IPv4HostMask {
-		return "tcp4", ""
-	}
-	return "tcp4", fmt.Sprintf("%s:%d", ipv4.NetIP().String(), ipv4.Port)
-}
-
-// ListenUDPArgs returns the arguments required to be passed to net.Listen().
-// If the Mask of ipv4 is not a /32, ListenUDPArgs() will fail.  See Host()
-// to create an IPv4Addr with its mask set to /32.
-func (ipv4 IPv4Addr) ListenUDPArgs() (network, listenArgs string) {
+// ListenPacketArgs returns the arguments required to be passed to
+// net.ListenUDP().  If the Mask of ipv4 is not a /32, ListenPacketArgs()
+// will fail.  See Host() to create an IPv4Addr with its mask set to /32.
+func (ipv4 IPv4Addr) ListenPacketArgs() (network, listenArgs string) {
 	if ipv4.Mask != IPv4HostMask {
 		return "udp4", ""
 	}
 	return "udp4", fmt.Sprintf("%s:%d", ipv4.NetIP().String(), ipv4.Port)
+}
+
+// ListenStreamArgs returns the arguments required to be passed to
+// net.ListenTCP().  If the Mask of ipv4 is not a /32, ListenStreamArgs()
+// will fail.  See Host() to create an IPv4Addr with its mask set to /32.
+func (ipv4 IPv4Addr) ListenStreamArgs() (network, listenArgs string) {
+	if ipv4.Mask != IPv4HostMask {
+		return "tcp4", ""
+	}
+	return "tcp4", fmt.Sprintf("%s:%d", ipv4.NetIP().String(), ipv4.Port)
 }
 
 // Maskbits returns the number of network mask bits in a given IPv4Addr.  For
@@ -271,7 +295,7 @@ func (ipv4 IPv4Addr) Network() IPAddr {
 	}
 }
 
-// NetworkAddress returns a uint32 of the IPv4Addr's network address.
+// NetworkAddress returns an IPv4Network of the IPv4Addr's network address.
 func (ipv4 IPv4Addr) NetworkAddress() IPv4Network {
 	return IPv4Network(uint32(ipv4.Address) & uint32(ipv4.Mask))
 }
