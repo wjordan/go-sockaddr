@@ -14,7 +14,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 		z03_addrStr           string
 		z04_NetIPStringOut    string
 		z05_addrInt           sockaddr.IPv4Address
-		z06_netInt            sockaddr.IPv4Address
+		z06_netInt            sockaddr.IPv4Network
 		z07_ipMaskStr         string
 		z08_maskbits          int
 		z09_NetIPNetStringOut string
@@ -528,7 +528,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			t.Errorf("[%d] Expected %+q's address to be %+q, received %+q", idx, test.z00_input, test.z04_NetIPStringOut, s)
 		}
 
-		if n, ok := ipv4.Network().(sockaddr.IPv4Addr); !ok || n.Address != test.z06_netInt {
+		if n, ok := ipv4.Network().(sockaddr.IPv4Addr); !ok || n.Address != sockaddr.IPv4Address(test.z06_netInt) {
 			t.Errorf("[%d] Expected %+q's Network to return %d, received %d", idx, test.z00_input, test.z06_netInt, n.Address)
 
 			if n.Mask != test.z10_maskInt {
