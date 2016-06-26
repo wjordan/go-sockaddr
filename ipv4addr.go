@@ -5,8 +5,22 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 )
+
+type (
+	// IPv4Address is a named type representing an IPv4 address.
+	IPv4Address uint32
+
+	// IPv4Network is a named type representing an IPv4 network.
+	IPv4Network uint32
+
+	// IPv4Mask is a named type representing an IPv4 network mask.
+	IPv4Mask uint32
+)
+
+// IPv4HostMask is a constant represents a /32 IPv4 Address
+// (i.e. 255.255.255.255).
+const IPv4HostMask = IPv4Mask(0xffffffff)
 
 // IPv4Addr implements a convenience wrapper around the union of Go's
 // built-in net.IP and net.IPNet types.  In UNIX-speak, IPv4Addr implements
@@ -14,26 +28,107 @@ import (
 // (i.e. `sockaddr_in`).
 type IPv4Addr struct {
 	IPAddr
-	address net.IP
-	network *net.IPNet
-	IPPort  uint16
+	Address IPv4Address
+	Mask    IPv4Mask
+	Port    IPPort
 }
 
-// Address returns the address as a net.IP (should be presized for IPv4).
-func (ipv4 IPv4Addr) Address() *net.IP {
-	return &ipv4.address
+// NewIPv4Addr creates an IPv4Addr from a string.  String can be in the form
+// of either an IPv4 address (e.g. `1.2.3.4`), an IP:port (e.g. `1.2.3.4:80`,
+// in which case the mask is assumed to be a /32), or an IPv4 CIDR
+// (e.g. `1.2.3.4/24`).  ipv4Str can not be a hostname.
+//
+// NOTE: Many net.*() routines will initialize and return an IPv6 address.
+// To create uint32 values from net.IP, always test to make sure the address
+// returned can be converted to a 4 byte array using To4().
+func NewIPv4Addr(ipv4Str string) (IPv4Addr, error) {
+	// Attempt to parse ipv4Str as a /32 host with a port number.
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", ipv4Str)
+	if err == nil {
+		ipv4 := tcpAddr.IP.To4()
+		if ipv4 == nil {
+			return IPv4Addr{}, fmt.Errorf("Unable to resolve %+q as an IPv4 address", ipv4Str)
+		}
+
+		ipv4Uint32 := binary.BigEndian.Uint32(ipv4)
+		ipv4Addr := IPv4Addr{
+			Address: IPv4Address(ipv4Uint32),
+			Mask:    IPv4HostMask,
+			Port:    IPPort(tcpAddr.Port),
+		}
+
+		return ipv4Addr, nil
+	}
+
+	// Parse as a naked IPv4 address
+	ip := net.ParseIP(ipv4Str)
+	if ip != nil {
+		ipv4 := ip.To4()
+		if ipv4 == nil {
+			return IPv4Addr{}, fmt.Errorf("Unable to string convert %+q to an IPv4 address", ipv4Str)
+		}
+
+		ipv4Uint32 := binary.BigEndian.Uint32(ipv4)
+		ipv4Addr := IPv4Addr{
+			Address: IPv4Address(ipv4Uint32),
+			Mask:    IPv4HostMask,
+		}
+		return ipv4Addr, nil
+	}
+
+	// Parse as an IPv4 CIDR
+	ipAddr, network, err := net.ParseCIDR(ipv4Str)
+	if err == nil {
+		ipv4 := ipAddr.To4()
+		if ipv4 == nil {
+			return IPv4Addr{}, fmt.Errorf("Unable to convert %s to an IPv4 address", ipv4Str)
+		}
+
+		ipv4Addr := IPv4Addr{
+			Address: IPv4Address(binary.BigEndian.Uint32(ipv4)),
+			Mask:    IPv4Mask(binary.BigEndian.Uint32(network.Mask)),
+		}
+		return ipv4Addr, nil
+	}
+
+	return IPv4Addr{}, fmt.Errorf("Unable to parse %+q to an IPv4 address: %v", ipv4Str, err)
 }
 
-// BroadcastAddress is an IPv4Addr-only method that returns the broadcast
-// address of the network (IPv6 only supports multicast).
-func (ipv4 IPv4Addr) BroadcastAddress() IPv4Addr {
-	mask := binary.BigEndian.Uint32(ipv4.network.Mask)
-	ipuint := ipv4.ToUint32()
-	return newFromUint32(ipv4, ipuint&mask|^mask)
+// AddressBinString returns a string with the IPv4Addr's Address represented
+// as a sequence of '0' and '1' characters.  This method is useful for
+// debugging or by operators who want to inspect an address.
+func (ipv4 IPv4Addr) AddressBinString() string {
+	return fmt.Sprintf("%032s", strconv.FormatUint(uint64(ipv4.Address), 2))
 }
 
-// Equal returns true if a Sockaddr is equal to the receiving IPv4Addr.
-func (ipv4a IPv4Addr) Equal(sa Sockaddr) bool {
+// AddressHexString returns a string with the IPv4Addr address represented as
+// a sequence of hex characters.  This method is useful for debugging or by
+// operators who want to inspect an address.
+func (ipv4 IPv4Addr) AddressHexString() string {
+	return fmt.Sprintf("%08s", strconv.FormatUint(uint64(ipv4.Address), 16))
+}
+
+// Broadcast is an IPv4Addr-only method that returns the broadcast address of
+// the network.
+//
+// NOTE: IPv6 only supports multicast, so this method only exists for
+// IPv4Addr.
+func (ipv4 IPv4Addr) Broadcast() IPAddr {
+	// Nothing should listen on a broadcast address.
+	return IPv4Addr{
+		Address: ipv4.BroadcastAddress(),
+		Mask:    IPv4HostMask,
+	}
+}
+
+// BroadcastAddress returns a IPv4Address of the IPv4Addr's broadcast
+// address.
+func (ipv4 IPv4Addr) BroadcastAddress() IPv4Address {
+	return IPv4Address(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
+}
+
+// Equal returns true if a SockAddr is equal to the receiving IPv4Addr.
+func (ipv4 IPv4Addr) Equal(sa SockAddr) bool {
 	if sa.Type() != TypeIPv4 {
 		return false
 	}
@@ -42,165 +137,169 @@ func (ipv4a IPv4Addr) Equal(sa Sockaddr) bool {
 		return false
 	}
 
+	if ipv4.Port != ipv4b.Port {
+		return false
+	}
+
 	// Now that the type conversion checks are complete, verify the data
 	// is equal.
-	if !ipv4a.address.Equal(ipv4b.address) {
+	if ipv4.Address != ipv4b.Address {
 		return false
 	}
 
-	if ipv4a.network.String() != ipv4b.network.String() {
-		return false
-	}
-
-	if ipv4a.IPPort != ipv4b.IPPort {
+	if ipv4.NetIPNet().String() != ipv4b.NetIPNet().String() {
 		return false
 	}
 
 	return true
 }
 
-// FirstUsableAddress returns the first address following the network prefix.
-// The first usable address in a network is normally the gateway and should
-// not be used except by devices forwarding packets between two
-// administratively distinct networks (i.e. a router).  This function does
-// not discriminate against first usable vs "first address that should be
-// used."  For example, IPv4Addr"192.168.1.10/24" would
-func (ipv4 IPv4Addr) FirstUsableAddress() IPAddr {
-	netPrefix := ipv4NetworkPrefix(ipv4)
-	netPrefixUint := netPrefix.ToUint32()
+// FirstUsable returns an IPv4Addr set to the first address following the
+// network prefix.  The first usable address in a network is normally the
+// gateway and should not be used except by devices forwarding packets
+// between two administratively distinct networks (i.e. a router).  This
+// function does not discriminate against first usable vs "first address that
+// should be used."  For example, FirstUsable() on "192.168.1.10/24" would
+// return the address "192.168.1.1/24".
+func (ipv4 IPv4Addr) FirstUsable() IPAddr {
+	addr := ipv4.NetworkAddress()
+
 	// If /32, return the address itself. If /31 assume a point-to-point
 	// link and return the lower address.
 	if ipv4.Maskbits() < 31 {
-		netPrefixUint += 1
+		addr++
 	}
-	return newFromUint32(ipv4, netPrefixUint)
+
+	return IPv4Addr{
+		Address: IPv4Address(addr),
+		Mask:    IPv4HostMask,
+	}
 }
 
-// ipv4NetworkPrefix is a pure, private helper function that calculates and
-// returns the network prefix as an IPv4Addr.
-func ipv4NetworkPrefix(ipv4 IPv4Addr) IPv4Addr {
-	mask := binary.BigEndian.Uint32(ipv4.network.Mask)
-	ipuint := ipv4.ToUint32()
-	return newFromUint32(ipv4, ipuint&mask)
+// Host returns a copy of ipv4 with its mask set to /32 so that it can be
+// used by ListenTCPArgs() or ListenUDPArgs().
+func (ipv4 IPv4Addr) Host() IPAddr {
+	// Nothing should listen on a broadcast address.
+	return IPv4Addr{
+		Address: ipv4.Address,
+		Mask:    IPv4HostMask,
+		Port:    ipv4.Port,
+	}
 }
 
-// LastUsableAddress returns the last address before the broadcast address in
-// a given network.
-func (ipv4 IPv4Addr) LastUsableAddress() IPAddr {
-	netBroadcast := ipv4.BroadcastAddress()
-	netBroadcastUint := netBroadcast.ToUint32()
+// IPPort returns the Port number as a uint16
+func (ipv4 IPv4Addr) IPPort() uint16 {
+	return uint16(ipv4.Port)
+}
+
+// LastUsable returns the last address before the broadcast address in a
+// given network.
+func (ipv4 IPv4Addr) LastUsable() IPAddr {
+	addr := ipv4.BroadcastAddress()
+
 	// If /32, return the address itself. If /31 assume a point-to-point
 	// link and return the upper address.
 	if ipv4.Maskbits() < 31 {
-		netBroadcastUint -= 1
+		addr--
 	}
-	return newFromUint32(ipv4, netBroadcastUint)
+
+	return IPv4Addr{
+		Address: addr,
+		Mask:    IPv4HostMask,
+	}
 }
 
-// func (ipv4 *IPv4Addr) ListenArgs() (net, largs string) {
-// 	return "tcp4", fmt.Sprintf("%s:%d", ipv4.address.String(), ipv4.IPPort)
-// }
+// ListenTCPArgs returns the arguments required to be passed to net.Listen().
+// If the Mask of ipv4 is not a /32, ListenTCPArgs() will fail.  See Host()
+// to create an IPv4Addr with its mask set to /32.
+func (ipv4 IPv4Addr) ListenTCPArgs() (network, listenArgs string) {
+	if ipv4.Mask != IPv4HostMask {
+		return "tcp4", ""
+	}
+	return "tcp4", fmt.Sprintf("%s:%d", ipv4.NetIP().String(), ipv4.Port)
+}
+
+// ListenUDPArgs returns the arguments required to be passed to net.Listen().
+// If the Mask of ipv4 is not a /32, ListenUDPArgs() will fail.  See Host()
+// to create an IPv4Addr with its mask set to /32.
+func (ipv4 IPv4Addr) ListenUDPArgs() (network, listenArgs string) {
+	if ipv4.Mask != IPv4HostMask {
+		return "udp4", ""
+	}
+	return "udp4", fmt.Sprintf("%s:%d", ipv4.NetIP().String(), ipv4.Port)
+}
 
 // Maskbits returns the number of network mask bits in a given IPv4Addr.  For
 // example, the Maskbits() of "192.168.1.1/24" would return 24.
 func (ipv4 IPv4Addr) Maskbits() int {
-	return ipMaskbits(ipv4.network)
+	mask := make(net.IPMask, IPv4len)
+	binary.BigEndian.PutUint32(mask, uint32(ipv4.Mask))
+	maskOnes, _ := mask.Size()
+	return maskOnes
 }
 
-// Network returns a pointer to the net.IPNet within IPv4Addr receiver.
-func (ipv4 IPv4Addr) Network() *net.IPNet {
-	return ipv4.network
+// NetIP returns the address as a net.IP (address is always presized to
+// IPv4).
+func (ipv4 IPv4Addr) NetIP() *net.IP {
+	x := make(net.IP, IPv4len)
+	binary.BigEndian.PutUint32(x, uint32(ipv4.Address))
+	return &x
 }
 
-// NetworkPrefix returns the network prefix or network address for a given
-// network.
-func (ipv4 IPv4Addr) NetworkPrefix() IPAddr {
-	mask := binary.BigEndian.Uint32(ipv4.network.Mask)
-	ipuint := ipv4.ToUint32()
-	return newFromUint32(ipv4, ipuint&mask)
+// NetIPMask create a new net.IPMask from the IPv4Addr.
+func (ipv4 IPv4Addr) NetIPMask() net.IPMask {
+	ipv4Mask := net.IPMask{}
+	ipv4Mask = make(net.IPMask, IPv4len)
+	binary.BigEndian.PutUint32(ipv4Mask, uint32(ipv4.Mask))
+	return ipv4Mask
 }
 
-// newIPv4FromNetIp creates an IPv4Addr from a net.IP byte array.
-func newIPv4FromNetIp(ip *net.IP, net *net.IPNet) (ret IPv4Addr) {
-	ret.address = *ip
-	ret.network = net
-	return ret
+// NetIPNet create a new net.IPNet from the IPv4Addr.
+func (ipv4 IPv4Addr) NetIPNet() *net.IPNet {
+	ipv4net := &net.IPNet{}
+	ipv4net.IP = make(net.IP, IPv4len)
+	binary.BigEndian.PutUint32(ipv4net.IP, uint32(ipv4.NetworkAddress()))
+	ipv4net.Mask = ipv4.NetIPMask()
+	return ipv4net
 }
 
-// newFromUint32 is a pure private helper function that copies ipv4 into a
-// new IPv4Addr struct using ipuint as the address.
-func newFromUint32(ipv4 IPv4Addr, ipuint uint32) (ret IPv4Addr) {
-	ret = IPv4Addr{address: ipv4.address, network: ipv4.network, IPPort: ipv4.IPPort}
-	ret.address = make(net.IP, IPv4len)
-	binary.BigEndian.PutUint32(ret.address, ipuint)
-	return ret
+// Network returns the network prefix or network address for a given network.
+func (ipv4 IPv4Addr) Network() IPAddr {
+	return IPv4Addr{
+		Address: IPv4Address(ipv4.NetworkAddress()),
+		Mask:    ipv4.Mask,
+	}
 }
 
-// Constructs a new IPv4Addr from string
-func NewIPv4AddrFromString(s string) (ret IPv4Addr, err error) {
-	// Before passing string to ParseCIDR(), test to see if there's a '/'
-	// character in the last searchLen characters.  If not, assume a bare
-	// IP and append "/32".
-	const searchTerm = "/32"
-	const searchLen = 3 // len(searchTerm)
-	if len(s) > searchLen && strings.IndexByte(s[len(s)-searchLen:], '/') == -1 {
-		s = s + searchTerm
+// NetworkAddress returns a uint32 of the IPv4Addr's network address.
+func (ipv4 IPv4Addr) NetworkAddress() IPv4Network {
+	return IPv4Network(uint32(ipv4.Address) & uint32(ipv4.Mask))
+}
+
+// Octets returns a slice of the four octets in an IPv4Addr's Address
+func (ipv4 IPv4Addr) Octets() []int {
+	return []int{
+		int(ipv4.Address >> 24),
+		int((ipv4.Address >> 16) & 0xff),
+		int((ipv4.Address >> 8) & 0xff),
+		int(ipv4.Address & 0xff),
+	}
+}
+
+// String returns a string representation of the IPv4Addr
+func (ipv4 IPv4Addr) String() string {
+	if ipv4.Port != 0 {
+		return fmt.Sprintf("%s:%d", ipv4.NetIP().String(), ipv4.Port)
 	}
 
-	addr, network, err := net.ParseCIDR(s)
-	if err != nil {
-		return IPv4Addr{}, err
+	if ipv4.Maskbits() == 32 {
+		return ipv4.NetIP().String()
 	}
 
-	// NOTE: ParseCIDR() can return true if the address was an IPv6
-	// address, however we may have appended /32 to an IPv6.  For the
-	// sake of cleanliness, return an error and let the caller handle
-	// attempting to parse an IPv6 address.
-	if addr.To4() == nil {
-		return IPv4Addr{}, fmt.Errorf("Unable to convert %s to an IPv4 address", s)
-	}
-
-	return newIPv4FromNetIp(&addr, network), nil
-}
-
-// Port returns the configured port for an IPv4Addr
-func (ipv4 IPv4Addr) Port() uint16 {
-	return ipv4.IPPort
-}
-
-// SetPort is a setter method to set an IPv4Addr's port number
-func (ipv4 IPv4Addr) SetPort(p uint16) {
-	ipv4.IPPort = p
-}
-
-// ToBinString returns a string with the IPv4Addr address represented as a
-// sequence of '0' and '1' characters.  This method is useful for debugging
-// or by operators who want to inspect an address.
-func (ipv4 IPv4Addr) ToBinString() string {
-	ipv4addr := ipv4.ToUint32()
-	return fmt.Sprintf("%032s", strconv.FormatUint(uint64(ipv4addr), 2))
-}
-
-// ToHexString returns a string with the IPv4Addr address represented as a
-// sequence of hex characters.  This method is useful for debugging or by
-// operators who want to inspect an address.
-func (ipv4 IPv4Addr) ToHexString() string {
-	ipnet := ipv4.ToUint32()
-	return fmt.Sprintf("%08s", strconv.FormatUint(uint64(ipnet), 16))
-}
-
-// ToUint32 convers an IPv4Addr to a network ordered uint32
-func (ipv4 *IPv4Addr) ToUint32() uint32 {
-	packedIpAddr := ipv4.address.To4()
-	return binary.BigEndian.Uint32(packedIpAddr)
-
-	// if p4 := packedIpAddr.address.To4(); len(p4) == IPv4len {
-	// 	ipint = uint32(p4[0])<<24 | uint32(p4[1])<<16 | uint32(p4[2])<<8 | uint32(p4[3])
-	// 	return ipint
-	// }
+	return fmt.Sprintf("%s/%d", ipv4.NetIP().String(), ipv4.Maskbits())
 }
 
 // Type is used as a type switch and returns TypeIPv4
-func (IPv4Addr) Type() SockaddrType {
+func (IPv4Addr) Type() SockAddrType {
 	return TypeIPv4
 }
