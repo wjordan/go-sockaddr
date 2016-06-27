@@ -5,6 +5,7 @@ If you're familiar with UNIX's `sockaddr` struct's, the following diagram
 mapping the C `sockaddr` (top) to `go-sockaddr` structs (bottom) and
 interfaces will be helpful:
 
+```
 +-------------------------------------------------------+
 |                                                       |
 |                        sockaddr                       |
@@ -23,3 +24,4 @@ interfaces will be helpful:
 |                  +----------------------------------+ |
 |                                                       |
 +-------------------------------------------------------+
+```
