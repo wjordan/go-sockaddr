@@ -300,7 +300,8 @@ func (ipv4 IPv4Addr) NetworkAddress() IPv4Network {
 	return IPv4Network(uint32(ipv4.Address) & uint32(ipv4.Mask))
 }
 
-// Octets returns a slice of the four octets in an IPv4Addr's Address
+// Octets returns a slice of the four octets in an IPv4Addr's Address.  The
+// order of the bytes is big endian.
 func (ipv4 IPv4Addr) Octets() []int {
 	return []int{
 		int(ipv4.Address >> 24),

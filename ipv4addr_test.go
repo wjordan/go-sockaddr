@@ -486,7 +486,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 	for idx, test := range tests {
 		ipv4, err := sockaddr.NewIPv4Addr(test.z00_input)
 		if test.z99_pass && err != nil {
-			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test, err)
+			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.z00_input, err)
 		} else if !test.z99_pass && err == nil {
 			t.Fatalf("[%d] Expected test to fail for %+q", idx, test.z00_input)
 		} else if !test.z99_pass && err != nil {
@@ -497,7 +497,12 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			t.Errorf("[%d] Expected new IPv4Addr to be Type %d, received %d (int)", idx, sockaddr.TypeIPv4, type_)
 		}
 
-		if h, ok := ipv4.Host().(sockaddr.IPv4Addr); !ok || h.Address != ipv4.Address || h.Mask != sockaddr.IPv4HostMask || h.Port != ipv4.Port {
+		h, ok := ipv4.Host().(sockaddr.IPv4Addr)
+		if !ok {
+			t.Errorf("[%d] Unable to type assert +%q's Host to IPv4Addr", idx, test.z00_input)
+		}
+
+		if h.Address != ipv4.Address || h.Mask != sockaddr.IPv4HostMask || h.Port != ipv4.Port {
 			t.Errorf("[%d] Expected %+q's Host() to return identical IPv4Addr except mask, received %+q", idx, test.z00_input, h.String())
 		}
 
@@ -520,20 +525,17 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 		if s := ipv4.String(); s != test.z03_addrStr {
 			t.Errorf("[%d] Expected %+q's String to be %+q, received %+q", idx, test.z00_input, test.z03_addrStr, s)
 		}
-		if a := ipv4.Address; a != test.z05_addrInt {
-			t.Errorf("[%d] Expected %+q's Address to return %d, received %d", idx, test.z00_input, test.z05_addrInt, a)
-		}
 
 		if s := ipv4.NetIP().String(); s != test.z04_NetIPStringOut {
 			t.Errorf("[%d] Expected %+q's address to be %+q, received %+q", idx, test.z00_input, test.z04_NetIPStringOut, s)
 		}
 
+		if a := ipv4.Address; a != test.z05_addrInt {
+			t.Errorf("[%d] Expected %+q's Address to return %d, received %d", idx, test.z00_input, test.z05_addrInt, a)
+		}
+
 		if n, ok := ipv4.Network().(sockaddr.IPv4Addr); !ok || n.Address != sockaddr.IPv4Address(test.z06_netInt) {
 			t.Errorf("[%d] Expected %+q's Network to return %d, received %d", idx, test.z00_input, test.z06_netInt, n.Address)
-
-			if n.Mask != test.z10_maskInt {
-				t.Errorf("[%d] Expected %+q's Network's Mask to return %d, received %d", idx, test.z00_input, test.z10_maskInt, n.Mask)
-			}
 		}
 
 		if m := ipv4.NetIPMask().String(); m != test.z07_ipMaskStr {
@@ -550,6 +552,11 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 
 		if m := ipv4.Mask; m != test.z10_maskInt {
 			t.Errorf("[%d] Expected %+q's Mask to return %d, received %d", idx, test.z00_input, test.z10_maskInt, m)
+		}
+
+		// Network()'s mask must match the IPv4Addr's Mask
+		if n, ok := ipv4.Network().(sockaddr.IPv4Addr); !ok || n.Mask != test.z10_maskInt {
+			t.Errorf("[%d] Expected %+q's Network's Mask to return %d, received %d", idx, test.z00_input, test.z10_maskInt, n.Mask)
 		}
 
 		if n := ipv4.Network().String(); n != test.z11_networkStr {
@@ -600,12 +607,12 @@ func TestSockAddr_IPv4Addr_Equal(t *testing.T) {
 		pass  []string
 		fail  []string
 	}{
-		{
+		{ // 0
 			input: "208.67.222.222/32",
-			pass:  []string{"208.67.222.222", "208.67.222.222/32"},
-			fail:  []string{"208.67.222.222/31", "208.67.220.220", "208.67.220.220/32"},
+			pass:  []string{"208.67.222.222", "208.67.222.222/32", "208.67.222.222:0"},
+			fail:  []string{"208.67.222.222/31", "208.67.220.220", "208.67.220.220/32", "208.67.222.222:5432"},
 		},
-		{
+		{ // 1
 			input: "4.2.2.1",
 			pass:  []string{"4.2.2.1", "4.2.2.1/32"},
 			fail:  []string{"4.2.2.1/0", "4.2.2.2", "4.2.2.2/32"},
