@@ -117,15 +117,15 @@ func (ipv4 IPv4Addr) AddressHexString() string {
 func (ipv4 IPv4Addr) Broadcast() IPAddr {
 	// Nothing should listen on a broadcast address.
 	return IPv4Addr{
-		Address: ipv4.BroadcastAddress(),
+		Address: IPv4Address(ipv4.BroadcastAddress()),
 		Mask:    IPv4HostMask,
 	}
 }
 
-// BroadcastAddress returns a IPv4Address of the IPv4Addr's broadcast
+// BroadcastAddress returns a IPv4Network of the IPv4Addr's broadcast
 // address.
-func (ipv4 IPv4Addr) BroadcastAddress() IPv4Address {
-	return IPv4Address(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
+func (ipv4 IPv4Addr) BroadcastAddress() IPv4Network {
+	return IPv4Network(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
 }
 
 // DialPacketArgs returns the arguments required to be passed to
@@ -228,7 +228,7 @@ func (ipv4 IPv4Addr) LastUsable() IPAddr {
 	}
 
 	return IPv4Addr{
-		Address: addr,
+		Address: IPv4Address(addr),
 		Mask:    IPv4HostMask,
 	}
 }
