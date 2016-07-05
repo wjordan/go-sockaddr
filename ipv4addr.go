@@ -128,6 +128,44 @@ func (ipv4 IPv4Addr) BroadcastAddress() IPv4Network {
 	return IPv4Network(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
 }
 
+// CmpRfc1918 returns 0 if SockAddr is one of the RFC1918 networks, -1 if it
+// is contained within an RFC1918 network, or 1 if not.
+func (ipv4 IPv4Addr) CmpRFC1918(sa SockAddr) int {
+	a := IsRFC1918(ipv4)
+	ipv4b, ok := sa.(IPv4Addr)
+	if !ok {
+		if a {
+			return -1
+		} else {
+			return 0
+		}
+	}
+
+	b := IsRFC1918(ipv4b)
+	switch {
+	case (a && b), (!a && !b):
+		return 0
+	case a && !b:
+		return -1
+	default:
+		return 1
+	}
+}
+
+// ContainsAddr returns true if the IPv4Address is contained within the
+// receiver.
+func (ipv4 IPv4Addr) ContainsAddr(x IPv4Address) bool {
+	return IPv4Address(ipv4.NetworkAddress()) <= x &&
+		IPv4Address(ipv4.BroadcastAddress()) >= x
+}
+
+// ContainsNetwork returns true if the network from IPv4Addr is contained
+// within the receiver.
+func (ipv4 IPv4Addr) ContainsNetwork(x IPv4Addr) bool {
+	return ipv4.NetworkAddress() <= x.NetworkAddress() &&
+		ipv4.BroadcastAddress() >= x.BroadcastAddress()
+}
+
 // DialPacketArgs returns the arguments required to be passed to
 // net.DialUDP().  If the Mask of ipv4 is not a /32 or the Port is 0,
 // DialPacketArgs() will fail.  See Host() to create an IPv4Addr with its
@@ -214,6 +252,18 @@ func (ipv4 IPv4Addr) Host() IPAddr {
 // IPPort returns the Port number as a uint16
 func (ipv4 IPv4Addr) IPPort() uint16 {
 	return uint16(ipv4.Port)
+}
+
+// IsRFC1918 tests to see if an IPv4Addr is an RFC1918 address
+func IsRFC1918(ipv4 IPv4Addr) bool {
+	var isRfc1918 bool
+	for _, rfc1918 := range rfc1918Networks {
+		if rfc1918.ContainsNetwork(ipv4) {
+			isRfc1918 = true
+			break
+		}
+	}
+	return isRfc1918
 }
 
 // LastUsable returns the last address before the broadcast address in a
