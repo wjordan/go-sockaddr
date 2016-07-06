@@ -152,9 +152,9 @@ func (ipv4 IPv4Addr) CmpRFC1918(sa SockAddr) int {
 	}
 }
 
-// ContainsAddr returns true if the IPv4Address is contained within the
+// ContainsAddress returns true if the IPv4Address is contained within the
 // receiver.
-func (ipv4 IPv4Addr) ContainsAddr(x IPv4Address) bool {
+func (ipv4 IPv4Addr) ContainsAddress(x IPv4Address) bool {
 	return IPv4Address(ipv4.NetworkAddress()) <= x &&
 		IPv4Address(ipv4.BroadcastAddress()) >= x
 }

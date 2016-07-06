@@ -613,6 +613,60 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 	}
 }
 
+func TestSockAddr_IPv4Addr_ContainsAddress(t *testing.T) {
+	tests := []struct {
+		input string
+		pass  []string
+		fail  []string
+	}{
+		{ // 0
+			input: "208.67.222.222/32",
+			pass: []string{
+				"208.67.222.222",
+				"208.67.222.222/32",
+				"208.67.222.223/31",
+				"208.67.222.222/31",
+				"0.0.0.0/0",
+			},
+			fail: []string{
+				"0.0.0.0/1",
+				"208.67.222.220/31",
+				"208.67.220.224/31",
+				"208.67.220.220/32",
+			},
+		},
+	}
+
+	for idx, test := range tests {
+		ipv4, err := sockaddr.NewIPv4Addr(test.input)
+		if err != nil {
+			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.input, err)
+		}
+
+		for passIdx, passInput := range test.pass {
+			passAddr, err := sockaddr.NewIPv4Addr(passInput)
+			if err != nil {
+				t.Fatalf("[%d/%d] Unable to create an IPv4Addr from %+q: %v", idx, passIdx, passInput, err)
+			}
+
+			if !passAddr.ContainsAddress(ipv4.Address) {
+				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
+			}
+		}
+
+		for failIdx, failInput := range test.fail {
+			failAddr, err := sockaddr.NewIPv4Addr(failInput)
+			if err != nil {
+				t.Fatalf("[%d/%d] Unable to create an IPv4Addr from %+q: %v", idx, failIdx, failInput, err)
+			}
+
+			if failAddr.ContainsAddress(ipv4.Address) {
+				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+			}
+		}
+	}
+}
+
 func TestSockAddr_IPv4Addr_Equal(t *testing.T) {
 	tests := []struct {
 		input string
