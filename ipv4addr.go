@@ -146,6 +146,29 @@ func (ipv4 IPv4Addr) CmpAddress(sa SockAddr) int {
 	}
 }
 
+// CmpPort returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1
+// if it should sort first, or 1 if it should sort after.
+func (ipv4 IPv4Addr) CmpPort(sa SockAddr) int {
+	var saPort IPPort
+	switch v := sa.(type) {
+	case IPv4Addr:
+		saPort = v.Port
+	case IPv6Addr:
+		saPort = v.Port
+	default:
+		return SortOrderDifferentTypes
+	}
+
+	switch {
+	case ipv4.Port == saPort:
+		return 0
+	case ipv4.Port < saPort:
+		return -1
+	default:
+		return 1
+	}
+}
+
 // CmpRfc1918 returns 0 if SockAddr is one of the RFC1918 networks, -1 if it
 // is contained within an RFC1918 network, or 1 if not.
 func (ipv4 IPv4Addr) CmpRFC1918(sa SockAddr) int {
@@ -268,8 +291,8 @@ func (ipv4 IPv4Addr) Host() IPAddr {
 }
 
 // IPPort returns the Port number as a uint16
-func (ipv4 IPv4Addr) IPPort() uint16 {
-	return uint16(ipv4.Port)
+func (ipv4 IPv4Addr) IPPort() IPPort {
+	return ipv4.Port
 }
 
 // IsRFC1918 tests to see if an IPv4Addr is an RFC1918 address

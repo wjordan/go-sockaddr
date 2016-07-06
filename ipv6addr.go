@@ -164,6 +164,29 @@ func (ipv6 IPv6Addr) AddressHexString() string {
 	return fmt.Sprintf("%032s", bi.Text(16))
 }
 
+// CmpPort returns 0 if a SockAddr is equal to the receiving IPv6Addr, -1
+// if it should sort first, or 1 if it should sort after.
+func (ipv6 IPv6Addr) CmpPort(sa SockAddr) int {
+	var saPort IPPort
+	switch v := sa.(type) {
+	case IPv4Addr:
+		saPort = v.Port
+	case IPv6Addr:
+		saPort = v.Port
+	default:
+		return SortOrderDifferentTypes
+	}
+
+	switch {
+	case ipv6.Port == saPort:
+		return 0
+	case ipv6.Port < saPort:
+		return -1
+	default:
+		return 1
+	}
+}
+
 // DialPacketArgs returns the arguments required to be passed to
 // net.DialUDP().  If the Mask of ipv6 is not a /128 or the Port is 0,
 // DialPacketArgs() will fail.  See Host() to create an IPv6Addr with its
@@ -242,8 +265,8 @@ func (ipv6 IPv6Addr) Host() IPAddr {
 }
 
 // IPPort returns the Port number as a uint16
-func (ipv6 IPv6Addr) IPPort() uint16 {
-	return uint16(ipv6.Port)
+func (ipv6 IPv6Addr) IPPort() IPPort {
+	return ipv6.Port
 }
 
 // LastUsable returns the last address in a given network.
