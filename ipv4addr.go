@@ -128,6 +128,24 @@ func (ipv4 IPv4Addr) BroadcastAddress() IPv4Network {
 	return IPv4Network(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
 }
 
+// CmpAddress returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1
+// if it should sort first, or 1 if it should sort after.
+func (ipv4 IPv4Addr) CmpAddress(sa SockAddr) int {
+	ipv4b, ok := sa.(IPv4Addr)
+	if !ok {
+		return SortOrderDifferentTypes
+	}
+
+	switch {
+	case ipv4.Address == ipv4b.Address:
+		return 0
+	case ipv4.Address < ipv4b.Address:
+		return -1
+	default:
+		return 1
+	}
+}
+
 // CmpRfc1918 returns 0 if SockAddr is one of the RFC1918 networks, -1 if it
 // is contained within an RFC1918 network, or 1 if not.
 func (ipv4 IPv4Addr) CmpRFC1918(sa SockAddr) int {

@@ -613,6 +613,60 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 	}
 }
 
+func TestSockAddr_IPv4Addr_CmpAddress(t *testing.T) {
+	tests := []struct {
+		a   string
+		b   string
+		cmp int
+	}{
+		{ // 0
+			a:   "208.67.222.222/32",
+			b:   "208.67.222.222",
+			cmp: 0,
+		},
+		{ // 1
+			a:   "208.67.222.222/32",
+			b:   "208.67.222.222/32",
+			cmp: 0,
+		},
+		{ // 2
+			a:   "208.67.222.222/32",
+			b:   "208.67.222.222:0",
+			cmp: 0,
+		},
+		{ // 3
+			a:   "208.67.222.220/32",
+			b:   "208.67.222.222/32",
+			cmp: -1,
+		},
+		{ // 4
+			a:   "208.67.222.222/32",
+			b:   "208.67.222.220/32",
+			cmp: 1,
+		},
+	}
+
+	for idx, test := range tests {
+		ipv4a, err := sockaddr.NewIPv4Addr(test.a)
+		if err != nil {
+			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.a, err)
+		}
+
+		ipv4b, err := sockaddr.NewIPv4Addr(test.b)
+		if err != nil {
+			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.b, err)
+		}
+
+		if x := ipv4a.CmpAddress(ipv4b); x != test.cmp {
+			t.Errorf("[%d] IPv4Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
+		}
+
+		if x := ipv4b.CmpAddress(ipv4a); x*-1 != test.cmp {
+			t.Errorf("[%d] IPv4Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
+		}
+	}
+}
+
 func TestSockAddr_IPv4Addr_ContainsAddress(t *testing.T) {
 	tests := []struct {
 		input string
