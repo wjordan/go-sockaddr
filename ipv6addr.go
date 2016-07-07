@@ -164,6 +164,22 @@ func (ipv6 IPv6Addr) AddressHexString() string {
 	return fmt.Sprintf("%032s", bi.Text(16))
 }
 
+// Cmp returns 0 if a SockAddr is equal to the receiving IPv6Addr, -1 if it
+// should sort first, or 1 if it should sort after.
+func (ipv6 IPv6Addr) CmpAddress(sa SockAddr) int {
+	ipv6b, ok := sa.(IPv6Addr)
+	if !ok {
+		return SortOrderDifferentTypes
+	}
+
+	ipv6aBigInt := new(big.Int)
+	ipv6aBigInt.Set(ipv6.Address)
+	ipv6bBigInt := new(big.Int)
+	ipv6bBigInt.Set(ipv6b.Address)
+
+	return ipv6aBigInt.Cmp(ipv6bBigInt)
+}
+
 // CmpPort returns 0 if a SockAddr is equal to the receiving IPv6Addr, -1
 // if it should sort first, or 1 if it should sort after.
 func (ipv6 IPv6Addr) CmpPort(sa SockAddr) int {

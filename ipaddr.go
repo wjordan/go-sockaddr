@@ -8,6 +8,7 @@ type IPAddr interface {
 	SockAddr
 	AddressBinString() string
 	AddressHexString() string
+	CmpAddress(SockAddr) int
 	CmpPort(SockAddr) int
 	DialPacketArgs() (string, string)
 	DialStreamArgs() (string, string)

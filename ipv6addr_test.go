@@ -357,6 +357,55 @@ func TestSockAddr_IPv6Addr(t *testing.T) {
 	}
 }
 
+func TestSockAddr_IPv6Addr_CmpAddress(t *testing.T) {
+	tests := []struct {
+		a   string
+		b   string
+		cmp int
+	}{
+		{ // 0
+			a:   "2001:4860:0:2001::68/128",
+			b:   "2001:4860:0:2001::68",
+			cmp: 0,
+		},
+		{ // 1
+			a:   "2607:f0d0:1002:0051:0000:0000:0000:0004/128",
+			b:   "2607:f0d0:1002:0051:0000:0000:0000:0004",
+			cmp: 0,
+		},
+		{ // 2
+			a:   "2607:f0d0:1002:0051:0000:0000:0000:0004/128",
+			b:   "2607:f0d0:1002:0051:0000:0000:0000:0004/64",
+			cmp: 0,
+		},
+		{ // 3
+			a:   "2607:f0d0:1002:0051:0000:0000:0000:0004",
+			b:   "2607:f0d0:1002:0051:0000:0000:0000:0005",
+			cmp: -1,
+		},
+	}
+
+	for idx, test := range tests {
+		ipv6a, err := sockaddr.NewIPv6Addr(test.a)
+		if err != nil {
+			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.a, err)
+		}
+
+		ipv6b, err := sockaddr.NewIPv6Addr(test.b)
+		if err != nil {
+			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.b, err)
+		}
+
+		if x := ipv6a.CmpAddress(ipv6b); x != test.cmp {
+			t.Errorf("[%d] IPv6Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv6a, ipv6b, test.cmp, x)
+		}
+
+		if x := ipv6b.CmpAddress(ipv6a); x*-1 != test.cmp {
+			t.Errorf("[%d] IPv6Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv6a, ipv6b, test.cmp, x)
+		}
+	}
+}
+
 func TestSockAddr_IPv6Addr_Equal(t *testing.T) {
 	tests := []struct {
 		input string
