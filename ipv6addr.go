@@ -15,12 +15,10 @@ type (
 
 	// IPv6Mask is a named type representing an IPv6 network mask.
 	IPv6Mask *big.Int
-
-	IPv6PrefixLen uint16
 )
 
 // IPv6HostPrefix is a constant represents a /128 IPv6 Prefix.
-const IPv6HostPrefix = IPv6PrefixLen(128)
+const IPv6HostPrefix = IPPrefixLen(128)
 
 // ipv6HostMask is an unexported big.Int representing a /128 IPv6 address.
 // This value must be a constant and always set to all ones.

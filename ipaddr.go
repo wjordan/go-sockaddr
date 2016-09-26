@@ -38,6 +38,10 @@ type IPAddr interface {
 // IPPort is the type for an IP port number for the TCP and UDP IP transports.
 type IPPort uint16
 
+// IPPrefixLen is a typed integer representing the prefix length for a given
+// IPAddr.
+type IPPrefixLen byte
+
 // NewIPAddr creates a new IPAddr from a string.  Returns nil if the string is
 // not an IPv4 or an IPv6 address.
 func NewIPAddr(addr string) (IPAddr, error) {
