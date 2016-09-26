@@ -128,6 +128,47 @@ func (ipv4 IPv4Addr) BroadcastAddress() IPv4Network {
 	return IPv4Network(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
 }
 
+// Cmp returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1 if it
+// should sort first, or 1 if it should sort after.
+func (ipv4 IPv4Addr) Cmp(sa SockAddr) int {
+	switch sa.Type() {
+	case TypeUnix:
+		return -1
+	case TypeIPv4:
+		break
+	case TypeIPv6:
+		return 1
+	default:
+		panic("unsupported type")
+	}
+
+	ipv4b, ok := sa.(IPv4Addr)
+	if !ok {
+		panic("type conversion failed")
+	}
+
+	// TODO: Not comparing the NetIPs, NetIPMasks, or NetIPNets.
+	if ipv4.Address == ipv4b.Address {
+		return 0
+	}
+
+	if ipv4.Address < ipv4b.Address {
+		return -1
+	} else {
+		return 1
+	}
+
+	// // Sort hosts with a port of 0 after hosts with a non-zero port.  See
+	// // SortIPAddrsByNetworkSize() for details.
+	// if ipv4.Port == ipv4b.Port {
+	// 	return 0
+	// } else if (ipv4.Port != 0 && ipv4b.Port != 0) && ipv4.Port > ipv4b.Port {
+	// 	return 1
+	// } else {
+	// 	return -1
+	// }
+}
+
 // CmpAddress returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1
 // if it should sort first, or 1 if it should sort after.
 func (ipv4 IPv4Addr) CmpAddress(sa SockAddr) int {
@@ -191,6 +232,16 @@ func (ipv4 IPv4Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
 	default:
 		return 1
 	}
+}
+
+// Contains returns true if the SockAddr is contained within the receiver.
+func (ipv4 IPv4Addr) Contains(sa SockAddr) bool {
+	ipv4b, ok := sa.(IPv4Addr)
+	if !ok {
+		return false
+	}
+
+	return ipv4.ContainsNetwork(ipv4b)
 }
 
 // ContainsAddress returns true if the IPv4Address is contained within the
@@ -350,11 +401,11 @@ func (ipv4 IPv4Addr) NetIP() *net.IP {
 }
 
 // NetIPMask create a new net.IPMask from the IPv4Addr.
-func (ipv4 IPv4Addr) NetIPMask() net.IPMask {
+func (ipv4 IPv4Addr) NetIPMask() *net.IPMask {
 	ipv4Mask := net.IPMask{}
 	ipv4Mask = make(net.IPMask, IPv4len)
 	binary.BigEndian.PutUint32(ipv4Mask, uint32(ipv4.Mask))
-	return ipv4Mask
+	return &ipv4Mask
 }
 
 // NetIPNet create a new net.IPNet from the IPv4Addr.
@@ -362,7 +413,7 @@ func (ipv4 IPv4Addr) NetIPNet() *net.IPNet {
 	ipv4net := &net.IPNet{}
 	ipv4net.IP = make(net.IP, IPv4len)
 	binary.BigEndian.PutUint32(ipv4net.IP, uint32(ipv4.NetworkAddress()))
-	ipv4net.Mask = ipv4.NetIPMask()
+	ipv4net.Mask = *ipv4.NetIPMask()
 	return ipv4net
 }
 

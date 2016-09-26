@@ -607,8 +607,8 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			t.Errorf("[%d] Expected %+q's ListenStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z20_ListenStreamArgs, listenNet, listenArgs)
 		}
 
-		if v := sockaddr.IsRFC1918(ipv4); v != test.z21_IsRFC1918 {
-			t.Errorf("[%d] Expected %+q's IsRFC1918 to be %+q, received %+q", idx, test.z00_input, test.z21_IsRFC1918, v)
+		if v := sockaddr.IsRFC(1918, ipv4); v != test.z21_IsRFC1918 {
+			t.Errorf("[%d] Expected IsRFC(1918, %+q) to be %+q, received %+q", idx, test.z00_input, test.z21_IsRFC1918, v)
 		}
 	}
 }
@@ -717,6 +717,65 @@ func TestSockAddr_IPv4Addr_ContainsAddress(t *testing.T) {
 			if failAddr.ContainsAddress(ipv4.Address) {
 				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
 			}
+		}
+	}
+}
+
+func TestSockAddr_IPv4Addr_CmpPort(t *testing.T) {
+	tests := []struct {
+		a   string
+		b   string
+		cmp int
+	}{
+		{ // 0: Same port, same IP
+			a:   "208.67.222.222:0",
+			b:   "208.67.222.222/32",
+			cmp: 0,
+		},
+		{ // 1: Same port, different IP
+			a:   "208.67.222.220:0",
+			b:   "208.67.222.222/32",
+			cmp: 0,
+		},
+		{ // 2: Same IP, different port
+			a:   "208.67.222.222:80",
+			b:   "208.67.222.222:443",
+			cmp: -1,
+		},
+		{ // 3: Same IP, different port
+			a:   "208.67.222.222:443",
+			b:   "208.67.222.222:80",
+			cmp: 1,
+		},
+		{ // 4: Different IP, different port
+			a:   "208.67.222.222:53",
+			b:   "208.67.220.220:8600",
+			cmp: -1,
+		},
+		{ // 5: Different IP, different port
+			a:   "208.67.222.222:8600",
+			b:   "208.67.220.220:53",
+			cmp: 1,
+		},
+	}
+
+	for idx, test := range tests {
+		ipv4a, err := sockaddr.NewIPv4Addr(test.a)
+		if err != nil {
+			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.a, err)
+		}
+
+		ipv4b, err := sockaddr.NewIPv4Addr(test.b)
+		if err != nil {
+			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.b, err)
+		}
+
+		if x := ipv4a.CmpPort(ipv4b); x != test.cmp {
+			t.Errorf("[%d] IPv4Addr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
+		}
+
+		if x := ipv4b.CmpPort(ipv4a); x*-1 != test.cmp {
+			t.Errorf("[%d] IPv4Addr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
 		}
 	}
 }
