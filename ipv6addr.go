@@ -203,6 +203,37 @@ func (ipv6 IPv6Addr) CmpPort(sa SockAddr) int {
 	}
 }
 
+// Contains returns true if the SockAddr is contained within the receiver.
+func (ipv6 IPv6Addr) Contains(sa SockAddr) bool {
+	ipv6b, ok := sa.(IPv6Addr)
+	if !ok {
+		return false
+	}
+
+	return ipv6.ContainsNetwork(ipv6b)
+}
+
+// ContainsNetwork returns true if the network from IPv6Addr is contained within
+// the receiver.
+func (x IPv6Addr) ContainsNetwork(y IPv6Addr) bool {
+	{
+		xIPv6 := x.FirstUsable().(IPv6Addr)
+		yIPv6 := y.FirstUsable().(IPv6Addr)
+		if xIPv6.CmpAddress(yIPv6) > 1 {
+			return false
+		}
+	}
+
+	{
+		xIPv6 := x.LastUsable().(IPv6Addr)
+		yIPv6 := y.LastUsable().(IPv6Addr)
+		if xIPv6.CmpAddress(yIPv6) <= 0 {
+			return false
+		}
+	}
+	return true
+}
+
 // DialPacketArgs returns the arguments required to be passed to
 // net.DialUDP().  If the Mask of ipv6 is not a /128 or the Port is 0,
 // DialPacketArgs() will fail.  See Host() to create an IPv6Addr with its
@@ -345,11 +376,11 @@ func (ipv6 IPv6Addr) NetIP() *net.IP {
 }
 
 // NetIPMask create a new net.IPMask from the IPv6Addr.
-func (ipv6 IPv6Addr) NetIPMask() net.IPMask {
+func (ipv6 IPv6Addr) NetIPMask() *net.IPMask {
 	ipv6Mask := make(net.IPMask, IPv6len)
 	m := big.Int(*ipv6.Mask)
 	copy(ipv6Mask, m.Bytes())
-	return ipv6Mask
+	return &ipv6Mask
 }
 
 // Network returns a pointer to the net.IPNet within IPv4Addr receiver.
@@ -357,7 +388,7 @@ func (ipv6 IPv6Addr) NetIPNet() *net.IPNet {
 	ipv6net := &net.IPNet{}
 	ipv6net.IP = make(net.IP, IPv6len)
 	copy(ipv6net.IP, *ipv6.NetIP())
-	ipv6net.Mask = ipv6.NetIPMask()
+	ipv6net.Mask = *ipv6.NetIPMask()
 	return ipv6net
 }
 
@@ -376,7 +407,7 @@ func (ipv6 IPv6Addr) NetworkAddress() IPv6Network {
 	addr.SetBytes((*ipv6.Address).Bytes())
 
 	mask := new(big.Int)
-	mask.SetBytes(ipv6.NetIPMask())
+	mask.SetBytes(*ipv6.NetIPMask())
 
 	netAddr := new(big.Int)
 	netAddr.And(addr, mask)
