@@ -7,7 +7,7 @@ test:: $(GOCOVERFILE)
 cover:: coverage_report
 
 ${GOCOVERFILE}::
-	go test -v -cover -coverprofile=$(GOCOVERFILE)
+	find * -type d -print0 | xargs -0 -I % sh -c "cd %; go test -v -race -cover -coverprofile=$(GOCOVERFILE)"
 
 $(GOCOVERHTML): $(GOCOVERFILE)
 	go tool cover -html=$(GOCOVERFILE) -o $(GOCOVERHTML)
