@@ -169,10 +169,10 @@ func (ipv4 IPv4Addr) CmpPort(sa SockAddr) int {
 	}
 }
 
-// CmpRfc1918 returns 0 if SockAddr is one of the RFC1918 networks, -1 if it
-// is contained within an RFC1918 network, or 1 if not.
-func (ipv4 IPv4Addr) CmpRFC1918(sa SockAddr) int {
-	a := IsRFC1918(ipv4)
+// CmpRfc returns 0 if SockAddr is one of the RFC networks, -1 if it is
+// contained within an RFC network, or 1 if not.
+func (ipv4 IPv4Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
+	a := IsRFC(rfcNum, ipv4)
 	ipv4b, ok := sa.(IPv4Addr)
 	if !ok {
 		if a {
@@ -182,7 +182,7 @@ func (ipv4 IPv4Addr) CmpRFC1918(sa SockAddr) int {
 		}
 	}
 
-	b := IsRFC1918(ipv4b)
+	b := IsRFC(rfcNum, ipv4b)
 	switch {
 	case (a && b), (!a && !b):
 		return 0
@@ -293,30 +293,6 @@ func (ipv4 IPv4Addr) Host() IPAddr {
 // IPPort returns the Port number as a uint16
 func (ipv4 IPv4Addr) IPPort() IPPort {
 	return ipv4.Port
-}
-
-// IsRFC1918 tests to see if an IPv4Addr is an RFC1918 address
-func IsRFC1918(ipv4 IPv4Addr) bool {
-	var isRfc1918 bool
-	for _, rfc1918 := range rfc1918Networks {
-		if rfc1918.ContainsNetwork(ipv4) {
-			isRfc1918 = true
-			break
-		}
-	}
-	return isRfc1918
-}
-
-// IsRFC6598 tests to see if an IPv4Addr is an RFC6598 address
-func IsRFC6598(ipv4 IPv4Addr) bool {
-	var isRfc6598 bool
-	for _, rfc6598 := range rfc6598Networks {
-		if rfc6598.ContainsNetwork(ipv4) {
-			isRfc6598 = true
-			break
-		}
-	}
-	return isRfc6598
 }
 
 // LastUsable returns the last address before the broadcast address in a
