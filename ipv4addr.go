@@ -307,6 +307,18 @@ func IsRFC1918(ipv4 IPv4Addr) bool {
 	return isRfc1918
 }
 
+// IsRFC6598 tests to see if an IPv4Addr is an RFC6598 address
+func IsRFC6598(ipv4 IPv4Addr) bool {
+	var isRfc6598 bool
+	for _, rfc6598 := range rfc6598Networks {
+		if rfc6598.ContainsNetwork(ipv4) {
+			isRfc6598 = true
+			break
+		}
+	}
+	return isRfc6598
+}
+
 // LastUsable returns the last address before the broadcast address in a
 // given network.
 func (ipv4 IPv4Addr) LastUsable() IPAddr {
