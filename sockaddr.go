@@ -17,11 +17,6 @@ const (
 	TypeIP = 0x6
 )
 
-const (
-	IPv4len = 4
-	IPv6len = 16
-)
-
 type SockAddr interface {
 	// Contains returns true if the SockAddr arg is contained within the
 	// receiver

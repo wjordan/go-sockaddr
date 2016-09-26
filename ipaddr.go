@@ -5,6 +5,11 @@ import (
 	"net"
 )
 
+const (
+	IPv4len = 4
+	IPv6len = 16
+)
+
 // IPAddr is a generic IP address interface for IPv4 and IPv6 addresses,
 // networks, and socket endpoints.
 type IPAddr interface {
