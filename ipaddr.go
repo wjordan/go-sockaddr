@@ -5,6 +5,7 @@ import (
 	"net"
 )
 
+// Constants for the sizes of the various IP addresses.
 const (
 	IPv4len = 4
 	IPv6len = 16
@@ -34,9 +35,11 @@ type IPAddr interface {
 	Network() IPAddr
 }
 
+// IPPort is the type for an IP port number for the TCP and UDP IP transports.
 type IPPort uint16
 
-// NewIPAddr creates a new IPAddr from a string.
+// NewIPAddr creates a new IPAddr from a string.  Returns nil if the string is
+// not an IPv4 or an IPv6 address.
 func NewIPAddr(addr string) (IPAddr, error) {
 	ipv4Addr, err := NewIPv4Addr(addr)
 	if err == nil {
