@@ -87,7 +87,8 @@ func (ms *multiSorter) Swap(i, j int) {
 // NOTE: This constant is here only for code readability.
 const sortOrderDifferentTypes = 0
 
-// AscAddress is a sorting function to sort addresses
+// AscAddress is a sorting function to sort SockAddrs by their respective
+// address type.  Non-equal types are deferred in the sort.
 func AscAddress(p1Ptr, p2Ptr *SockAddr) int {
 	p1 := *p1Ptr
 	p2 := *p2Ptr
@@ -101,7 +102,8 @@ func AscAddress(p1Ptr, p2Ptr *SockAddr) int {
 	return sortOrderDifferentTypes
 }
 
-// AscPort is a sorting function to sort port numbers.
+// AscPort is a sorting function to sort SockAddrs by their respective address
+// type.  Non-equal types are deferred in the sort.
 func AscPort(p1Ptr, p2Ptr *SockAddr) int {
 	p1 := *p1Ptr
 	p2 := *p2Ptr
