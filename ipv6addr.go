@@ -170,7 +170,7 @@ func (ipv6 IPv6Addr) AddressHexString() string {
 func (ipv6 IPv6Addr) CmpAddress(sa SockAddr) int {
 	ipv6b, ok := sa.(IPv6Addr)
 	if !ok {
-		return SortOrderDifferentTypes
+		return sortOrderDifferentTypes
 	}
 
 	ipv6aBigInt := new(big.Int)
@@ -191,7 +191,7 @@ func (ipv6 IPv6Addr) CmpPort(sa SockAddr) int {
 	case IPv6Addr:
 		saPort = v.Port
 	default:
-		return SortOrderDifferentTypes
+		return sortOrderDifferentTypes
 	}
 
 	switch {

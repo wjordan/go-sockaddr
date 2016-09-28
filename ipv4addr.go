@@ -174,7 +174,7 @@ func (ipv4 IPv4Addr) Cmp(sa SockAddr) int {
 func (ipv4 IPv4Addr) CmpAddress(sa SockAddr) int {
 	ipv4b, ok := sa.(IPv4Addr)
 	if !ok {
-		return SortOrderDifferentTypes
+		return sortOrderDifferentTypes
 	}
 
 	switch {
@@ -197,7 +197,7 @@ func (ipv4 IPv4Addr) CmpPort(sa SockAddr) int {
 	case IPv6Addr:
 		saPort = v.Port
 	default:
-		return SortOrderDifferentTypes
+		return sortOrderDifferentTypes
 	}
 
 	switch {
