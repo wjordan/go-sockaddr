@@ -118,6 +118,7 @@ func TestSockAddr_SockAddrs_AscPrivate(t *testing.T) {
 	}{
 		{ // testNum: 0
 			sortFuncs: []sockaddr.CmpFunc{
+				sockaddr.AscType,
 				sockaddr.AscPrivate,
 				sockaddr.AscAddress,
 				sockaddr.AscType,
@@ -143,11 +144,11 @@ func TestSockAddr_SockAddrs_AscPrivate(t *testing.T) {
 				"192.168.0.0/16",
 				"192.168.0.0/16",
 				"192.168.1.10/24",
+				"240.0.0.1/4",
 				"128.95.120.1/32",
 				"128.95.120.2/32",
 				// "128.95.120.2:53",
 				// "128.95.120.2:8600",
-				// "240.0.0.1/4",
 				// "::",
 			},
 		},

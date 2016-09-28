@@ -115,17 +115,17 @@ func AscPort(p1Ptr, p2Ptr *SockAddr) int {
 	}
 }
 
-// AscPrivate is a sorting function to sort "more secure" private values
-// before "more public" values.
+// AscPrivate is a sorting function to sort "more secure" private values before
+// "more public" values.  Both IPv4 and IPv6 are compared against RFC6890
+// (RFC6890 includes, and is not limited to, RFC1918 and RFC6598 for IPv4, and
+// IPv6 includes RFC4193).
 func AscPrivate(p1Ptr, p2Ptr *SockAddr) int {
 	p1 := *p1Ptr
 	p2 := *p2Ptr
 
 	switch v := p1.(type) {
-	case IPv4Addr:
-		return v.CmpRFC(1918, p2)
-		// default:
-		// 	panic("Unsupported type")
+	case IPv4Addr, IPv6Addr:
+		return v.CmpRFC(6890, p2)
 	}
 	return SortOrderDifferentTypes
 }
