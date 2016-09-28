@@ -551,7 +551,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 		}
 
 		if m := ipv4.Maskbits(); m != test.z08_maskbits {
-			t.Errorf("[%dr] Expected %+q's port to be %d, received %d", idx, test.z00_input, test.z08_maskbits, m)
+			t.Errorf("[%d] Expected %+q's port to be %d, received %d", idx, test.z00_input, test.z08_maskbits, m)
 		}
 
 		if n := ipv4.NetIPNet().String(); n != test.z09_NetIPNetStringOut {
