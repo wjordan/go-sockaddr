@@ -18,6 +18,11 @@ const (
 )
 
 type SockAddr interface {
+	// CmpRFC returns 0 if SockAddr exactly matches one of the matched RFC
+	// networks, -1 if the receiver is contained within the RFC network, or
+	// 1 if the address is not contained within the RFC.
+	CmpRFC(rfcNum uint, sa SockAddr) int
+
 	// Contains returns true if the SockAddr arg is contained within the
 	// receiver
 	Contains(SockAddr) bool

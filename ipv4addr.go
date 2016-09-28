@@ -210,7 +210,7 @@ func (ipv4 IPv4Addr) CmpPort(sa SockAddr) int {
 	}
 }
 
-// CmpRfc returns 0 if SockAddr is one of the RFC networks, -1 if it is
+// CmpRFC returns 0 if SockAddr is one of the RFC networks, -1 if it is
 // contained within an RFC network, or 1 if not.
 func (ipv4 IPv4Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
 	a := IsRFC(rfcNum, ipv4)

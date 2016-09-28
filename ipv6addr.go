@@ -204,6 +204,30 @@ func (ipv6 IPv6Addr) CmpPort(sa SockAddr) int {
 	}
 }
 
+// CmpRFC returns 0 if SockAddr is one of the RFC networks, -1 if it is
+// contained within an RFC network, or 1 if not.
+func (ipv6 IPv6Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
+	a := IsRFC(rfcNum, ipv6)
+	ipv6b, ok := sa.(IPv6Addr)
+	if !ok {
+		if a {
+			return -1
+		} else {
+			return 0
+		}
+	}
+
+	b := IsRFC(rfcNum, ipv6b)
+	switch {
+	case (a && b), (!a && !b):
+		return 0
+	case a && !b:
+		return -1
+	default:
+		return 1
+	}
+}
+
 // Contains returns true if the SockAddr is contained within the receiver.
 func (ipv6 IPv6Addr) Contains(sa SockAddr) bool {
 	ipv6b, ok := sa.(IPv6Addr)
