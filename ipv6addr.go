@@ -51,24 +51,35 @@ type IPv6Addr struct {
 	Port    IPPort
 }
 
-// NewIPv6Addr creates an IPv6Addr from a string.  String can be in the form
-// of an an IPv6:port (e.g. `[2001:4860:0:2001::68]:80`, in which case the
-// mask is assumed to be a /128), an IPv6 address
-// (e.g. `2001:4860:0:2001::68`, also with a `/128` mask), an IPv6 CIDR
-// (e.g. `2001:4860:0:2001::68/64`, which has its IP port initialized to
-// zero).  ipv6Str can not be a hostname.
+// NewIPv6Addr creates an IPv6Addr from a string.  String can be in the form of
+// an an IPv6:port (e.g. `[2001:4860:0:2001::68]:80`, in which case the mask is
+// assumed to be a /128), an IPv6 address (e.g. `2001:4860:0:2001::68`, also
+// with a `/128` mask), an IPv6 CIDR (e.g. `2001:4860:0:2001::68/64`, which has
+// its IP port initialized to zero).  ipv6Str can not be a hostname.
 //
 // NOTE: Many net.*() routines will initialize and return an IPv4 address.
-// Always test to make sure the address returned cannot be converted to a 4
-// byte array using To4() (i.e. it was an IPv6 value).
+// Always test to make sure the address returned cannot be converted to a 4 byte
+// array using To4().
 func NewIPv6Addr(ipv6Str string) (IPv6Addr, error) {
+	v6Addr := false
+LOOP:
+	for i := 0; i < len(ipv6Str); i++ {
+		switch ipv6Str[i] {
+		case '.':
+			break LOOP
+		case ':':
+			v6Addr = true
+			break LOOP
+		}
+	}
+
+	if !v6Addr {
+		return IPv6Addr{}, fmt.Errorf("Unable to resolve %+q as an IPv6 address, appears to be an IPv4 address", ipv6Str)
+	}
+
 	// Attempt to parse ipv6Str as a /128 host with a port number.
 	tcpAddr, err := net.ResolveTCPAddr("tcp6", ipv6Str)
 	if err == nil {
-		ipv4 := tcpAddr.IP.To4()
-		if ipv4 != nil {
-			return IPv6Addr{}, fmt.Errorf("Unable to resolve %+q as an IPv6 address", ipv6Str)
-		}
 		ipv6 := tcpAddr.IP.To16()
 		if ipv6 == nil {
 			return IPv6Addr{}, fmt.Errorf("Unable to resolve %+q as a 16byte IPv6 address", ipv6Str)
@@ -95,10 +106,6 @@ func NewIPv6Addr(ipv6Str string) (IPv6Addr, error) {
 	}
 	ip := net.ParseIP(ipv6Str)
 	if ip != nil {
-		if ipv4 := ip.To4(); ipv4 != nil {
-			return IPv6Addr{}, fmt.Errorf("Unable to string convert %+q to an IPv6 address", ipv6Str)
-		}
-
 		ipv6 := ip.To16()
 		if ipv6 == nil {
 			return IPv6Addr{}, fmt.Errorf("Unable to string convert %+q to a 16byte IPv6 address", ipv6Str)
@@ -121,10 +128,6 @@ func NewIPv6Addr(ipv6Str string) (IPv6Addr, error) {
 	// Parse as an IPv6 CIDR
 	ipAddr, network, err := net.ParseCIDR(ipv6Str)
 	if err == nil {
-		if ipv4 := ipAddr.To4(); ipv4 != nil {
-			return IPv6Addr{}, fmt.Errorf("Unable to convert %+q to an IPv6 address", ipv6Str)
-		}
-
 		ipv6 := ipAddr.To16()
 		if ipv6 == nil {
 			return IPv6Addr{}, fmt.Errorf("Unable to convert %+q to a 16byte IPv6 address", ipv6Str)
