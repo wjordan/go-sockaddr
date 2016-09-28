@@ -12,7 +12,7 @@ import (
 // Parse parses input as template input using the addresses available on the
 // host, then returns the string output if there are no errors.
 func Parse(input string) (string, error) {
-	addrs, err := sockaddr.GetIfAddrs()
+	addrs, err := sockaddr.GetIfSockAddrs()
 	if err != nil {
 		return "", errwrap.Wrapf("unable to query interface addresses: {{err}}", err)
 	}
@@ -31,10 +31,10 @@ func ParseIfAddrs(input string, ifAddrs []sockaddr.IfAddrs) (string, error) {
 func ParseIfAddrsTemplate(input string, ifAddrs []sockaddr.IfAddrs, tmplIn *template.Template) (string, error) {
 	funcMap := template.FuncMap{
 		// Generates a set of IfAddr inputs for the rest of the template
-		// pipeline.  `interfaceAddrs` is the default input and original
+		// pipeline.  `GetIfSockAddrs` is the default input and original
 		// "dot" in the pipeline.
 		//
-		"interfaceAddrs": sockaddr.GetIfAddrs,
+		"GetIfSockAddrs": sockaddr.GetIfSockAddrs,
 
 		// The exclude* and include* functions filter IfAddrs
 		//

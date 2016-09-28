@@ -15,12 +15,12 @@ func TestSockAddr_Parse(t *testing.T) {
 	}{
 		{
 			name:   "basic includeByIfName",
-			input:  `{{interfaceAddrs | includeByIfName "lo0" | printf "%v"}}`,
+			input:  `{{GetIfSockAddrs | includeByIfName "lo0" | printf "%v"}}`,
 			output: `[{[127.0.0.1/8 100:: fe80::1/64] {1 16384 lo0  up|loopback|multicast}}]`,
 		},
 		{
 			name:   "includeByIfName regexp",
-			input:  `{{interfaceAddrs | includeByIfName "^(en|lo)0$" | excludeByIfName "^en0$" | ifAddrs | sortByType | sortByAddr | printf "%v"}}`,
+			input:  `{{GetIfSockAddrs | includeByIfName "^(en|lo)0$" | excludeByIfName "^en0$" | ifAddrs | sortByType | sortByAddr | printf "%v"}}`,
 			output: `[127.0.0.1/8 100:: fe80::1/64]`,
 		},
 		{

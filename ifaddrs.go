@@ -14,10 +14,10 @@ type IfAddrs struct {
 	net.Interface
 }
 
-// GetIfAddrs iterates over all available network interfaces and finds all
+// GetIfSockAddrs iterates over all available network interfaces and finds all
 // available IP addresses on each interface and converts them to
 // sockaddr.IPAddrs.
-func GetIfAddrs() ([]IfAddrs, error) {
+func GetIfSockAddrs() ([]IfAddrs, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
 		return nil, err
