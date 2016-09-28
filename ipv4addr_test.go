@@ -30,6 +30,8 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 		z19_ListenPacketArgs  []string
 		z20_ListenStreamArgs  []string
 		z21_IsRFC1918         bool
+		z22_IsRFC6598         bool
+		z23_IsRFC6890         bool
 		z99_pass              bool
 	}{
 		{ // 0
@@ -53,6 +55,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z18_DialStreamArgs:    []string{"tcp4", ""},
 			z19_ListenPacketArgs:  []string{"udp4", "0.0.0.0:0"},
 			z20_ListenStreamArgs:  []string{"tcp4", "0.0.0.0:0"},
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 1
@@ -77,6 +80,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z18_DialStreamArgs:    []string{"tcp4", "0.0.0.0:80"},
 			z19_ListenPacketArgs:  []string{"udp4", "0.0.0.0:80"},
 			z20_ListenStreamArgs:  []string{"tcp4", "0.0.0.0:80"},
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 2
@@ -122,6 +126,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z18_DialStreamArgs:    []string{"tcp4", ""},
 			z19_ListenPacketArgs:  []string{"udp4", "0.0.0.1:0"},
 			z20_ListenStreamArgs:  []string{"tcp4", "0.0.0.1:0"},
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 4
@@ -192,6 +197,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z19_ListenPacketArgs:  []string{"udp4", ""},
 			z20_ListenStreamArgs:  []string{"tcp4", ""},
 			z21_IsRFC1918:         true,
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 7
@@ -262,6 +268,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z19_ListenPacketArgs:  []string{"udp4", ""},
 			z20_ListenStreamArgs:  []string{"tcp4", ""},
 			z21_IsRFC1918:         true,
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 10
@@ -286,6 +293,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z19_ListenPacketArgs:  []string{"udp4", ""},
 			z20_ListenStreamArgs:  []string{"tcp4", ""},
 			z21_IsRFC1918:         true,
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 11
@@ -310,6 +318,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z19_ListenPacketArgs:  []string{"udp4", "192.168.0.1:0"},
 			z20_ListenStreamArgs:  []string{"tcp4", "192.168.0.1:0"},
 			z21_IsRFC1918:         true,
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 12
@@ -334,6 +343,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z19_ListenPacketArgs:  []string{"udp4", ""},
 			z20_ListenStreamArgs:  []string{"tcp4", ""},
 			z21_IsRFC1918:         true,
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 13
@@ -358,6 +368,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z19_ListenPacketArgs:  []string{"udp4", ""},
 			z20_ListenStreamArgs:  []string{"tcp4", ""},
 			z21_IsRFC1918:         true,
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 14
@@ -382,6 +393,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z19_ListenPacketArgs:  []string{"udp4", ""},
 			z20_ListenStreamArgs:  []string{"tcp4", ""},
 			z21_IsRFC1918:         true,
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 15
@@ -405,6 +417,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z18_DialStreamArgs:    []string{"tcp4", ""},
 			z19_ListenPacketArgs:  []string{"udp4", ""},
 			z20_ListenStreamArgs:  []string{"tcp4", ""},
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 16
@@ -428,6 +441,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z18_DialStreamArgs:    []string{"tcp4", ""},
 			z19_ListenPacketArgs:  []string{"udp4", ""},
 			z20_ListenStreamArgs:  []string{"tcp4", ""},
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 17
@@ -451,6 +465,7 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z18_DialStreamArgs:    []string{"tcp4", ""},
 			z19_ListenPacketArgs:  []string{"udp4", "255.255.255.255:0"},
 			z20_ListenStreamArgs:  []string{"tcp4", "255.255.255.255:0"},
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 		{ // 18
@@ -487,6 +502,31 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 			z18_DialStreamArgs:    []string{"tcp4", "128.95.120.1:8600"},
 			z19_ListenPacketArgs:  []string{"udp4", "128.95.120.1:8600"},
 			z20_ListenStreamArgs:  []string{"tcp4", "128.95.120.1:8600"},
+			z99_pass:              true,
+		},
+		{ // 22
+			z00_input:             "100.64.2.3/23",
+			z01_addrHexStr:        "64400203",
+			z02_addrBinStr:        "01100100010000000000001000000011",
+			z03_addrStr:           "100.64.2.3/23",
+			z04_NetIPStringOut:    "100.64.2.3",
+			z05_addrInt:           1681916419,
+			z06_netInt:            1681916416,
+			z07_ipMaskStr:         "fffffe00",
+			z08_maskbits:          23,
+			z09_NetIPNetStringOut: "100.64.2.0/23",
+			z10_maskInt:           4294966784,
+			z11_networkStr:        "100.64.2.0/23",
+			z12_octets:            []int{100, 64, 2, 3},
+			z13_firstUsable:       "100.64.2.1",
+			z14_lastUsable:        "100.64.3.254",
+			z15_broadcast:         "100.64.3.255",
+			z17_DialPacketArgs:    []string{"udp4", ""},
+			z18_DialStreamArgs:    []string{"tcp4", ""},
+			z19_ListenPacketArgs:  []string{"udp4", ""},
+			z20_ListenStreamArgs:  []string{"tcp4", ""},
+			z22_IsRFC6598:         true,
+			z23_IsRFC6890:         true,
 			z99_pass:              true,
 		},
 	}
@@ -609,6 +649,14 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 
 		if v := sockaddr.IsRFC(1918, ipv4); v != test.z21_IsRFC1918 {
 			t.Errorf("[%d] Expected IsRFC(1918, %+q) to be %+q, received %+q", idx, test.z00_input, test.z21_IsRFC1918, v)
+		}
+
+		if v := sockaddr.IsRFC(6598, ipv4); v != test.z22_IsRFC6598 {
+			t.Errorf("[%d] Expected IsRFC(6598, %+q) to be %+q, received %+q", idx, test.z00_input, test.z22_IsRFC6598, v)
+		}
+
+		if v := sockaddr.IsRFC(6890, ipv4); v != test.z23_IsRFC6890 {
+			t.Errorf("[%d] Expected IsRFC(6890, %+q) to be %+q, received %+q", idx, test.z00_input, test.z23_IsRFC6890, v)
 		}
 	}
 }
