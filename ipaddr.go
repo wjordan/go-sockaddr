@@ -5,8 +5,9 @@ import (
 	"net"
 )
 
-// Constants for the sizes of the various IP addresses.
+// Constants for the sizes of IPv3, IPv4, and IPv6 address types.
 const (
+	IPv3len = 6
 	IPv4len = 4
 	IPv6len = 16
 )
