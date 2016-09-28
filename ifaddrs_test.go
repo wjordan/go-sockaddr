@@ -10,7 +10,7 @@ import (
 // doesn't do much in the way of testing beyond verifying that `lo0` has a
 // loopback address present.
 func TestGetIfAddrs(t *testing.T) {
-	ifAddrs, err := sockaddr.GetIfAddrs()
+	ifAddrs, err := sockaddr.GetIfSockAddrs()
 	if err != nil {
 		t.Fatalf("Unable to proceed: %v", err)
 	}
