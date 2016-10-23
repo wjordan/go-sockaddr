@@ -9,8 +9,8 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-test_script="${1}"
 test_name="$(basename ${1} .sh)"
+test_script="${test_name}.sh"
 test_out="${test_name}.out"
 expected_out="${test_name}.expected"
 
@@ -36,5 +36,13 @@ if [ "${result}" -eq 0 ]; then
 fi
 
 diff_out="${test_name}.diff"
+set +e
 diff -u "${test_out}" "${expected_out}" > "${diff_out}"
+set -e
+
+# If run as an interactive TTY, pass along the diff to the caller
+if [ -t 0 ]; then
+    cat "${diff_out}"
+fi
+
 exit 1
