@@ -1,0 +1,7 @@
+usage: sockaddr [--version] [--help] <command> [<args>]
+
+Available commands are:
+    dump       Parses IP addresses
+    eval       Evaluates a sockaddr template
+    version    Prints the sockaddr version
+
