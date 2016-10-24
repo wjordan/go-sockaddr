@@ -1,4 +1,4 @@
-# go-netaddr
+# go-sockaddr
 Socket convenience functions for Go
 
 If you're familiar with UNIX's `sockaddr` struct's, the following diagram
@@ -10,12 +10,6 @@ interfaces will be helpful:
 |                                                       |
 |                        sockaddr                       |
 |                        SockAddr                       |
-|                                                       |
-|                                                       |
-|                                   CacheableHostAddr   |
-|                                                       |
-|                                                       |
-|                              HostAddr                 |
 |                                                       |
 | +--------------+ +----------------------------------+ |
 | | sockaddr_un  | |                                  | |
