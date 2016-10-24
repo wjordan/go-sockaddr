@@ -30,6 +30,11 @@ type SockAddr interface {
 	// Equal allows for the comparison of two SockAddrs
 	Equal(SockAddr) bool
 
+	DialPacketArgs() (string, string)
+	DialStreamArgs() (string, string)
+	ListenPacketArgs() (string, string)
+	ListenStreamArgs() (string, string)
+
 	// // ListenArgs returns the necessary arguments required for
 	// // stream-based communication such as net.Listen().
 	// ListenArgs() (net.Listener, error)
@@ -43,9 +48,6 @@ type SockAddr interface {
 
 	// Type returns the SockAddrType
 	Type() SockAddrType
-
-	// // ToUint32 returns MaxUint32 for non-uint32
-	// ToUint32() uint32
 }
 
 // New creates a new SockAddr from the string.  The order in which New()
@@ -110,18 +112,18 @@ func IsRFC(rfcNum uint, sa SockAddr) bool {
 // 	return ipa, err
 // }
 
-// func (ipa *IPAddr) ToIPAddr() *IPAddr {
-// 	switch ipa.Type() {
-// 	case TypeIPv4, TypeIPv6:
-// 		ipa, ok := ipa.(*IPAddr)
-// 		if !ok {
-// 			return nil
-// 		}
-// 		return ipa.ToIPv4Addr()
-// 	default:
-// 		return nil
-// 	}
-// }
+func ToIPAddr(sa SockAddr) *IPAddr {
+	switch sa.Type() {
+	case TypeIPv4, TypeIPv6:
+		ipa, ok := sa.(IPAddr)
+		if !ok {
+			return nil
+		}
+		return &ipa
+	default:
+		return nil
+	}
+}
 
 func ToIPv4Addr(sa SockAddr) *IPv4Addr {
 	switch sa.Type() {
@@ -131,24 +133,36 @@ func ToIPv4Addr(sa SockAddr) *IPv4Addr {
 			return nil
 		}
 		return &ipv4
-		//return ipv4.ToIPv4Addr()
 	default:
 		return nil
 	}
 }
 
-// func (ipa *IPAddr) ToIPv6Addr() *IPv4Addr {
-// 	switch ipa.Type() {
-// 	case TypeIPv6:
-// 		ipa, ok := ipa.(*IPAddr)
-// 		if !ok {
-// 			return nil
-// 		}
-// 		return ipa.ToIPv6Addr()
-// 	default:
-// 		return nil
-// 	}
-// }
+func ToIPv6Addr(sa SockAddr) *IPv6Addr {
+	switch sa.Type() {
+	case TypeIPv6:
+		ipv6, ok := sa.(IPv6Addr)
+		if !ok {
+			return nil
+		}
+		return &ipv6
+	default:
+		return nil
+	}
+}
+
+func ToUnixSock(sa SockAddr) *UnixSock {
+	switch sa.Type() {
+	case TypeUnix:
+		ua, ok := sa.(UnixSock)
+		if !ok {
+			return nil
+		}
+		return &ua
+	default:
+		return nil
+	}
+}
 
 // String() for SockAddrType returns a string representation of the
 // SockAddrType (e.g. "IPv4", "IPv6", "UNIX", "IP", or "unknown").

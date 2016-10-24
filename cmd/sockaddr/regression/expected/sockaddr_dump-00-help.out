@@ -1,0 +1,3 @@
+Usage: sockaddr dump [address ...]
+
+  Parse address(es) and dumps various output.

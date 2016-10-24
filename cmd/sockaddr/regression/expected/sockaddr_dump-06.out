@@ -1,0 +1,19 @@
+Attribute           Value
+type                IPv6
+string              [ff00::100]:22
+host                [ff00::100]:22
+port                22
+network address     ff00::100
+network mask        ffffffffffffffffffffffffffffffff
+network             ff00::100
+mask bits           128
+binary              00000000111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001
+hex                 00ff0000000000000000000000000001
+first usable        ff00::100
+last usable         ff00::100
+octets              255 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0
+uint128             1324035698926381045275276563951124481
+dial packet args    "udp6" "[ff00::100]:22"
+dial stream args    "tcp6" "[ff00::100]:22"
+listen packet args  "udp6" "[ff00::100]:22"
+listen stream args  "tcp6" "[ff00::100]:22"

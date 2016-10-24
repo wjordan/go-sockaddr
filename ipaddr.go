@@ -21,19 +21,16 @@ type IPAddr interface {
 	Cmp(SockAddr) int
 	CmpAddress(SockAddr) int
 	CmpPort(SockAddr) int
-	DialPacketArgs() (string, string)
-	DialStreamArgs() (string, string)
 	FirstUsable() IPAddr
 	Host() IPAddr
 	IPPort() IPPort
 	LastUsable() IPAddr
-	ListenPacketArgs() (string, string)
-	ListenStreamArgs() (string, string)
 	Maskbits() int
 	NetIP() *net.IP
 	NetIPMask() *net.IPMask
 	NetIPNet() *net.IPNet
 	Network() IPAddr
+	Octets() []int
 }
 
 // IPPort is the type for an IP port number for the TCP and UDP IP transports.

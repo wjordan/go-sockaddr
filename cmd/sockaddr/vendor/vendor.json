@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "6U1/66VaDVjh/hiz+UPnASgxGV8=",
+			"path": "github.com/ryanuber/columnize",
+			"revision": "6f43af5ecd2928c6fef2b4f35ef6f36f96690390",
+			"revisionTime": "2016-09-15T03:41:46Z"
+		}
+	],
+	"rootPath": "github.com/hashicorp/go-sockaddr/cmd/sockaddr"
+}
