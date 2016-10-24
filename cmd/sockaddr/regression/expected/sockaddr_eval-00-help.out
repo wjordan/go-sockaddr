@@ -1,0 +1,3 @@
+Usage: sockaddr eval [template ...]
+
+  Parse the sockaddr template and evaluates the output.

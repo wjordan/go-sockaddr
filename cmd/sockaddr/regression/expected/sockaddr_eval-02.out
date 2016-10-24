@@ -1,0 +1,8 @@
+[0] in: "{{GetIfSockAddrs | includeByIfName \"lo0\" | printf \"%v\"}}"
+[0] out: "[{[127.0.0.1/8 100:: fe80::1/64] {1 16384 lo0  up|loopback|multicast}}]"
+
+---
+
+[1] in: "{{GetIfSockAddrs | includeByIfName \"lo0\" | printf \"%v\"}}"
+[1] out: "[{[127.0.0.1/8 100:: fe80::1/64] {1 16384 lo0  up|loopback|multicast}}]"
+

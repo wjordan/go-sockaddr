@@ -9,29 +9,31 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-test_name="$(basename ${1} .sh)"
-test_script="${test_name}.sh"
+exact_name="$(basename ${1} .sh)"
+test_name="$(echo ${exact_name} | sed -e s@^test_@@)"
+test_script="${exact_name}.sh"
 test_out="${test_name}.out"
-expected_out="${test_name}.expected"
+expected_out="expected/${test_name}.out"
 
 if [ ! -r "${test_script}" ]; then
     printf "ERROR: Test script %s does not exist\n" "${test_script}"
-    exit 1
-fi
-
-if [ ! -r "${expected_out}" ]; then
-    printf "ERROR: Expected test output does not exist\n" "${expected_out}"
-    exit 1
+    exit 2
 fi
 
 set +e
 "./${test_script}" > "${test_out}" 2>&1
+
+if [ ! -r "${expected_out}" ]; then
+    printf "ERROR: Expected test output (%s) does not exist\n" "${expected_out}"
+    exit 2
+fi
 
 cmp -s "${expected_out}" "${test_out}"
 result=$?
 set -e
 
 if [ "${result}" -eq 0 ]; then
+    rm -f "${test_out}"
     exit 0
 fi
 
