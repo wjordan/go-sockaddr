@@ -1,6 +1,7 @@
 package command
 
 import (
+	"flag"
 	"fmt"
 	"math/big"
 	"strings"
@@ -12,58 +13,136 @@ import (
 
 type DumpCommand struct {
 	Ui cli.Ui
+
+	// machineMode changes the output format to be machine friendly
+	// (i.e. tab-separated values).
+	machineMode bool
+
+	// valueOnly changes the output format to include only values
+	valueOnly bool
+
+	// list of attribute names to include in the output
+	attrNames []string
+
+	// list of options belonging to this command
+	flags *flag.FlagSet
 }
 
+// Description is the long-form command help.
+func (c *DumpCommand) Description() string {
+	return `Parse address(es) and dumps various output.`
+}
+
+// Help returns the full help output expected by `cmd -h`
 func (c *DumpCommand) Help() string {
-	helpText := `
-Usage: sockaddr dump [address ...]
-
-  Parse address(es) and dumps various output.
-`
-	return strings.TrimSpace(helpText)
+	return MakeHelp(c)
 }
 
+// InitOpts is responsible for setup of this command's configuration via the
+// command line.  InitOpts() does not parse the arguments (see parseOpts()).
+func (c *DumpCommand) InitOpts() {
+	c.flags = flag.NewFlagSet("dump", flag.ContinueOnError)
+	c.flags.Usage = func() { c.Ui.Output(c.Help()) }
+	c.flags.BoolVar(&c.machineMode, "H", false, "Machine readable output")
+	c.flags.Var((*MultiArg)(&c.attrNames), "o", "Name of an attribute to pass through")
+}
+
+// Run executes the command
 func (c *DumpCommand) Run(args []string) int {
 	if len(args) == 0 {
 		c.Ui.Error(fmt.Sprintf("%s", c.Help()))
 		return 1
 	}
 
-	for _, arg := range args {
-		sa, err := sockaddr.NewSockAddr(arg)
+	c.InitOpts()
+	addrs := c.parseOpts(args)
+	for _, addr := range addrs {
+		sa, err := sockaddr.NewSockAddr(addr)
 		if err != nil {
 			return 1
 		}
-		dumpSockAddr(c.Ui, sa)
+		c.dumpSockAddr(sa)
 	}
 	return 0
 }
 
+// Synopsis returns a terse description used when listing sub-commands.
 func (c *DumpCommand) Synopsis() string {
-	return "Parses IP addresses"
+	return `Parses IP addresses`
 }
 
-func dumpSockAddr(ui cli.Ui, sa sockaddr.SockAddr) {
-	const numAttrs = 17
-	output := make([]string, 0, numAttrs)
+// Usage is the one-line usage description
+func (c *DumpCommand) Usage() string {
+	return `sockaddr dump [options] address [...]`
+}
 
-	output = append(output, "Attribute | Value")
-	output = append(output, fmt.Sprintf("type | %s", sa.Type()))
-	output = append(output, fmt.Sprintf("string | %s", sa.String()))
+//VisitAllFlags forwards the visitor function to the FlagSet
+func (c *DumpCommand) VisitAllFlags(fn func(*flag.Flag)) {
+	c.flags.VisitAll(fn)
+}
+
+func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
+	reservedAttrs := []string{"Attribute"}
+	const maxNumAttrs = 32
+
+	output := make([]string, 0, maxNumAttrs+len(reservedAttrs))
+	allowedAttrs := make(map[string]struct{}, len(c.attrNames)+len(reservedAttrs))
+	for _, attr := range reservedAttrs {
+		allowedAttrs[attr] = struct{}{}
+	}
+	for _, attr := range c.attrNames {
+		allowedAttrs[attr] = struct{}{}
+	}
+
+	// allowedAttr returns true if the attribute is allowed to be appended
+	// to the output.
+	allowedAttr := func(k string) bool {
+		if len(allowedAttrs) == len(reservedAttrs) {
+			return true
+		}
+
+		_, found := allowedAttrs[k]
+		return found
+	}
+
+	// outFmt is a small helper function to reduce the tedium below.  outFmt
+	// returns a new slice and expects the value to already be a string.
+	outFmt := func(o []string, k string, v interface{}) []string {
+		if !allowedAttr(k) {
+			return o
+		}
+		switch {
+		case c.valueOnly:
+			return append(o, fmt.Sprintf("%s", v))
+		case !c.valueOnly && c.machineMode:
+			return append(o, fmt.Sprintf("%s\t%s", k, v))
+		case !c.valueOnly && !c.machineMode:
+			fallthrough
+		default:
+			return append(o, fmt.Sprintf("%s | %s", k, v))
+		}
+	}
+
+	if !c.machineMode {
+		output = outFmt(output, "Attribute", "Value")
+	}
+
+	output = outFmt(output, "type", sa.Type())
+	output = outFmt(output, "string", sa)
 
 	// Attributes for all IP types (both IPv4 and IPv6)
 	if sa.Type()&sockaddr.TypeIP != 0 {
 		ip := *sockaddr.ToIPAddr(sa)
-		output = append(output, fmt.Sprintf("host | %s", ip.Host()))
-		output = append(output, fmt.Sprintf("port | %d", ip.IPPort()))
-		output = append(output, fmt.Sprintf("network address | %s", ip.NetIP()))
-		output = append(output, fmt.Sprintf("network mask | %s", ip.NetIPMask()))
-		output = append(output, fmt.Sprintf("network | %s", ip.Network()))
-		output = append(output, fmt.Sprintf("mask bits | %d", ip.Maskbits()))
-		output = append(output, fmt.Sprintf("binary | %s", ip.AddressBinString()))
-		output = append(output, fmt.Sprintf("hex | %s", ip.AddressHexString()))
-		output = append(output, fmt.Sprintf("first usable | %s", ip.FirstUsable()))
-		output = append(output, fmt.Sprintf("last usable | %s", ip.LastUsable()))
+		output = outFmt(output, "host", ip.Host())
+		output = outFmt(output, "address", ip.NetIP())
+		output = outFmt(output, "port", fmt.Sprintf("%d", ip.IPPort()))
+		output = outFmt(output, "netmask", ip.NetIPMask())
+		output = outFmt(output, "network", ip.Network())
+		output = outFmt(output, "mask_bits", fmt.Sprintf("%d", ip.Maskbits()))
+		output = outFmt(output, "binary", ip.AddressBinString())
+		output = outFmt(output, "hex", ip.AddressHexString())
+		output = outFmt(output, "first_usable", ip.FirstUsable())
+		output = outFmt(output, "last_usable", ip.LastUsable())
 
 		{
 			octets := ip.Octets()
@@ -71,49 +150,49 @@ func dumpSockAddr(ui cli.Ui, sa sockaddr.SockAddr) {
 			for _, octet := range octets {
 				octetStrs = append(octetStrs, fmt.Sprintf("%d", octet))
 			}
-			output = append(output, fmt.Sprintf("octets | %s", strings.Join(octetStrs, " ")))
+			output = outFmt(output, "octets", strings.Join(octetStrs, " "))
 		}
 	}
 
 	if sa.Type() == sockaddr.TypeIPv4 {
 		ipv4 := *sockaddr.ToIPv4Addr(sa)
-		output = append(output, fmt.Sprintf("broadcast | %s", ipv4.Broadcast()))
-		output = append(output, fmt.Sprintf("uint32 | %d", uint32(ipv4.Address)))
+		output = outFmt(output, "broadcast", ipv4.Broadcast())
+		output = outFmt(output, "uint32", fmt.Sprintf("%d", uint32(ipv4.Address)))
 	}
 
 	if sa.Type() == sockaddr.TypeIPv6 {
 		ipv6 := *sockaddr.ToIPv6Addr(sa)
 		{
 			b := big.Int(*ipv6.Address)
-			output = append(output, fmt.Sprintf("uint128 | %s", b.Text(10)))
+			output = outFmt(output, "uint128", b.Text(10))
 		}
 	}
 
 	if sa.Type() == sockaddr.TypeUnix {
 		us := *sockaddr.ToUnixSock(sa)
-		output = append(output, fmt.Sprintf("path | %s", us.Path()))
+		output = outFmt(output, "path", us.Path())
 	}
 
 	// Developer-focused arguments
 	{
 		arg1, arg2 := sa.DialPacketArgs()
-		output = append(output, fmt.Sprintf("dial packet args | %+q %+q", arg1, arg2))
+		output = outFmt(output, "DialPacket", fmt.Sprintf("%+q %+q", arg1, arg2))
 	}
 	{
 		arg1, arg2 := sa.DialStreamArgs()
-		output = append(output, fmt.Sprintf("dial stream args | %+q %+q", arg1, arg2))
+		output = outFmt(output, "DialStream", fmt.Sprintf("%+q %+q", arg1, arg2))
 	}
 	{
 		arg1, arg2 := sa.ListenPacketArgs()
-		output = append(output, fmt.Sprintf("listen packet args | %+q %+q", arg1, arg2))
+		output = outFmt(output, "ListenPacket", fmt.Sprintf("%+q %+q", arg1, arg2))
 	}
 	{
 		arg1, arg2 := sa.ListenStreamArgs()
-		output = append(output, fmt.Sprintf("listen stream args | %+q %+q", arg1, arg2))
+		output = outFmt(output, "ListenStream", fmt.Sprintf("%+q %+q", arg1, arg2))
 	}
 
 	result := columnize.SimpleFormat(output)
-	ui.Output(result)
+	c.Ui.Output(result)
 
 	// fmt.Printf("SockAddr.Address.IsGlobalUnicast(): %v\n", na.Address.IsGlobalUnicast())
 	// fmt.Printf("SockAddr.Address.IsInterfaceLocalMulticast(): %v\n", na.Address.IsInterfaceLocalMulticast())
@@ -130,4 +209,14 @@ func dumpSockAddr(ui cli.Ui, sa sockaddr.SockAddr) {
 	// }
 
 	// fmt.Printf("SockAddr.ToUint32(): %d\n", ipuint)
+}
+
+// parseOpts is responsible for parsing the options set in InitOpts().  Returns
+// a list of non-parsed flags.
+func (c *DumpCommand) parseOpts(args []string) []string {
+	if err := c.flags.Parse(args); err != nil {
+		return nil
+	}
+
+	return c.flags.Args()
 }

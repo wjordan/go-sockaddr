@@ -1,5 +1,5 @@
-#!/bin/sh -e --
+#!/bin/sh --
 
 set -e
 exec 2>&1
-exec ../sockaddr dump 127.0.0.2
+exec ../sockaddr dump 127.0.0.1

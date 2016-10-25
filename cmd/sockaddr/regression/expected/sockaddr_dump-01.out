@@ -1,20 +1,20 @@
-Attribute           Value
-type                IPv4
-string              127.0.0.2
-host                127.0.0.2
-port                0
-network address     127.0.0.2
-network mask        ffffffff
-network             127.0.0.2
-mask bits           32
-binary              01111111000000000000000000000010
-hex                 7f000002
-first usable        127.0.0.2
-last usable         127.0.0.2
-octets              127 0 0 2
-broadcast           127.0.0.2
-uint32              2130706434
-dial packet args    "udp4" ""
-dial stream args    "tcp4" ""
-listen packet args  "udp4" "127.0.0.2:0"
-listen stream args  "tcp4" "127.0.0.2:0"
+Attribute     Value
+type          IPv4
+string        127.0.0.1
+host          127.0.0.1
+address       127.0.0.1
+port          0
+netmask       ffffffff
+network       127.0.0.1
+mask_bits     32
+binary        01111111000000000000000000000001
+hex           7f000001
+first_usable  127.0.0.1
+last_usable   127.0.0.1
+octets        127 0 0 1
+broadcast     127.0.0.1
+uint32        2130706433
+DialPacket    "udp4" ""
+DialStream    "tcp4" ""
+ListenPacket  "udp4" "127.0.0.1:0"
+ListenStream  "tcp4" "127.0.0.1:0"

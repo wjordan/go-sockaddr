@@ -1,8 +1,8 @@
-Attribute           Value
-type                UNIX
-string              "/tmp/example"
-path                /tmp/example
-dial packet args    "unixgram" "/tmp/example"
-dial stream args    "unix" "/tmp/example"
-listen packet args  "unixgram" "/tmp/example"
-listen stream args  "unix" "/tmp/example"
+Attribute     Value
+type          UNIX
+string        "/tmp/example"
+path          /tmp/example
+DialPacket    "unixgram" "/tmp/example"
+DialStream    "unix" "/tmp/example"
+ListenPacket  "unixgram" "/tmp/example"
+ListenStream  "unix" "/tmp/example"

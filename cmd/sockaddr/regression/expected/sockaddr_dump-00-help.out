@@ -1,3 +1,8 @@
-Usage: sockaddr dump [address ...]
+Usage: sockaddr dump [options] address [...]
 
   Parse address(es) and dumps various output.
+
+Options:
+
+  -H  Machine readable output
+  -o  Name of an attribute to pass through

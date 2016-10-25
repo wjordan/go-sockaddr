@@ -1,5 +1,5 @@
-#!/bin/sh -e --
+#!/bin/sh --
 
 set -e
 exec 2>&1
-exec ../sockaddr dump '[ff::1]'
+exec ../sockaddr dump '[2001:db8::3]'
