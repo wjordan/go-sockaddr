@@ -49,9 +49,12 @@ func (c *RFCCommand) Run(args []string) int {
 	c.InitOpts()
 	unprocessedArgs := c.parseOpts(args)
 
-	if len(unprocessedArgs) != 2 {
+	switch numArgs := len(unprocessedArgs); {
+	case numArgs != 2 && numArgs != 0:
 		c.Ui.Error(`ERROR: Need an RFC Number and an IP address to test.`)
 		c.Ui.Error(c.Help())
+		fallthrough
+	case numArgs == 0:
 		return 1
 	}
 
@@ -70,16 +73,16 @@ func (c *RFCCommand) Run(args []string) int {
 	}
 
 	switch inRFC := sockaddr.IsRFC(uint(rfcNum), ipAddr); {
-	case !inRFC && !c.silentMode:
-		c.Ui.Output(fmt.Sprintf("%s is not part of RFC %d", ipAddr, rfcNum))
-		fallthrough
-	case !inRFC:
-		return 1
 	case inRFC && !c.silentMode:
 		c.Ui.Output(fmt.Sprintf("%s is part of RFC %d", ipAddr, rfcNum))
 		fallthrough
 	case inRFC:
 		return 0
+	case !inRFC && !c.silentMode:
+		c.Ui.Output(fmt.Sprintf("%s is not part of RFC %d", ipAddr, rfcNum))
+		fallthrough
+	case !inRFC:
+		return 1
 	default:
 		panic("bad")
 	}
