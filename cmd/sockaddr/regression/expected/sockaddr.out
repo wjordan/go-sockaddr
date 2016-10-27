@@ -3,5 +3,6 @@ usage: sockaddr [--version] [--help] <command> [<args>]
 Available commands are:
     dump       Parses IP addresses
     eval       Evaluates a sockaddr template
+    rfc        Test to see if an IP is part of a known RFC
     version    Prints the sockaddr version
 

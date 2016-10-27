@@ -24,6 +24,11 @@ func init() {
 				Ui: ui,
 			}, nil
 		},
+		"rfc": func() (cli.Command, error) {
+			return &command.RFCCommand{
+				Ui: ui,
+			}, nil
+		},
 		"version": func() (cli.Command, error) {
 			return &command.VersionCommand{
 				HumanVersion: GetHumanVersion(),
