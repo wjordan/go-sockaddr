@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	wordwrap "github.com/mitchellh/go-wordwrap"
 	"github.com/ryanuber/columnize"
 )
 
@@ -28,7 +29,13 @@ func MakeHelp(c AutoHelp) string {
 		return ""
 	}
 
-	descriptionText := c.Description()
+	descriptionText := wordwrap.WrapString(c.Description(), 60)
+	descrLines := strings.Split(descriptionText, "\n")
+	prefixedLines := make([]string, len(descrLines))
+	for i := range descrLines {
+		prefixedLines[i] = "  " + descrLines[i]
+	}
+	descriptionText = strings.Join(prefixedLines, "\n")
 
 	c.InitOpts()
 	flags := []*flag.Flag{}
@@ -44,7 +51,7 @@ func MakeHelp(c AutoHelp) string {
 	case len(optionsText) == 0:
 		helpOutput = fmt.Sprintf(`Usage: %s
 
-  %s`,
+%s`,
 			usageText, descriptionText)
 	case len(descriptionText) == 0 && len(optionsText) > 0:
 		helpOutput = fmt.Sprintf(`Usage: %s
@@ -56,7 +63,7 @@ Options:
 	default:
 		helpOutput = fmt.Sprintf(`Usage: %s
 
-  %s
+%s
 
 Options:
 

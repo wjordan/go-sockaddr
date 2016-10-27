@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "L3leymg2RT8hFl5uL+5KP/LpBkg=",
+			"path": "github.com/mitchellh/go-wordwrap",
+			"revision": "ad45545899c7b13c020ea92b2072220eefad42b8",
+			"revisionTime": "2015-03-14T17:03:34Z"
+		},
+		{
 			"checksumSHA1": "6U1/66VaDVjh/hiz+UPnASgxGV8=",
 			"path": "github.com/ryanuber/columnize",
 			"revision": "6f43af5ecd2928c6fef2b4f35ef6f36f96690390",
