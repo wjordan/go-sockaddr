@@ -454,6 +454,54 @@ func TestSockAddr_IPv6Addr_ContainsAddress(t *testing.T) {
 	}
 }
 
+func TestSockAddr_IPv6Addr_ContainsNetwork(t *testing.T) {
+	tests := []struct {
+		input string
+		pass  []string
+		fail  []string
+	}{
+		{ // 0
+			input: "::1/128",
+			pass: []string{
+				"::1",
+				"[::1/128]",
+			},
+			fail: []string{
+				"100::",
+			},
+		},
+	}
+
+	for idx, test := range tests {
+		ipv6, err := sockaddr.NewIPv6Addr(test.input)
+		if err != nil {
+			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
+		}
+
+		for passIdx, passInput := range test.pass {
+			passAddr, err := sockaddr.NewIPv6Addr(passInput)
+			if err != nil {
+				t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, passIdx, passInput, err)
+			}
+
+			if !passAddr.ContainsNetwork(ipv6) {
+				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
+			}
+		}
+
+		for failIdx, failInput := range test.fail {
+			failAddr, err := sockaddr.NewIPv6Addr(failInput)
+			if err != nil {
+				t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, failIdx, failInput, err)
+			}
+
+			if failAddr.ContainsNetwork(ipv6) {
+				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+			}
+		}
+	}
+}
+
 func TestSockAddr_IPv6Addr_Equal(t *testing.T) {
 	tests := []struct {
 		input string
