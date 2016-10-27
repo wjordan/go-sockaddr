@@ -1,8 +1,8 @@
 package command
 
 import (
+	"flag"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/go-sockaddr/template"
 	"github.com/mitchellh/cli"
@@ -12,13 +12,20 @@ type EvalCommand struct {
 	Ui cli.Ui
 }
 
-func (c *EvalCommand) Help() string {
-	helpText := `
-Usage: sockaddr eval [template ...]
+// Description is the long-form command help.
+func (c *EvalCommand) Description() string {
+	return `Parse the sockaddr template and evaluates the output.`
+}
 
-  Parse the sockaddr template and evaluates the output.
-`
-	return strings.TrimSpace(helpText)
+// Help returns the full help output expected by `sockaddr -h cmd`
+func (c *EvalCommand) Help() string {
+	return MakeHelp(c)
+}
+
+// InitOpts is responsible for setup of this command's configuration via the
+// command line.  InitOpts() does not parse the arguments (see parseOpts()).
+func (c *EvalCommand) InitOpts() {
+	// noop, no flags to parse for this command
 }
 
 func (c *EvalCommand) Run(args []string) int {
@@ -40,6 +47,17 @@ func (c *EvalCommand) Run(args []string) int {
 	return 0
 }
 
+// Synopsis returns a terse description used when listing sub-commands.
 func (c *EvalCommand) Synopsis() string {
-	return "Evaluates a sockaddr template"
+	return `Evaluates a sockaddr template`
+}
+
+// Usage is the one-line usage description
+func (c *EvalCommand) Usage() string {
+	return `sockaddr eval [template ...]`
+}
+
+// VisitAllFlags forwards the visitor function to the FlagSet
+func (c *EvalCommand) VisitAllFlags(func(*flag.Flag)) {
+	// noop, no flags to parse for this command
 }

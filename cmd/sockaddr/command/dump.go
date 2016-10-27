@@ -33,7 +33,7 @@ func (c *DumpCommand) Description() string {
 	return `Parse address(es) and dumps various output.`
 }
 
-// Help returns the full help output expected by `cmd -h`
+// Help returns the full help output expected by `sockaddr -h cmd`
 func (c *DumpCommand) Help() string {
 	return MakeHelp(c)
 }
@@ -76,7 +76,7 @@ func (c *DumpCommand) Usage() string {
 	return `sockaddr dump [options] address [...]`
 }
 
-//VisitAllFlags forwards the visitor function to the FlagSet
+// VisitAllFlags forwards the visitor function to the FlagSet
 func (c *DumpCommand) VisitAllFlags(fn func(*flag.Flag)) {
 	c.flags.VisitAll(fn)
 }
