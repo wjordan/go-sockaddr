@@ -3,6 +3,7 @@ GOCOVERFILE?=	.cover.out
 GOCOVERHTML?=	coverage.html
 
 test:: $(GOCOVERFILE)
+	@$(MAKE) -C cmd/sockaddr test
 
 cover:: coverage_report
 
