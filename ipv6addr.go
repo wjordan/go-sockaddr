@@ -252,7 +252,7 @@ func (x IPv6Addr) ContainsNetwork(y IPv6Addr) bool {
 	{
 		xIPv6 := x.LastUsable().(IPv6Addr)
 		yIPv6 := y.LastUsable().(IPv6Addr)
-		if xIPv6.CmpAddress(yIPv6) <= 0 {
+		if xIPv6.CmpAddress(yIPv6) <= -1 {
 			return false
 		}
 	}
