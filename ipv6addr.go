@@ -238,6 +238,32 @@ func (ipv6 IPv6Addr) Contains(sa SockAddr) bool {
 	return ipv6.ContainsNetwork(ipv6b)
 }
 
+// ContainsAddress returns true if the IPv6Address is contained within the
+// receiver.
+func (ipv6 IPv6Addr) ContainsAddress(x IPv6Address) bool {
+	xAddr := IPv6Addr{
+		Address: x,
+		Mask:    ipv6HostMask,
+	}
+
+	{
+		xIPv6 := xAddr.FirstUsable().(IPv6Addr)
+		yIPv6 := ipv6.FirstUsable().(IPv6Addr)
+		if xIPv6.CmpAddress(yIPv6) >= 1 {
+			return false
+		}
+	}
+
+	{
+		xIPv6 := xAddr.LastUsable().(IPv6Addr)
+		yIPv6 := ipv6.LastUsable().(IPv6Addr)
+		if xIPv6.CmpAddress(yIPv6) <= -1 {
+			return false
+		}
+	}
+	return true
+}
+
 // ContainsNetwork returns true if the network from IPv6Addr is contained within
 // the receiver.
 func (x IPv6Addr) ContainsNetwork(y IPv6Addr) bool {
