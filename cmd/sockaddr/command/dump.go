@@ -14,18 +14,18 @@ import (
 type DumpCommand struct {
 	Ui cli.Ui
 
+	// attrNames is a list of attribute names to include in the output
+	attrNames []string
+
+	// flags is a list of options belonging to this command
+	flags *flag.FlagSet
+
 	// machineMode changes the output format to be machine friendly
 	// (i.e. tab-separated values).
 	machineMode bool
 
 	// valueOnly changes the output format to include only values
 	valueOnly bool
-
-	// list of attribute names to include in the output
-	attrNames []string
-
-	// list of options belonging to this command
-	flags *flag.FlagSet
 }
 
 // Description is the long-form command help.
@@ -47,10 +47,10 @@ func (c *DumpCommand) InitOpts() {
 	c.flags.Var((*MultiArg)(&c.attrNames), "o", "Name of an attribute to pass through")
 }
 
-// Run executes the command
+// Run executes this command.
 func (c *DumpCommand) Run(args []string) int {
 	if len(args) == 0 {
-		c.Ui.Error(fmt.Sprintf("%s", c.Help()))
+		c.Ui.Error(c.Help())
 		return 1
 	}
 

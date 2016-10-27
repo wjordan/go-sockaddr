@@ -28,9 +28,10 @@ func (c *EvalCommand) InitOpts() {
 	// noop, no flags to parse for this command
 }
 
+// Run executes this command.
 func (c *EvalCommand) Run(args []string) int {
 	if len(args) == 0 {
-		c.Ui.Error(fmt.Sprintf("%s", c.Help()))
+		c.Ui.Error(c.Help())
 		return 1
 	}
 
