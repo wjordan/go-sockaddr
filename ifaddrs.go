@@ -1,9 +1,12 @@
 package sockaddr
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/errwrap"
 )
@@ -47,6 +50,24 @@ func GetIfSockAddrs() ([]IfAddrs, error) {
 	}
 
 	return ifAddrs, nil
+}
+
+// GetDefaultInterface returns the interface that has the default route.
+func GetDefaultInterface() (IfAddrs, error) {
+	defaultIfName, err := getDefaultIfName()
+	if err != nil {
+		return IfAddrs{}, err
+	}
+
+	ifAddrs, err := GetIfSockAddrs()
+	for _, ifAddr := range ifAddrs {
+		if ifAddr.Name == defaultIfName {
+			return ifAddr, nil
+		}
+	}
+
+	panic("interface vanished")
+	return IfAddrs{}, errors.New("No default interface found")
 }
 
 // IfByName returns a list of matched and non-matched IfAddrs, or an error if
@@ -249,3 +270,23 @@ func IfReturnAttrNames(inputIfAddrs []IfAddrs) []string {
 
 	return ifNames
 }
+
+// parseBSDDefaultIfName is a *BSD-specific parsing function for route(8)'s
+// output.
+func parseBSDDefaultIfName(routeOut []byte) (string, error) {
+	lines := strings.Split(string(routeOut), "\n")
+	for _, line := range lines {
+		kvs := strings.SplitN(line, ":", 2)
+		if len(kvs) != 2 {
+			continue
+		}
+
+		if string(bytes.TrimSpace([]byte(kvs[0]))) == "interface" {
+			ifName := string(bytes.TrimSpace([]byte(kvs[1])))
+			return ifName, nil
+		}
+	}
+
+	return "", errors.New("No default interface found")
+}
+

@@ -65,3 +65,12 @@ func TestGetIfAddrs(t *testing.T) {
 		t.Fatalf("Had an IPv6 w/o an expected IPv6 loopback addresses")
 	}
 }
+
+// TestGetDefaultIfName tests to make sure a default interface name is always
+// returned from getDefaultIfName().
+func TestGetDefaultInterface(t *testing.T) {
+	ifAddr, err := sockaddr.GetDefaultInterface()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
