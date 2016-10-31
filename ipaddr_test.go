@@ -1,6 +1,7 @@
 package sockaddr_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/go-sockaddr"
@@ -75,38 +76,41 @@ func TestSockAddr_IPAddr_CmpAddress(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		saA, err := sockaddr.NewSockAddr(test.a)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create a SockAddr from %+q: %v", idx, test.a, err)
-		}
-		saB, err := sockaddr.NewSockAddr(test.b)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an SockAddr from %+q: %v", idx, test.b, err)
-		}
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			saA, err := sockaddr.NewSockAddr(test.a)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create a SockAddr from %+q: %v", idx, test.a, err)
+			}
+			saB, err := sockaddr.NewSockAddr(test.b)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create an SockAddr from %+q: %v", idx, test.b, err)
+			}
 
-		ipA, ok := saA.(sockaddr.IPAddr)
-		if !ok {
-			t.Fatalf("[%d] Unable to convert SockAddr %+q to an IPAddr", idx, test.a)
-		}
+			ipA, ok := saA.(sockaddr.IPAddr)
+			if !ok {
+				t.Fatalf("[%d] Unable to convert SockAddr %+q to an IPAddr", idx, test.a)
+			}
 
-		if x := ipA.CmpAddress(saB); x != test.cmp {
-			t.Errorf("[%d] IPAddr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipA, saB, test.cmp, x)
-		}
+			if x := ipA.CmpAddress(saB); x != test.cmp {
+				t.Errorf("[%d] IPAddr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipA, saB, test.cmp, x)
+			}
 
-		ipB, ok := saB.(sockaddr.IPAddr)
-		if !ok {
-			continue
-		}
-		if x := ipA.CmpAddress(ipB); x != test.cmp {
-			t.Errorf("[%d] IPAddr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipA, ipB, test.cmp, x)
-		}
-		if x := ipB.CmpAddress(ipA); x*-1 != test.cmp {
-			t.Errorf("[%d] IPAddr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipB, ipA, test.cmp, x)
-		}
+			ipB, ok := saB.(sockaddr.IPAddr)
+			if !ok {
+				// Return success for comparing non-IPAddr types
+				return
+			}
+			if x := ipA.CmpAddress(ipB); x != test.cmp {
+				t.Errorf("[%d] IPAddr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipA, ipB, test.cmp, x)
+			}
+			if x := ipB.CmpAddress(ipA); x*-1 != test.cmp {
+				t.Errorf("[%d] IPAddr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipB, ipA, test.cmp, x)
+			}
 
-		if x := ipB.CmpAddress(saA); x*-1 != test.cmp {
-			t.Errorf("[%d] IPAddr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipB, saA, test.cmp, x)
-		}
+			if x := ipB.CmpAddress(saA); x*-1 != test.cmp {
+				t.Errorf("[%d] IPAddr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipB, saA, test.cmp, x)
+			}
+		})
 	}
 }
 
@@ -179,37 +183,40 @@ func TestSockAddr_IPAddr_CmpPort(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		saA, err := sockaddr.NewSockAddr(test.a)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create a SockAddr from %+q: %v", idx, test.a, err)
-		}
-		saB, err := sockaddr.NewSockAddr(test.b)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an SockAddr from %+q: %v", idx, test.b, err)
-		}
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			saA, err := sockaddr.NewSockAddr(test.a)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create a SockAddr from %+q: %v", idx, test.a, err)
+			}
+			saB, err := sockaddr.NewSockAddr(test.b)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create an SockAddr from %+q: %v", idx, test.b, err)
+			}
 
-		ipA, ok := saA.(sockaddr.IPAddr)
-		if !ok {
-			t.Fatalf("[%d] Unable to convert SockAddr %+q to an IPAddr", idx, test.a)
-		}
+			ipA, ok := saA.(sockaddr.IPAddr)
+			if !ok {
+				t.Fatalf("[%d] Unable to convert SockAddr %+q to an IPAddr", idx, test.a)
+			}
 
-		if x := ipA.CmpPort(saB); x != test.cmp {
-			t.Errorf("[%d] IPAddr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipA, saB, test.cmp, x)
-		}
+			if x := ipA.CmpPort(saB); x != test.cmp {
+				t.Errorf("[%d] IPAddr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipA, saB, test.cmp, x)
+			}
 
-		ipB, ok := saB.(sockaddr.IPAddr)
-		if !ok {
-			continue
-		}
-		if x := ipA.CmpPort(ipB); x != test.cmp {
-			t.Errorf("[%d] IPAddr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipA, ipB, test.cmp, x)
-		}
-		if x := ipB.CmpPort(ipA); x*-1 != test.cmp {
-			t.Errorf("[%d] IPAddr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipB, ipA, test.cmp, x)
-		}
+			ipB, ok := saB.(sockaddr.IPAddr)
+			if !ok {
+				// Return success for comparing non-IPAddr types
+				return
+			}
+			if x := ipA.CmpPort(ipB); x != test.cmp {
+				t.Errorf("[%d] IPAddr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipA, ipB, test.cmp, x)
+			}
+			if x := ipB.CmpPort(ipA); x*-1 != test.cmp {
+				t.Errorf("[%d] IPAddr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipB, ipA, test.cmp, x)
+			}
 
-		if x := ipB.CmpPort(saA); x*-1 != test.cmp {
-			t.Errorf("[%d] IPAddr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipB, saA, test.cmp, x)
-		}
+			if x := ipB.CmpPort(saA); x*-1 != test.cmp {
+				t.Errorf("[%d] IPAddr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipB, saA, test.cmp, x)
+			}
+		})
 	}
 }

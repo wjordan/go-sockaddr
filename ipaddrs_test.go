@@ -1,6 +1,7 @@
 package sockaddr_test
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 
@@ -58,55 +59,57 @@ func makeTestIPAddrs(t *testing.T) GoodTestIPAddrTests {
 		},
 	}
 	gfs := make(GoodTestIPAddrTests, 0, len(goodTestInputs))
-	for _, gfi := range goodTestInputs {
-		gf := new(GoodTestIPAddrTest)
-		gf.sockAddrs = make(sockaddr.SockAddrs, 0, len(gfi.sockAddrs))
-		for _, n := range gfi.sockAddrs {
-			sa, err := sockaddr.NewSockAddr(n)
-			if err != nil {
-				t.Fatalf("Expected valid network")
+	for idx, gfi := range goodTestInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			gf := new(GoodTestIPAddrTest)
+			gf.sockAddrs = make(sockaddr.SockAddrs, 0, len(gfi.sockAddrs))
+			for _, n := range gfi.sockAddrs {
+				sa, err := sockaddr.NewSockAddr(n)
+				if err != nil {
+					t.Fatalf("Expected valid network")
+				}
+				gf.sockAddrs = append(gf.sockAddrs, sa)
 			}
-			gf.sockAddrs = append(gf.sockAddrs, sa)
-		}
 
-		gf.sortedBySpecificMasklen = make(sockaddr.SockAddrs, 0, len(gfi.sortedBySpecificMasklen))
-		for _, n := range gfi.sortedBySpecificMasklen {
-			na, err := sockaddr.NewSockAddr(n)
-			if err != nil {
-				t.Fatalf("Expected valid network")
+			gf.sortedBySpecificMasklen = make(sockaddr.SockAddrs, 0, len(gfi.sortedBySpecificMasklen))
+			for _, n := range gfi.sortedBySpecificMasklen {
+				na, err := sockaddr.NewSockAddr(n)
+				if err != nil {
+					t.Fatalf("Expected valid network")
+				}
+				gf.sortedBySpecificMasklen = append(gf.sortedBySpecificMasklen, na)
 			}
-			gf.sortedBySpecificMasklen = append(gf.sortedBySpecificMasklen, na)
-		}
 
-		if len(gf.sockAddrs) != len(gf.sortedBySpecificMasklen) {
-			t.Fatalf("Expected same number of sortedBySpecificMasklen networks")
-		}
-
-		gf.sortedByBroadMasklen = make(sockaddr.SockAddrs, 0, len(gfi.sortedByBroadMasklen))
-		for _, n := range gfi.sortedByBroadMasklen {
-			na, err := sockaddr.NewSockAddr(n)
-			if err != nil {
-				t.Fatalf("Expected valid network")
+			if len(gf.sockAddrs) != len(gf.sortedBySpecificMasklen) {
+				t.Fatalf("Expected same number of sortedBySpecificMasklen networks")
 			}
-			gf.sortedByBroadMasklen = append(gf.sortedByBroadMasklen, na)
-		}
 
-		if len(gf.sockAddrs) != len(gf.sortedByBroadMasklen) {
-			t.Fatalf("Expected same number of sortedByBroadMasklen networks")
-		}
-
-		gf.sortedByNetwork = make(sockaddr.SockAddrs, 0, len(gfi.sortedByNetwork))
-		for _, n := range gfi.sortedByNetwork {
-			na, err := sockaddr.NewSockAddr(n)
-			if err != nil {
-				t.Fatalf("Expected valid network")
+			gf.sortedByBroadMasklen = make(sockaddr.SockAddrs, 0, len(gfi.sortedByBroadMasklen))
+			for _, n := range gfi.sortedByBroadMasklen {
+				na, err := sockaddr.NewSockAddr(n)
+				if err != nil {
+					t.Fatalf("Expected valid network")
+				}
+				gf.sortedByBroadMasklen = append(gf.sortedByBroadMasklen, na)
 			}
-			gf.sortedByNetwork = append(gf.sortedByNetwork, na)
-		}
 
-		if len(gf.sockAddrs) != len(gf.sortedByNetwork) {
-			t.Fatalf("Expected same number of sortedByNetwork networks")
-		}
+			if len(gf.sockAddrs) != len(gf.sortedByBroadMasklen) {
+				t.Fatalf("Expected same number of sortedByBroadMasklen networks")
+			}
+
+			gf.sortedByNetwork = make(sockaddr.SockAddrs, 0, len(gfi.sortedByNetwork))
+			for _, n := range gfi.sortedByNetwork {
+				na, err := sockaddr.NewSockAddr(n)
+				if err != nil {
+					t.Fatalf("Expected valid network")
+				}
+				gf.sortedByNetwork = append(gf.sortedByNetwork, na)
+			}
+
+			if len(gf.sockAddrs) != len(gf.sortedByNetwork) {
+				t.Fatalf("Expected same number of sortedByNetwork networks")
+			}
+		})
 	}
 
 	return gfs
@@ -133,43 +136,45 @@ func TestSockAddr_IPAddrs_BySpecificMaskLen(t *testing.T) {
 		},
 	}
 
-	for _, test := range testInputs {
-		inputAddrs := convertToSockAddrs(t, test.inputAddrs)
-		sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
-		sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
-		filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIPv4)
-		ipv4Addrs := make([]sockaddr.IPv4Addr, 0, len(filteredAddrs))
-		for _, x := range filteredAddrs {
-			switch v := x.(type) {
-			case sockaddr.IPv4Addr:
-				ipv4Addrs = append(ipv4Addrs, v)
-			default:
-				t.Fatalf("invalid type")
+	for idx, test := range testInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
+			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
+			sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
+			filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIPv4)
+			ipv4Addrs := make([]sockaddr.IPv4Addr, 0, len(filteredAddrs))
+			for _, x := range filteredAddrs {
+				switch v := x.(type) {
+				case sockaddr.IPv4Addr:
+					ipv4Addrs = append(ipv4Addrs, v)
+				default:
+					t.Fatalf("invalid type")
+				}
 			}
-		}
 
-		ipAddrs := make([]sockaddr.IPAddr, 0, len(filteredAddrs))
-		for _, x := range filteredAddrs {
-			ipAddr, ok := x.(sockaddr.IPAddr)
-			if !ok {
-				t.Fatalf("Unable to typecast to IPAddr")
+			ipAddrs := make([]sockaddr.IPAddr, 0, len(filteredAddrs))
+			for _, x := range filteredAddrs {
+				ipAddr, ok := x.(sockaddr.IPAddr)
+				if !ok {
+					t.Fatalf("Unable to typecast to IPAddr")
+				}
+				ipAddrs = append(ipAddrs, ipAddr)
 			}
-			ipAddrs = append(ipAddrs, ipAddr)
-		}
-		sort.Sort(sockaddr.SortIPAddrsBySpecificMaskLen{ipAddrs})
+			sort.Sort(sockaddr.SortIPAddrsBySpecificMaskLen{ipAddrs})
 
-		var lastLen int = 32
-		for i, netaddr := range ipAddrs {
-			maskLen := netaddr.Maskbits()
-			if lastLen < maskLen {
-				t.Fatalf("Sort by specific mask length failed")
-			}
-			lastLen = maskLen
+			var lastLen int = 32
+			for i, netaddr := range ipAddrs {
+				maskLen := netaddr.Maskbits()
+				if lastLen < maskLen {
+					t.Fatalf("Sort by specific mask length failed")
+				}
+				lastLen = maskLen
 
-			if sortedAddrs[i] != netaddr {
-				t.Errorf("Expected %s, received %s in iteration %d", sortedAddrs[i], netaddr, i)
+				if sortedAddrs[i] != netaddr {
+					t.Errorf("Expected %s, received %s in iteration %d", sortedAddrs[i], netaddr, i)
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -194,33 +199,35 @@ func TestSockAddr_IPAddrs_ByBroadMaskLen(t *testing.T) {
 		},
 	}
 
-	for _, test := range testInputs {
-		inputAddrs := convertToSockAddrs(t, test.inputAddrs)
-		sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
-		sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
-		filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIP)
-		ipAddrs := make([]sockaddr.IPAddr, 0, len(filteredAddrs))
-		for _, x := range filteredAddrs {
-			ipAddr, ok := x.(sockaddr.IPAddr)
-			if !ok {
-				t.Fatalf("Unable to typecast to IPAddr")
+	for idx, test := range testInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
+			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
+			sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
+			filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIP)
+			ipAddrs := make([]sockaddr.IPAddr, 0, len(filteredAddrs))
+			for _, x := range filteredAddrs {
+				ipAddr, ok := x.(sockaddr.IPAddr)
+				if !ok {
+					t.Fatalf("Unable to typecast to IPAddr")
+				}
+				ipAddrs = append(ipAddrs, ipAddr)
 			}
-			ipAddrs = append(ipAddrs, ipAddr)
-		}
-		sort.Sort(sockaddr.SortIPAddrsByBroadMaskLen{ipAddrs})
+			sort.Sort(sockaddr.SortIPAddrsByBroadMaskLen{ipAddrs})
 
-		var lastLen int
-		for i, netaddr := range ipAddrs {
-			maskLen := netaddr.Maskbits()
-			if lastLen > maskLen {
-				t.Fatalf("Sort by specific mask length failed")
-			}
-			lastLen = maskLen
+			var lastLen int
+			for i, netaddr := range ipAddrs {
+				maskLen := netaddr.Maskbits()
+				if lastLen > maskLen {
+					t.Fatalf("Sort by specific mask length failed")
+				}
+				lastLen = maskLen
 
-			if sortedAddrs[i] != netaddr {
-				t.Errorf("Expected %s, received %s in iteration %d", sortedAddrs[i], netaddr, i)
+				if sortedAddrs[i] != netaddr {
+					t.Errorf("Expected %s, received %s in iteration %d", sortedAddrs[i], netaddr, i)
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -246,24 +253,26 @@ func TestSockAddr_IPAddrs_IPAddrsByNetwork(t *testing.T) {
 		},
 	}
 
-	for _, test := range testInputs {
-		inputAddrs := convertToSockAddrs(t, test.inputAddrs)
-		sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
-		sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
-		ipaddrs := sockaddrs.FilterByTypeIPv4Addr()
-		sort.Sort(sockaddr.SortIPAddrsByNetwork{ipaddrs})
+	for idx, test := range testInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
+			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
+			sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
+			ipaddrs := sockaddrs.FilterByTypeIPv4Addr()
+			sort.Sort(sockaddr.SortIPAddrsByNetwork{ipaddrs})
 
-		var lastIpUint sockaddr.IPv4Address
-		for i, netaddr := range ipaddrs {
-			if lastIpUint > netaddr.Address {
-				t.Fatalf("Sort by network failed")
-			}
-			lastIpUint = netaddr.Address
+			var lastIpUint sockaddr.IPv4Address
+			for i, netaddr := range ipaddrs {
+				if lastIpUint > netaddr.Address {
+					t.Fatalf("Sort by network failed")
+				}
+				lastIpUint = netaddr.Address
 
-			if !netaddr.Equal(sortedAddrs[i]) {
-				t.Errorf("[%d] Sort equality failed: expected %s, received %s", i, sortedAddrs[i], netaddr)
+				if !netaddr.Equal(sortedAddrs[i]) {
+					t.Errorf("[%d] Sort equality failed: expected %s, received %s", i, sortedAddrs[i], netaddr)
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -295,40 +304,42 @@ func TestSockAddr_IPAddrs_IPAddrsByNetworkSize(t *testing.T) {
 		},
 	}
 
-	for _, test := range testInputs {
-		inputAddrs := convertToSockAddrs(t, test.inputAddrs)
-		sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
+	for idx, test := range testInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
+			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 
-		sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
-		filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIP)
-		ipAddrs := make([]sockaddr.IPAddr, 0, len(filteredAddrs))
-		for _, x := range filteredAddrs {
-			ipAddr, ok := x.(sockaddr.IPAddr)
-			if !ok {
-				t.Fatalf("Unable to typecast to IPAddr")
+			sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
+			filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIP)
+			ipAddrs := make([]sockaddr.IPAddr, 0, len(filteredAddrs))
+			for _, x := range filteredAddrs {
+				ipAddr, ok := x.(sockaddr.IPAddr)
+				if !ok {
+					t.Fatalf("Unable to typecast to IPAddr")
+				}
+				ipAddrs = append(ipAddrs, ipAddr)
 			}
-			ipAddrs = append(ipAddrs, ipAddr)
-		}
-		sort.Sort(sockaddr.SortIPAddrsByNetworkSize{ipAddrs})
+			sort.Sort(sockaddr.SortIPAddrsByNetworkSize{ipAddrs})
 
-		// var prevAddr sockaddr.IPAddr
-		for i, ipAddr := range ipAddrs {
-			// if i == 0 {
-			// 	prevAddr = ipAddr
-			// 	continue
-			// }
+			// var prevAddr sockaddr.IPAddr
+			for i, ipAddr := range ipAddrs {
+				// if i == 0 {
+				// 	prevAddr = ipAddr
+				// 	continue
+				// }
 
-			// if prevAddr.Cmp(ipAddr) > 0 {
-			// 	t.Logf("[%d] Prev:\t%v", i, prevAddr)
-			// 	t.Logf("[%d] ipAddr:\t%v", i, ipAddr)
-			// 	t.Fatalf("Sort by network failed")
-			// }
-			// prevAddr = ipAddr
+				// if prevAddr.Cmp(ipAddr) > 0 {
+				// 	t.Logf("[%d] Prev:\t%v", i, prevAddr)
+				// 	t.Logf("[%d] ipAddr:\t%v", i, ipAddr)
+				// 	t.Fatalf("Sort by network failed")
+				// }
+				// prevAddr = ipAddr
 
-			if !ipAddr.Equal(sortedAddrs[i]) {
-				t.Errorf("[%d] Sort equality failed: expected %s, received %s", i, sortedAddrs[i], ipAddr)
+				if !ipAddr.Equal(sortedAddrs[i]) {
+					t.Errorf("[%d] Sort equality failed: expected %s, received %s", i, sortedAddrs[i], ipAddr)
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -427,18 +438,20 @@ func TestSockAddr_IPAddrs_IPAddrsByCmp(t *testing.T) {
 		},
 	}
 
-	for _, test := range testInputs {
-		shuffleStrings(test.inputAddrs)
+	for idx, test := range testInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			shuffleStrings(test.inputAddrs)
 
-		inputAddrs := convertToSockAddrs(t, test.inputAddrs)
-		sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
+			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
+			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 
-		sockaddr.OrderedBy(sockaddr.AscType, sockaddr.AscPrivate, sockaddr.AscAddress, sockaddr.AscPort).Sort(inputAddrs)
+			sockaddr.OrderedBy(sockaddr.AscType, sockaddr.AscPrivate, sockaddr.AscAddress, sockaddr.AscPort).Sort(inputAddrs)
 
-		for i, sockAddr := range inputAddrs {
-			if !sockAddr.Equal(sortedAddrs[i]) {
-				t.Errorf("[%d] Sort equality failed: expected %s, received %s", i, sortedAddrs[i], sockAddr)
+			for i, sockAddr := range inputAddrs {
+				if !sockAddr.Equal(sortedAddrs[i]) {
+					t.Errorf("[%d] Sort equality failed: expected %s, received %s", i, sortedAddrs[i], sockAddr)
+				}
 			}
-		}
+		})
 	}
 }

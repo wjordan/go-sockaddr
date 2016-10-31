@@ -1,6 +1,7 @@
 package sockaddr_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/go-sockaddr"
@@ -532,132 +533,135 @@ func TestSockAddr_IPv4Addr(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv4, err := sockaddr.NewIPv4Addr(test.z00_input)
-		if test.z99_pass && err != nil {
-			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.z00_input, err)
-		} else if !test.z99_pass && err == nil {
-			t.Fatalf("[%d] Expected test to fail for %+q", idx, test.z00_input)
-		} else if !test.z99_pass && err != nil {
-			continue
-		}
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv4, err := sockaddr.NewIPv4Addr(test.z00_input)
+			if test.z99_pass && err != nil {
+				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.z00_input, err)
+			} else if !test.z99_pass && err == nil {
+				t.Fatalf("[%d] Expected test to fail for %+q", idx, test.z00_input)
+			} else if !test.z99_pass && err != nil {
+				// Expected failure, return successfully
+				return
+			}
 
-		if type_ := ipv4.Type(); type_ != sockaddr.TypeIPv4 {
-			t.Errorf("[%d] Expected new IPv4Addr to be Type %d, received %d (int)", idx, sockaddr.TypeIPv4, type_)
-		}
+			if type_ := ipv4.Type(); type_ != sockaddr.TypeIPv4 {
+				t.Errorf("[%d] Expected new IPv4Addr to be Type %d, received %d (int)", idx, sockaddr.TypeIPv4, type_)
+			}
 
-		h, ok := ipv4.Host().(sockaddr.IPv4Addr)
-		if !ok {
-			t.Errorf("[%d] Unable to type assert +%q's Host to IPv4Addr", idx, test.z00_input)
-		}
+			h, ok := ipv4.Host().(sockaddr.IPv4Addr)
+			if !ok {
+				t.Errorf("[%d] Unable to type assert +%q's Host to IPv4Addr", idx, test.z00_input)
+			}
 
-		if h.Address != ipv4.Address || h.Mask != sockaddr.IPv4HostMask || h.Port != ipv4.Port {
-			t.Errorf("[%d] Expected %+q's Host() to return identical IPv4Addr except mask, received %+q", idx, test.z00_input, h.String())
-		}
+			if h.Address != ipv4.Address || h.Mask != sockaddr.IPv4HostMask || h.Port != ipv4.Port {
+				t.Errorf("[%d] Expected %+q's Host() to return identical IPv4Addr except mask, received %+q", idx, test.z00_input, h.String())
+			}
 
-		if c := cap(*ipv4.NetIP()); c != sockaddr.IPv4len {
-			t.Errorf("[%d] Expected new IPv4Addr's Address capacity to be %d bytes, received %d", idx, sockaddr.IPv4len, c)
-		}
+			if c := cap(*ipv4.NetIP()); c != sockaddr.IPv4len {
+				t.Errorf("[%d] Expected new IPv4Addr's Address capacity to be %d bytes, received %d", idx, sockaddr.IPv4len, c)
+			}
 
-		if l := len(*ipv4.NetIP()); l != sockaddr.IPv4len {
-			t.Errorf("[%d] Expected new IPv4Addr's Address length to be %d bytes, received %d", idx, sockaddr.IPv4len, l)
-		}
+			if l := len(*ipv4.NetIP()); l != sockaddr.IPv4len {
+				t.Errorf("[%d] Expected new IPv4Addr's Address length to be %d bytes, received %d", idx, sockaddr.IPv4len, l)
+			}
 
-		if s := ipv4.AddressHexString(); s != test.z01_addrHexStr {
-			t.Errorf("[%d] Expected address %+q's hexadecimal representation to be %+q, received %+q", idx, test.z00_input, test.z01_addrHexStr, s)
-		}
+			if s := ipv4.AddressHexString(); s != test.z01_addrHexStr {
+				t.Errorf("[%d] Expected address %+q's hexadecimal representation to be %+q, received %+q", idx, test.z00_input, test.z01_addrHexStr, s)
+			}
 
-		if s := ipv4.AddressBinString(); s != test.z02_addrBinStr {
-			t.Errorf("[%d] Expected address %+q's binary representation to be %+q, received %+q", idx, test.z00_input, test.z02_addrBinStr, s)
-		}
+			if s := ipv4.AddressBinString(); s != test.z02_addrBinStr {
+				t.Errorf("[%d] Expected address %+q's binary representation to be %+q, received %+q", idx, test.z00_input, test.z02_addrBinStr, s)
+			}
 
-		if s := ipv4.String(); s != test.z03_addrStr {
-			t.Errorf("[%d] Expected %+q's String to be %+q, received %+q", idx, test.z00_input, test.z03_addrStr, s)
-		}
+			if s := ipv4.String(); s != test.z03_addrStr {
+				t.Errorf("[%d] Expected %+q's String to be %+q, received %+q", idx, test.z00_input, test.z03_addrStr, s)
+			}
 
-		if s := ipv4.NetIP().String(); s != test.z04_NetIPStringOut {
-			t.Errorf("[%d] Expected %+q's address to be %+q, received %+q", idx, test.z00_input, test.z04_NetIPStringOut, s)
-		}
+			if s := ipv4.NetIP().String(); s != test.z04_NetIPStringOut {
+				t.Errorf("[%d] Expected %+q's address to be %+q, received %+q", idx, test.z00_input, test.z04_NetIPStringOut, s)
+			}
 
-		if a := ipv4.Address; a != test.z05_addrInt {
-			t.Errorf("[%d] Expected %+q's Address to return %d, received %d", idx, test.z00_input, test.z05_addrInt, a)
-		}
+			if a := ipv4.Address; a != test.z05_addrInt {
+				t.Errorf("[%d] Expected %+q's Address to return %d, received %d", idx, test.z00_input, test.z05_addrInt, a)
+			}
 
-		if n, ok := ipv4.Network().(sockaddr.IPv4Addr); !ok || n.Address != sockaddr.IPv4Address(test.z06_netInt) {
-			t.Errorf("[%d] Expected %+q's Network to return %d, received %d", idx, test.z00_input, test.z06_netInt, n.Address)
-		}
+			if n, ok := ipv4.Network().(sockaddr.IPv4Addr); !ok || n.Address != sockaddr.IPv4Address(test.z06_netInt) {
+				t.Errorf("[%d] Expected %+q's Network to return %d, received %d", idx, test.z00_input, test.z06_netInt, n.Address)
+			}
 
-		if m := ipv4.NetIPMask().String(); m != test.z07_ipMaskStr {
-			t.Errorf("[%d] Expected %+q's mask to be %+q, received %+q", idx, test.z00_input, test.z07_ipMaskStr, m)
-		}
+			if m := ipv4.NetIPMask().String(); m != test.z07_ipMaskStr {
+				t.Errorf("[%d] Expected %+q's mask to be %+q, received %+q", idx, test.z00_input, test.z07_ipMaskStr, m)
+			}
 
-		if m := ipv4.Maskbits(); m != test.z08_maskbits {
-			t.Errorf("[%d] Expected %+q's port to be %d, received %d", idx, test.z00_input, test.z08_maskbits, m)
-		}
+			if m := ipv4.Maskbits(); m != test.z08_maskbits {
+				t.Errorf("[%d] Expected %+q's port to be %d, received %d", idx, test.z00_input, test.z08_maskbits, m)
+			}
 
-		if n := ipv4.NetIPNet().String(); n != test.z09_NetIPNetStringOut {
-			t.Errorf("[%d] Expected %+q's network to be %+q, received %+q", idx, test.z00_input, test.z09_NetIPNetStringOut, n)
-		}
+			if n := ipv4.NetIPNet().String(); n != test.z09_NetIPNetStringOut {
+				t.Errorf("[%d] Expected %+q's network to be %+q, received %+q", idx, test.z00_input, test.z09_NetIPNetStringOut, n)
+			}
 
-		if m := ipv4.Mask; m != test.z10_maskInt {
-			t.Errorf("[%d] Expected %+q's Mask to return %d, received %d", idx, test.z00_input, test.z10_maskInt, m)
-		}
+			if m := ipv4.Mask; m != test.z10_maskInt {
+				t.Errorf("[%d] Expected %+q's Mask to return %d, received %d", idx, test.z00_input, test.z10_maskInt, m)
+			}
 
-		// Network()'s mask must match the IPv4Addr's Mask
-		if n, ok := ipv4.Network().(sockaddr.IPv4Addr); !ok || n.Mask != test.z10_maskInt {
-			t.Errorf("[%d] Expected %+q's Network's Mask to return %d, received %d", idx, test.z00_input, test.z10_maskInt, n.Mask)
-		}
+			// Network()'s mask must match the IPv4Addr's Mask
+			if n, ok := ipv4.Network().(sockaddr.IPv4Addr); !ok || n.Mask != test.z10_maskInt {
+				t.Errorf("[%d] Expected %+q's Network's Mask to return %d, received %d", idx, test.z00_input, test.z10_maskInt, n.Mask)
+			}
 
-		if n := ipv4.Network().String(); n != test.z11_networkStr {
-			t.Errorf("[%d] Expected %+q's Network() to be %+q, received %+q", idx, test.z00_input, test.z11_networkStr, n)
-		}
+			if n := ipv4.Network().String(); n != test.z11_networkStr {
+				t.Errorf("[%d] Expected %+q's Network() to be %+q, received %+q", idx, test.z00_input, test.z11_networkStr, n)
+			}
 
-		if o := ipv4.Octets(); len(o) != 4 || o[0] != test.z12_octets[0] || o[1] != test.z12_octets[1] || o[2] != test.z12_octets[2] || o[3] != test.z12_octets[3] {
-			t.Errorf("[%d] Expected %+q's Octets to be %+v, received %+v", idx, test.z00_input, test.z12_octets, o)
-		}
+			if o := ipv4.Octets(); len(o) != 4 || o[0] != test.z12_octets[0] || o[1] != test.z12_octets[1] || o[2] != test.z12_octets[2] || o[3] != test.z12_octets[3] {
+				t.Errorf("[%d] Expected %+q's Octets to be %+v, received %+v", idx, test.z00_input, test.z12_octets, o)
+			}
 
-		if f := ipv4.FirstUsable().String(); f != test.z13_firstUsable {
-			t.Errorf("[%d] Expected %+q's FirstUsable() to be %+q, received %+q", idx, test.z00_input, test.z13_firstUsable, f)
-		}
+			if f := ipv4.FirstUsable().String(); f != test.z13_firstUsable {
+				t.Errorf("[%d] Expected %+q's FirstUsable() to be %+q, received %+q", idx, test.z00_input, test.z13_firstUsable, f)
+			}
 
-		if l := ipv4.LastUsable().String(); l != test.z14_lastUsable {
-			t.Errorf("[%d] Expected %+q's LastUsable() to be %+q, received %+q", idx, test.z00_input, test.z14_lastUsable, l)
-		}
+			if l := ipv4.LastUsable().String(); l != test.z14_lastUsable {
+				t.Errorf("[%d] Expected %+q's LastUsable() to be %+q, received %+q", idx, test.z00_input, test.z14_lastUsable, l)
+			}
 
-		if b := ipv4.Broadcast().String(); b != test.z15_broadcast {
-			t.Errorf("[%d] Expected %+q's broadcast to be %+q, received %+q", idx, test.z00_input, test.z15_broadcast, b)
-		}
+			if b := ipv4.Broadcast().String(); b != test.z15_broadcast {
+				t.Errorf("[%d] Expected %+q's broadcast to be %+q, received %+q", idx, test.z00_input, test.z15_broadcast, b)
+			}
 
-		if p := ipv4.IPPort(); sockaddr.IPPort(p) != test.z16_portInt || sockaddr.IPPort(p) != test.z16_portInt {
-			t.Errorf("[%d] Expected %+q's port to be %d, received %d", idx, test.z00_input, test.z16_portInt, p)
-		}
+			if p := ipv4.IPPort(); sockaddr.IPPort(p) != test.z16_portInt || sockaddr.IPPort(p) != test.z16_portInt {
+				t.Errorf("[%d] Expected %+q's port to be %d, received %d", idx, test.z00_input, test.z16_portInt, p)
+			}
 
-		if dialNet, dialArgs := ipv4.DialPacketArgs(); dialNet != test.z17_DialPacketArgs[0] || dialArgs != test.z17_DialPacketArgs[1] {
-			t.Errorf("[%d] Expected %+q's DialPacketArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z17_DialPacketArgs, dialNet, dialArgs)
-		}
+			if dialNet, dialArgs := ipv4.DialPacketArgs(); dialNet != test.z17_DialPacketArgs[0] || dialArgs != test.z17_DialPacketArgs[1] {
+				t.Errorf("[%d] Expected %+q's DialPacketArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z17_DialPacketArgs, dialNet, dialArgs)
+			}
 
-		if dialNet, dialArgs := ipv4.DialStreamArgs(); dialNet != test.z18_DialStreamArgs[0] || dialArgs != test.z18_DialStreamArgs[1] {
-			t.Errorf("[%d] Expected %+q's DialStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z18_DialStreamArgs, dialNet, dialArgs)
-		}
+			if dialNet, dialArgs := ipv4.DialStreamArgs(); dialNet != test.z18_DialStreamArgs[0] || dialArgs != test.z18_DialStreamArgs[1] {
+				t.Errorf("[%d] Expected %+q's DialStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z18_DialStreamArgs, dialNet, dialArgs)
+			}
 
-		if listenNet, listenArgs := ipv4.ListenPacketArgs(); listenNet != test.z19_ListenPacketArgs[0] || listenArgs != test.z19_ListenPacketArgs[1] {
-			t.Errorf("[%d] Expected %+q's ListenPacketArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z19_ListenPacketArgs, listenNet, listenArgs)
-		}
+			if listenNet, listenArgs := ipv4.ListenPacketArgs(); listenNet != test.z19_ListenPacketArgs[0] || listenArgs != test.z19_ListenPacketArgs[1] {
+				t.Errorf("[%d] Expected %+q's ListenPacketArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z19_ListenPacketArgs, listenNet, listenArgs)
+			}
 
-		if listenNet, listenArgs := ipv4.ListenStreamArgs(); listenNet != test.z20_ListenStreamArgs[0] || listenArgs != test.z20_ListenStreamArgs[1] {
-			t.Errorf("[%d] Expected %+q's ListenStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z20_ListenStreamArgs, listenNet, listenArgs)
-		}
+			if listenNet, listenArgs := ipv4.ListenStreamArgs(); listenNet != test.z20_ListenStreamArgs[0] || listenArgs != test.z20_ListenStreamArgs[1] {
+				t.Errorf("[%d] Expected %+q's ListenStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z20_ListenStreamArgs, listenNet, listenArgs)
+			}
 
-		if v := sockaddr.IsRFC(1918, ipv4); v != test.z21_IsRFC1918 {
-			t.Errorf("[%d] Expected IsRFC(1918, %+q) to be %+q, received %+q", idx, test.z00_input, test.z21_IsRFC1918, v)
-		}
+			if v := sockaddr.IsRFC(1918, ipv4); v != test.z21_IsRFC1918 {
+				t.Errorf("[%d] Expected IsRFC(1918, %+q) to be %+q, received %+q", idx, test.z00_input, test.z21_IsRFC1918, v)
+			}
 
-		if v := sockaddr.IsRFC(6598, ipv4); v != test.z22_IsRFC6598 {
-			t.Errorf("[%d] Expected IsRFC(6598, %+q) to be %+q, received %+q", idx, test.z00_input, test.z22_IsRFC6598, v)
-		}
+			if v := sockaddr.IsRFC(6598, ipv4); v != test.z22_IsRFC6598 {
+				t.Errorf("[%d] Expected IsRFC(6598, %+q) to be %+q, received %+q", idx, test.z00_input, test.z22_IsRFC6598, v)
+			}
 
-		if v := sockaddr.IsRFC(6890, ipv4); v != test.z23_IsRFC6890 {
-			t.Errorf("[%d] Expected IsRFC(6890, %+q) to be %+q, received %+q", idx, test.z00_input, test.z23_IsRFC6890, v)
-		}
+			if v := sockaddr.IsRFC(6890, ipv4); v != test.z23_IsRFC6890 {
+				t.Errorf("[%d] Expected IsRFC(6890, %+q) to be %+q, received %+q", idx, test.z00_input, test.z23_IsRFC6890, v)
+			}
+		})
 	}
 }
 
@@ -695,23 +699,25 @@ func TestSockAddr_IPv4Addr_CmpAddress(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv4a, err := sockaddr.NewIPv4Addr(test.a)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.a, err)
-		}
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv4a, err := sockaddr.NewIPv4Addr(test.a)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.a, err)
+			}
 
-		ipv4b, err := sockaddr.NewIPv4Addr(test.b)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.b, err)
-		}
+			ipv4b, err := sockaddr.NewIPv4Addr(test.b)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.b, err)
+			}
 
-		if x := ipv4a.CmpAddress(ipv4b); x != test.cmp {
-			t.Errorf("[%d] IPv4Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
-		}
+			if x := ipv4a.CmpAddress(ipv4b); x != test.cmp {
+				t.Errorf("[%d] IPv4Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
+			}
 
-		if x := ipv4b.CmpAddress(ipv4a); x*-1 != test.cmp {
-			t.Errorf("[%d] IPv4Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
-		}
+			if x := ipv4b.CmpAddress(ipv4a); x*-1 != test.cmp {
+				t.Errorf("[%d] IPv4Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
+			}
+		})
 	}
 }
 
@@ -740,32 +746,34 @@ func TestSockAddr_IPv4Addr_ContainsAddress(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv4, err := sockaddr.NewIPv4Addr(test.input)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.input, err)
-		}
-
-		for passIdx, passInput := range test.pass {
-			passAddr, err := sockaddr.NewIPv4Addr(passInput)
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv4, err := sockaddr.NewIPv4Addr(test.input)
 			if err != nil {
-				t.Fatalf("[%d/%d] Unable to create an IPv4Addr from %+q: %v", idx, passIdx, passInput, err)
+				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.input, err)
 			}
 
-			if !passAddr.ContainsAddress(ipv4.Address) {
-				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
-			}
-		}
+			for passIdx, passInput := range test.pass {
+				passAddr, err := sockaddr.NewIPv4Addr(passInput)
+				if err != nil {
+					t.Fatalf("[%d/%d] Unable to create an IPv4Addr from %+q: %v", idx, passIdx, passInput, err)
+				}
 
-		for failIdx, failInput := range test.fail {
-			failAddr, err := sockaddr.NewIPv4Addr(failInput)
-			if err != nil {
-				t.Fatalf("[%d/%d] Unable to create an IPv4Addr from %+q: %v", idx, failIdx, failInput, err)
+				if !passAddr.ContainsAddress(ipv4.Address) {
+					t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
+				}
 			}
 
-			if failAddr.ContainsAddress(ipv4.Address) {
-				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+			for failIdx, failInput := range test.fail {
+				failAddr, err := sockaddr.NewIPv4Addr(failInput)
+				if err != nil {
+					t.Fatalf("[%d/%d] Unable to create an IPv4Addr from %+q: %v", idx, failIdx, failInput, err)
+				}
+
+				if failAddr.ContainsAddress(ipv4.Address) {
+					t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -808,23 +816,25 @@ func TestSockAddr_IPv4Addr_CmpPort(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv4a, err := sockaddr.NewIPv4Addr(test.a)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.a, err)
-		}
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv4a, err := sockaddr.NewIPv4Addr(test.a)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.a, err)
+			}
 
-		ipv4b, err := sockaddr.NewIPv4Addr(test.b)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.b, err)
-		}
+			ipv4b, err := sockaddr.NewIPv4Addr(test.b)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.b, err)
+			}
 
-		if x := ipv4a.CmpPort(ipv4b); x != test.cmp {
-			t.Errorf("[%d] IPv4Addr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
-		}
+			if x := ipv4a.CmpPort(ipv4b); x != test.cmp {
+				t.Errorf("[%d] IPv4Addr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
+			}
 
-		if x := ipv4b.CmpPort(ipv4a); x*-1 != test.cmp {
-			t.Errorf("[%d] IPv4Addr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
-		}
+			if x := ipv4b.CmpPort(ipv4a); x*-1 != test.cmp {
+				t.Errorf("[%d] IPv4Addr.CmpPort() failed with %+q with %+q (expected %d, received %d)", idx, ipv4a, ipv4b, test.cmp, x)
+			}
+		})
 	}
 }
 
@@ -847,31 +857,33 @@ func TestSockAddr_IPv4Addr_Equal(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv4, err := sockaddr.NewIPv4Addr(test.input)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.input, err)
-		}
-
-		for goodIdx, passInput := range test.pass {
-			good, err := sockaddr.NewIPv4Addr(passInput)
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv4, err := sockaddr.NewIPv4Addr(test.input)
 			if err != nil {
-				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, passInput, err)
+				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, test.input, err)
 			}
 
-			if !ipv4.Equal(good) {
-				t.Errorf("[%d/%d] Expected %+q to be equal to %+q: %+q/%+q", idx, goodIdx, test.input, passInput, ipv4.String(), good.String())
-			}
-		}
+			for goodIdx, passInput := range test.pass {
+				good, err := sockaddr.NewIPv4Addr(passInput)
+				if err != nil {
+					t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, passInput, err)
+				}
 
-		for failIdx, failInput := range test.fail {
-			fail, err := sockaddr.NewIPv4Addr(failInput)
-			if err != nil {
-				t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, failInput, err)
+				if !ipv4.Equal(good) {
+					t.Errorf("[%d/%d] Expected %+q to be equal to %+q: %+q/%+q", idx, goodIdx, test.input, passInput, ipv4.String(), good.String())
+				}
 			}
 
-			if ipv4.Equal(fail) {
-				t.Errorf("[%d/%d] Expected %+q to be not equal to %+q", idx, failIdx, test.input, failInput)
+			for failIdx, failInput := range test.fail {
+				fail, err := sockaddr.NewIPv4Addr(failInput)
+				if err != nil {
+					t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, failInput, err)
+				}
+
+				if ipv4.Equal(fail) {
+					t.Errorf("[%d/%d] Expected %+q to be not equal to %+q", idx, failIdx, test.input, failInput)
+				}
 			}
-		}
+		})
 	}
 }

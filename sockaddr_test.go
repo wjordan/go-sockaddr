@@ -1,6 +1,7 @@
 package sockaddr_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/go-sockaddr"
@@ -169,77 +170,79 @@ func TestSockAddr_New(t *testing.T) {
 	}
 
 	for idx, r := range goodResults {
-		var (
-			addr sockaddr.IPAddr
-			str  string
-		)
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			var (
+				addr sockaddr.IPAddr
+				str  string
+			)
 
-		sa, err := sockaddr.NewSockAddr(r.input)
-		if err != nil {
-			t.Fatalf("Failed parse %s", r.input)
-		}
-
-		switch r.ResultType {
-		case "ipv4":
-			ipv4b, err := sockaddr.NewIPv4Addr(r.input)
+			sa, err := sockaddr.NewSockAddr(r.input)
 			if err != nil {
-				t.Fatalf("[%d] Unable to construct a new IPv4 from %s: %s", idx, r.input, err)
-			}
-			if !ipv4b.Equal(sa) {
-				t.Fatalf("[%d] Equality comparison failed on fresh IPv4", idx)
+				t.Fatalf("Failed parse %s", r.input)
 			}
 
-			type_ := sa.Type()
-			if type_ != sockaddr.TypeIPv4 {
-				t.Fatalf("[%d] Type mismatch for %s: %d", idx, r.input, type_)
-			}
+			switch r.ResultType {
+			case "ipv4":
+				ipv4b, err := sockaddr.NewIPv4Addr(r.input)
+				if err != nil {
+					t.Fatalf("[%d] Unable to construct a new IPv4 from %s: %s", idx, r.input, err)
+				}
+				if !ipv4b.Equal(sa) {
+					t.Fatalf("[%d] Equality comparison failed on fresh IPv4", idx)
+				}
 
-			ipv4 := sockaddr.ToIPv4Addr(sa)
-			if ipv4 == nil {
-				t.Fatalf("[%d] Failed ToIPv4Addr() %s", idx, r.input)
-			}
+				type_ := sa.Type()
+				if type_ != sockaddr.TypeIPv4 {
+					t.Fatalf("[%d] Type mismatch for %s: %d", idx, r.input, type_)
+				}
 
-			addr = ipv4.Broadcast()
-			if addr == nil || addr.NetIP().To4().String() != r.BroadcastAddress {
-				t.Fatalf("Failed IPv4Addr.BroadcastAddress() %s: expected %+q, received %+q", r.input, r.BroadcastAddress, addr.NetIP().To4().String())
-			}
+				ipv4 := sockaddr.ToIPv4Addr(sa)
+				if ipv4 == nil {
+					t.Fatalf("[%d] Failed ToIPv4Addr() %s", idx, r.input)
+				}
 
-			maskbits := ipv4.Maskbits()
-			if maskbits != r.Maskbits {
-				t.Fatalf("Failed Maskbits %s: %d != %d", r.input, maskbits, r.Maskbits)
-			}
+				addr = ipv4.Broadcast()
+				if addr == nil || addr.NetIP().To4().String() != r.BroadcastAddress {
+					t.Fatalf("Failed IPv4Addr.BroadcastAddress() %s: expected %+q, received %+q", r.input, r.BroadcastAddress, addr.NetIP().To4().String())
+				}
 
-			if ipv4.Address != r.IPUint32 {
-				t.Fatalf("Failed ToUint32() %s: %d != %d", r.input, ipv4.Address, r.IPUint32)
-			}
+				maskbits := ipv4.Maskbits()
+				if maskbits != r.Maskbits {
+					t.Fatalf("Failed Maskbits %s: %d != %d", r.input, maskbits, r.Maskbits)
+				}
 
-			str = ipv4.AddressBinString()
-			if str != r.BinString {
-				t.Fatalf("Failed BinString %s: %s != %s", r.input, str, r.BinString)
-			}
+				if ipv4.Address != r.IPUint32 {
+					t.Fatalf("Failed ToUint32() %s: %d != %d", r.input, ipv4.Address, r.IPUint32)
+				}
 
-			str = ipv4.AddressHexString()
-			if str != r.HexString {
-				t.Fatalf("Failed HexString %s: %s != %s", r.input, str, r.HexString)
-			}
+				str = ipv4.AddressBinString()
+				if str != r.BinString {
+					t.Fatalf("Failed BinString %s: %s != %s", r.input, str, r.BinString)
+				}
 
-			addr = ipv4.Network()
-			if addr == nil || addr.NetIP().To4().String() != r.NetworkAddress {
-				t.Fatalf("Failed NetworkAddress %s: %s != %s", r.input, addr.NetIP().To4().String(), r.NetworkAddress)
-			}
+				str = ipv4.AddressHexString()
+				if str != r.HexString {
+					t.Fatalf("Failed HexString %s: %s != %s", r.input, str, r.HexString)
+				}
 
-			addr = ipv4.FirstUsable()
-			if addr == nil || addr.NetIP().To4().String() != r.FirstUsableAddress {
-				t.Fatalf("Failed FirstUsableAddress %s: %s != %s", r.input, addr.NetIP().To4().String(), r.FirstUsableAddress)
-			}
+				addr = ipv4.Network()
+				if addr == nil || addr.NetIP().To4().String() != r.NetworkAddress {
+					t.Fatalf("Failed NetworkAddress %s: %s != %s", r.input, addr.NetIP().To4().String(), r.NetworkAddress)
+				}
 
-			addr = ipv4.LastUsable()
-			if addr == nil || addr.NetIP().To4().String() != r.LastUsableAddress {
-				t.Fatalf("Failed LastUsableAddress %s: %s != %s", r.input, addr.NetIP().To4().String(), r.LastUsableAddress)
+				addr = ipv4.FirstUsable()
+				if addr == nil || addr.NetIP().To4().String() != r.FirstUsableAddress {
+					t.Fatalf("Failed FirstUsableAddress %s: %s != %s", r.input, addr.NetIP().To4().String(), r.FirstUsableAddress)
+				}
+
+				addr = ipv4.LastUsable()
+				if addr == nil || addr.NetIP().To4().String() != r.LastUsableAddress {
+					t.Fatalf("Failed LastUsableAddress %s: %s != %s", r.input, addr.NetIP().To4().String(), r.LastUsableAddress)
+				}
+			default:
+				t.Fatalf("Unknown result type: %s", r.ResultType)
 			}
-		default:
-			t.Fatalf("Unknown result type: %s", r.ResultType)
-		}
+		})
 	}
 
 	badResults := []string{
@@ -247,13 +250,16 @@ func TestSockAddr_New(t *testing.T) {
 		"0.0.0.0.0",
 	}
 
-	for _, badIP := range badResults {
-		sa, err := sockaddr.NewSockAddr(badIP)
-		if err == nil {
-			t.Fatalf("Failed should have failed to parse %s: %v", badIP, sa)
-		}
-		if sa != nil {
-			t.Fatalf("SockAddr should be nil")
-		}
+	for idx, badIP := range badResults {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			sa, err := sockaddr.NewSockAddr(badIP)
+			if err == nil {
+				t.Fatalf("Failed should have failed to parse %s: %v", badIP, sa)
+			}
+			if sa != nil {
+				t.Fatalf("SockAddr should be nil")
+			}
+		})
 	}
+
 }

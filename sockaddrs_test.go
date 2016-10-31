@@ -1,6 +1,7 @@
 package sockaddr_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -82,31 +83,33 @@ func TestSockAddr_SockAddrs_AscAddress(t *testing.T) {
 		},
 	}
 
-	for testNum, test := range testInputs {
-		shuffleStrings(test.inputAddrs)
-		inputSockAddrs := convertToSockAddrs(t, test.inputAddrs)
-		sortedIPv4Addrs, nonIPv4Addrs := convertToSockAddrs(t, test.sortedAddrs).OnlyIPv4()
-		if l := len(sortedIPv4Addrs); l != test.numIPv4Inputs {
-			t.Fatal("[%d] Missing IPv4Addrs: expected %d, received %d", testNum, test.numIPv4Inputs, l)
-		}
-		if len(nonIPv4Addrs) != test.numIPv6Inputs+test.numUnixInputs {
-			t.Fatal("[%d] Non-IPv4 Address in input", testNum)
-		}
-
-		// Copy inputAddrs so we can manipulate it. wtb const.
-		sockAddrs := append(sockaddr.SockAddrs(nil), inputSockAddrs...)
-		filteredAddrs := sockAddrs.FilterByType(sockaddr.TypeIPv4)
-		sockaddr.OrderedBy(test.sortFuncs...).Sort(filteredAddrs)
-		ipv4Addrs, nonIPv4s := filteredAddrs.OnlyIPv4()
-		if len(nonIPv4s) != 0 {
-			t.Fatalf("[%d] bad", testNum)
-		}
-
-		for i, ipv4Addr := range ipv4Addrs {
-			if ipv4Addr.Address != sortedIPv4Addrs[i].Address {
-				t.Errorf("[%d/%d] Sort equality failed: expected %s, received %s", testNum, i, sortedIPv4Addrs[i], ipv4Addr)
+	for idx, test := range testInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			shuffleStrings(test.inputAddrs)
+			inputSockAddrs := convertToSockAddrs(t, test.inputAddrs)
+			sortedIPv4Addrs, nonIPv4Addrs := convertToSockAddrs(t, test.sortedAddrs).OnlyIPv4()
+			if l := len(sortedIPv4Addrs); l != test.numIPv4Inputs {
+				t.Fatal("[%d] Missing IPv4Addrs: expected %d, received %d", idx, test.numIPv4Inputs, l)
 			}
-		}
+			if len(nonIPv4Addrs) != test.numIPv6Inputs+test.numUnixInputs {
+				t.Fatal("[%d] Non-IPv4 Address in input", idx)
+			}
+
+			// Copy inputAddrs so we can manipulate it. wtb const.
+			sockAddrs := append(sockaddr.SockAddrs(nil), inputSockAddrs...)
+			filteredAddrs := sockAddrs.FilterByType(sockaddr.TypeIPv4)
+			sockaddr.OrderedBy(test.sortFuncs...).Sort(filteredAddrs)
+			ipv4Addrs, nonIPv4s := filteredAddrs.OnlyIPv4()
+			if len(nonIPv4s) != 0 {
+				t.Fatalf("[%d] bad", idx)
+			}
+
+			for i, ipv4Addr := range ipv4Addrs {
+				if ipv4Addr.Address != sortedIPv4Addrs[i].Address {
+					t.Errorf("[%d/%d] Sort equality failed: expected %s, received %s", idx, i, sortedIPv4Addrs[i], ipv4Addr)
+				}
+			}
+		})
 	}
 }
 
@@ -154,23 +157,25 @@ func TestSockAddr_SockAddrs_AscPrivate(t *testing.T) {
 		},
 	}
 
-	for testNum, test := range testInputs {
-		sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
+	for idx, test := range testInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 
-		inputAddrs := append([]string(nil), test.inputAddrs...)
-		shuffleStrings(inputAddrs)
-		inputSockAddrs := convertToSockAddrs(t, inputAddrs)
+			inputAddrs := append([]string(nil), test.inputAddrs...)
+			shuffleStrings(inputAddrs)
+			inputSockAddrs := convertToSockAddrs(t, inputAddrs)
 
-		sockaddr.OrderedBy(test.sortFuncs...).Sort(inputSockAddrs)
+			sockaddr.OrderedBy(test.sortFuncs...).Sort(inputSockAddrs)
 
-		for i, sockAddr := range sortedAddrs {
-			if !sockAddr.Equal(inputSockAddrs[i]) {
-				t.Logf("Input Addrs:\t%+v", inputAddrs)
-				t.Logf("Sorted Addrs:\t%+v", inputSockAddrs)
-				t.Logf("Expected Addrs:\t%+v", test.sortedAddrs)
-				t.Fatalf("[%d/%d] Sort AscType/AscAddress failed: expected %+q, received %+q", testNum, i, sockAddr, inputSockAddrs[i])
+			for i, sockAddr := range sortedAddrs {
+				if !sockAddr.Equal(inputSockAddrs[i]) {
+					t.Logf("Input Addrs:\t%+v", inputAddrs)
+					t.Logf("Sorted Addrs:\t%+v", inputSockAddrs)
+					t.Logf("Expected Addrs:\t%+v", test.sortedAddrs)
+					t.Fatalf("[%d/%d] Sort AscType/AscAddress failed: expected %+q, received %+q", idx, i, sockAddr, inputSockAddrs[i])
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -207,18 +212,20 @@ func TestSockAddr_SockAddrs_AscType(t *testing.T) {
 		},
 	}
 
-	for testNum, test := range testInputs {
-		shuffleStrings(test.inputAddrs)
+	for idx, test := range testInputs {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			shuffleStrings(test.inputAddrs)
 
-		inputSockAddrs := convertToSockAddrs(t, test.inputAddrs)
-		sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
+			inputSockAddrs := convertToSockAddrs(t, test.inputAddrs)
+			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 
-		sockaddr.OrderedBy(test.sortFuncs...).Sort(inputSockAddrs)
+			sockaddr.OrderedBy(test.sortFuncs...).Sort(inputSockAddrs)
 
-		for i, sockAddr := range sortedAddrs {
-			if sockAddr.Type() != sortedAddrs[i].Type() {
-				t.Errorf("[%d/%d] Sort AscType failed: expected %+q, received %+q", testNum, i, sortedAddrs[i], sockAddr)
+			for i, sockAddr := range sortedAddrs {
+				if sockAddr.Type() != sortedAddrs[i].Type() {
+					t.Errorf("[%d/%d] Sort AscType failed: expected %+q, received %+q", idx, i, sortedAddrs[i], sockAddr)
+				}
 			}
-		}
+		})
 	}
 }

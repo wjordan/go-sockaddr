@@ -1,6 +1,7 @@
 package sockaddr_test
 
 import (
+	"fmt"
 	"math/big"
 	"strings"
 	"testing"
@@ -226,134 +227,137 @@ func TestSockAddr_IPv6Addr(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv6, err := sockaddr.NewIPv6Addr(test.z00_input)
-		if test.z99_pass && err != nil {
-			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.z00_input, err)
-		} else if !test.z99_pass && err == nil {
-			t.Fatalf("[%d] Expected test to fail for %+q", idx, test.z00_input)
-		} else if !test.z99_pass && err != nil {
-			continue
-		}
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv6, err := sockaddr.NewIPv6Addr(test.z00_input)
+			if test.z99_pass && err != nil {
+				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.z00_input, err)
+			} else if !test.z99_pass && err == nil {
+				t.Fatalf("[%d] Expected test to fail for %+q", idx, test.z00_input)
+			} else if !test.z99_pass && err != nil {
+				// Expected failure, return success
+				return
+			}
 
-		if type_ := ipv6.Type(); type_ != sockaddr.TypeIPv6 {
-			t.Errorf("[%d] Expected new IPv6Addr to be Type %d, received %d (int)", idx, sockaddr.TypeIPv6, type_)
-		}
+			if type_ := ipv6.Type(); type_ != sockaddr.TypeIPv6 {
+				t.Errorf("[%d] Expected new IPv6Addr to be Type %d, received %d (int)", idx, sockaddr.TypeIPv6, type_)
+			}
 
-		h, ok := ipv6.Host().(sockaddr.IPv6Addr)
-		if !ok {
-			t.Errorf("[%d] Unable to type assert +%q's Host to IPv6Addr", idx, test.z00_input)
-		}
+			h, ok := ipv6.Host().(sockaddr.IPv6Addr)
+			if !ok {
+				t.Errorf("[%d] Unable to type assert +%q's Host to IPv6Addr", idx, test.z00_input)
+			}
 
-		hAddressBigInt := big.Int(*h.Address)
-		hMaskBigInt := big.Int(*h.Mask)
-		if hAddressBigInt.Cmp(ipv6.Address) != 0 || hMaskBigInt.Cmp(ipv6HostMask) != 0 || h.Port != ipv6.Port {
-			t.Errorf("[%d] Expected %+q's Host() to return identical IPv6Addr except mask, received %+q", idx, test.z00_input, h.String())
-		}
+			hAddressBigInt := big.Int(*h.Address)
+			hMaskBigInt := big.Int(*h.Mask)
+			if hAddressBigInt.Cmp(ipv6.Address) != 0 || hMaskBigInt.Cmp(ipv6HostMask) != 0 || h.Port != ipv6.Port {
+				t.Errorf("[%d] Expected %+q's Host() to return identical IPv6Addr except mask, received %+q", idx, test.z00_input, h.String())
+			}
 
-		if c := cap(*ipv6.NetIP()); c != sockaddr.IPv6len {
-			t.Errorf("[%d] Expected new IPv6Addr's Address capacity to be %d bytes, received %d", idx, sockaddr.IPv6len, c)
-		}
+			if c := cap(*ipv6.NetIP()); c != sockaddr.IPv6len {
+				t.Errorf("[%d] Expected new IPv6Addr's Address capacity to be %d bytes, received %d", idx, sockaddr.IPv6len, c)
+			}
 
-		if l := len(*ipv6.NetIP()); l != sockaddr.IPv6len {
-			t.Errorf("[%d] Expected new IPv6Addr's Address length to be %d bytes, received %d", idx, sockaddr.IPv6len, l)
-		}
+			if l := len(*ipv6.NetIP()); l != sockaddr.IPv6len {
+				t.Errorf("[%d] Expected new IPv6Addr's Address length to be %d bytes, received %d", idx, sockaddr.IPv6len, l)
+			}
 
-		if s := ipv6.AddressHexString(); s != test.z01_addrHexStr {
-			t.Errorf("[%d] Expected address %+q's hexadecimal representation to be %+q, received %+q", idx, test.z00_input, test.z01_addrHexStr, s)
-		}
+			if s := ipv6.AddressHexString(); s != test.z01_addrHexStr {
+				t.Errorf("[%d] Expected address %+q's hexadecimal representation to be %+q, received %+q", idx, test.z00_input, test.z01_addrHexStr, s)
+			}
 
-		if s := ipv6.AddressBinString(); s != test.z02_addrBinStr {
-			t.Errorf("[%d] Expected address %+q's binary representation to be %+q, received %+q", idx, test.z00_input, test.z02_addrBinStr, s)
-		}
+			if s := ipv6.AddressBinString(); s != test.z02_addrBinStr {
+				t.Errorf("[%d] Expected address %+q's binary representation to be %+q, received %+q", idx, test.z00_input, test.z02_addrBinStr, s)
+			}
 
-		if s := ipv6.String(); s != test.z03_addrStr {
-			t.Errorf("[%d] Expected %+q's String to be %+q, received %+q", idx, test.z00_input, test.z03_addrStr, s)
-		}
+			if s := ipv6.String(); s != test.z03_addrStr {
+				t.Errorf("[%d] Expected %+q's String to be %+q, received %+q", idx, test.z00_input, test.z03_addrStr, s)
+			}
 
-		if s := ipv6.NetIP().String(); s != test.z04_NetIPStringOut {
-			t.Errorf("[%d] Expected %+q's address to be %+q, received %+q", idx, test.z00_input, test.z04_NetIPStringOut, s)
-		}
+			if s := ipv6.NetIP().String(); s != test.z04_NetIPStringOut {
+				t.Errorf("[%d] Expected %+q's address to be %+q, received %+q", idx, test.z00_input, test.z04_NetIPStringOut, s)
+			}
 
-		if hAddressBigInt.Cmp(test.z05_addrInt) != 0 {
-			t.Errorf("[%d] Expected %+q's Address to return %+v, received %+v", idx, test.z00_input, test.z05_addrInt, hAddressBigInt)
-		}
+			if hAddressBigInt.Cmp(test.z05_addrInt) != 0 {
+				t.Errorf("[%d] Expected %+q's Address to return %+v, received %+v", idx, test.z00_input, test.z05_addrInt, hAddressBigInt)
+			}
 
-		n, ok := ipv6.Network().(sockaddr.IPv6Addr)
-		if !ok {
-			t.Errorf("[%d] Unable to type assert +%q's Network to IPv6Addr", idx, test.z00_input)
-		}
+			n, ok := ipv6.Network().(sockaddr.IPv6Addr)
+			if !ok {
+				t.Errorf("[%d] Unable to type assert +%q's Network to IPv6Addr", idx, test.z00_input)
+			}
 
-		nAddressBigInt := big.Int(*n.Address)
-		if nAddressBigInt.Cmp(test.z06_netInt) != 0 {
-			t.Errorf("[%d] Expected %+q's Network to return %+v, received %+v", idx, test.z00_input, test.z06_netInt, n.Address)
-		}
+			nAddressBigInt := big.Int(*n.Address)
+			if nAddressBigInt.Cmp(test.z06_netInt) != 0 {
+				t.Errorf("[%d] Expected %+q's Network to return %+v, received %+v", idx, test.z00_input, test.z06_netInt, n.Address)
+			}
 
-		if m := ipv6.NetIPMask().String(); m != test.z07_ipMaskStr {
-			t.Errorf("[%d] Expected %+q's mask to be %+q, received %+q", idx, test.z00_input, test.z07_ipMaskStr, m)
-		}
+			if m := ipv6.NetIPMask().String(); m != test.z07_ipMaskStr {
+				t.Errorf("[%d] Expected %+q's mask to be %+q, received %+q", idx, test.z00_input, test.z07_ipMaskStr, m)
+			}
 
-		if m := ipv6.Maskbits(); m != test.z08_maskbits {
-			t.Errorf("[%dr] Expected %+q's port to be %+v, received %+v", idx, test.z00_input, test.z08_maskbits, m)
-		}
+			if m := ipv6.Maskbits(); m != test.z08_maskbits {
+				t.Errorf("[%dr] Expected %+q's port to be %+v, received %+v", idx, test.z00_input, test.z08_maskbits, m)
+			}
 
-		if n := ipv6.NetIPNet().String(); n != test.z09_NetIPNetStringOut {
-			t.Errorf("[%d] Expected %+q's network to be %+q, received %+q", idx, test.z00_input, test.z09_NetIPNetStringOut, n)
-		}
+			if n := ipv6.NetIPNet().String(); n != test.z09_NetIPNetStringOut {
+				t.Errorf("[%d] Expected %+q's network to be %+q, received %+q", idx, test.z00_input, test.z09_NetIPNetStringOut, n)
+			}
 
-		ipv6MaskBigInt := big.Int(*ipv6.Mask)
-		if ipv6MaskBigInt.Cmp(test.z10_maskInt) != 0 {
-			t.Errorf("[%d] Expected %+q's Mask to return %+v, received %+v", idx, test.z00_input, test.z10_maskInt, ipv6MaskBigInt)
-		}
+			ipv6MaskBigInt := big.Int(*ipv6.Mask)
+			if ipv6MaskBigInt.Cmp(test.z10_maskInt) != 0 {
+				t.Errorf("[%d] Expected %+q's Mask to return %+v, received %+v", idx, test.z00_input, test.z10_maskInt, ipv6MaskBigInt)
+			}
 
-		nMaskBigInt := big.Int(*n.Mask)
-		if nMaskBigInt.Cmp(test.z10_maskInt) != 0 {
-			t.Errorf("[%d] Expected %+q's Network's Mask to return %+v, received %+v", idx, test.z00_input, test.z10_maskInt, nMaskBigInt)
-		}
+			nMaskBigInt := big.Int(*n.Mask)
+			if nMaskBigInt.Cmp(test.z10_maskInt) != 0 {
+				t.Errorf("[%d] Expected %+q's Network's Mask to return %+v, received %+v", idx, test.z00_input, test.z10_maskInt, nMaskBigInt)
+			}
 
-		// Network()'s mask must match the IPv6Addr's Mask
-		if n := ipv6.Network().String(); n != test.z11_networkStr {
-			t.Errorf("[%d] Expected %+q's Network() to be %+q, received %+q", idx, test.z00_input, test.z11_networkStr, n)
-		}
+			// Network()'s mask must match the IPv6Addr's Mask
+			if n := ipv6.Network().String(); n != test.z11_networkStr {
+				t.Errorf("[%d] Expected %+q's Network() to be %+q, received %+q", idx, test.z00_input, test.z11_networkStr, n)
+			}
 
-		if o := ipv6.Octets(); len(o) != 16 || cap(o) != 16 ||
-			o[0] != test.z12_octets[0] || o[1] != test.z12_octets[1] ||
-			o[2] != test.z12_octets[2] || o[3] != test.z12_octets[3] ||
-			o[4] != test.z12_octets[4] || o[5] != test.z12_octets[5] ||
-			o[6] != test.z12_octets[6] || o[7] != test.z12_octets[7] ||
-			o[8] != test.z12_octets[8] || o[9] != test.z12_octets[9] ||
-			o[10] != test.z12_octets[10] || o[11] != test.z12_octets[11] ||
-			o[12] != test.z12_octets[12] || o[13] != test.z12_octets[13] ||
-			o[14] != test.z12_octets[14] || o[15] != test.z12_octets[15] {
-			t.Errorf("[%d] Expected %+q's Octets to be %x, received %x", idx, test.z00_input, test.z12_octets, o)
-		}
+			if o := ipv6.Octets(); len(o) != 16 || cap(o) != 16 ||
+				o[0] != test.z12_octets[0] || o[1] != test.z12_octets[1] ||
+				o[2] != test.z12_octets[2] || o[3] != test.z12_octets[3] ||
+				o[4] != test.z12_octets[4] || o[5] != test.z12_octets[5] ||
+				o[6] != test.z12_octets[6] || o[7] != test.z12_octets[7] ||
+				o[8] != test.z12_octets[8] || o[9] != test.z12_octets[9] ||
+				o[10] != test.z12_octets[10] || o[11] != test.z12_octets[11] ||
+				o[12] != test.z12_octets[12] || o[13] != test.z12_octets[13] ||
+				o[14] != test.z12_octets[14] || o[15] != test.z12_octets[15] {
+				t.Errorf("[%d] Expected %+q's Octets to be %x, received %x", idx, test.z00_input, test.z12_octets, o)
+			}
 
-		if f := ipv6.FirstUsable().String(); f != test.z13_firstUsable {
-			t.Errorf("[%d] Expected %+q's FirstUsable() to be %+q, received %+q", idx, test.z00_input, test.z13_firstUsable, f)
-		}
+			if f := ipv6.FirstUsable().String(); f != test.z13_firstUsable {
+				t.Errorf("[%d] Expected %+q's FirstUsable() to be %+q, received %+q", idx, test.z00_input, test.z13_firstUsable, f)
+			}
 
-		if l := ipv6.LastUsable().String(); l != test.z14_lastUsable {
-			t.Errorf("[%d] Expected %+q's LastUsable() to be %+q, received %+q", idx, test.z00_input, test.z14_lastUsable, l)
-		}
+			if l := ipv6.LastUsable().String(); l != test.z14_lastUsable {
+				t.Errorf("[%d] Expected %+q's LastUsable() to be %+q, received %+q", idx, test.z00_input, test.z14_lastUsable, l)
+			}
 
-		if p := ipv6.IPPort(); sockaddr.IPPort(p) != test.z16_portInt || sockaddr.IPPort(p) != test.z16_portInt {
-			t.Errorf("[%d] Expected %+q's port to be %+v, received %+v", idx, test.z00_input, test.z16_portInt, p)
-		}
+			if p := ipv6.IPPort(); sockaddr.IPPort(p) != test.z16_portInt || sockaddr.IPPort(p) != test.z16_portInt {
+				t.Errorf("[%d] Expected %+q's port to be %+v, received %+v", idx, test.z00_input, test.z16_portInt, p)
+			}
 
-		if dialNet, dialArgs := ipv6.DialPacketArgs(); dialNet != test.z17_DialPacketArgs[0] || dialArgs != test.z17_DialPacketArgs[1] {
-			t.Errorf("[%d] Expected %+q's DialPacketArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z17_DialPacketArgs, dialNet, dialArgs)
-		}
+			if dialNet, dialArgs := ipv6.DialPacketArgs(); dialNet != test.z17_DialPacketArgs[0] || dialArgs != test.z17_DialPacketArgs[1] {
+				t.Errorf("[%d] Expected %+q's DialPacketArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z17_DialPacketArgs, dialNet, dialArgs)
+			}
 
-		if dialNet, dialArgs := ipv6.DialStreamArgs(); dialNet != test.z18_DialStreamArgs[0] || dialArgs != test.z18_DialStreamArgs[1] {
-			t.Errorf("[%d] Expected %+q's DialStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z18_DialStreamArgs, dialNet, dialArgs)
-		}
+			if dialNet, dialArgs := ipv6.DialStreamArgs(); dialNet != test.z18_DialStreamArgs[0] || dialArgs != test.z18_DialStreamArgs[1] {
+				t.Errorf("[%d] Expected %+q's DialStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z18_DialStreamArgs, dialNet, dialArgs)
+			}
 
-		if listenNet, listenArgs := ipv6.ListenPacketArgs(); listenNet != test.z19_ListenPacketArgs[0] || listenArgs != test.z19_ListenPacketArgs[1] {
-			t.Errorf("[%d] Expected %+q's ListenPacketArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z19_ListenPacketArgs, listenNet, listenArgs)
-		}
+			if listenNet, listenArgs := ipv6.ListenPacketArgs(); listenNet != test.z19_ListenPacketArgs[0] || listenArgs != test.z19_ListenPacketArgs[1] {
+				t.Errorf("[%d] Expected %+q's ListenPacketArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z19_ListenPacketArgs, listenNet, listenArgs)
+			}
 
-		if listenNet, listenArgs := ipv6.ListenStreamArgs(); listenNet != test.z20_ListenStreamArgs[0] || listenArgs != test.z20_ListenStreamArgs[1] {
-			t.Errorf("[%d] Expected %+q's ListenStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z20_ListenStreamArgs, listenNet, listenArgs)
-		}
+			if listenNet, listenArgs := ipv6.ListenStreamArgs(); listenNet != test.z20_ListenStreamArgs[0] || listenArgs != test.z20_ListenStreamArgs[1] {
+				t.Errorf("[%d] Expected %+q's ListenStreamArgs() to be %+q, received %+q, %+q", idx, test.z00_input, test.z20_ListenStreamArgs, listenNet, listenArgs)
+			}
+		})
 	}
 }
 
@@ -386,23 +390,25 @@ func TestSockAddr_IPv6Addr_CmpAddress(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv6a, err := sockaddr.NewIPv6Addr(test.a)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.a, err)
-		}
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv6a, err := sockaddr.NewIPv6Addr(test.a)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.a, err)
+			}
 
-		ipv6b, err := sockaddr.NewIPv6Addr(test.b)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.b, err)
-		}
+			ipv6b, err := sockaddr.NewIPv6Addr(test.b)
+			if err != nil {
+				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.b, err)
+			}
 
-		if x := ipv6a.CmpAddress(ipv6b); x != test.cmp {
-			t.Errorf("[%d] IPv6Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv6a, ipv6b, test.cmp, x)
-		}
+			if x := ipv6a.CmpAddress(ipv6b); x != test.cmp {
+				t.Errorf("[%d] IPv6Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv6a, ipv6b, test.cmp, x)
+			}
 
-		if x := ipv6b.CmpAddress(ipv6a); x*-1 != test.cmp {
-			t.Errorf("[%d] IPv6Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv6a, ipv6b, test.cmp, x)
-		}
+			if x := ipv6b.CmpAddress(ipv6a); x*-1 != test.cmp {
+				t.Errorf("[%d] IPv6Addr.CmpAddress() failed with %+q with %+q (expected %d, received %d)", idx, ipv6a, ipv6b, test.cmp, x)
+			}
+		})
 	}
 }
 
@@ -425,32 +431,34 @@ func TestSockAddr_IPv6Addr_ContainsAddress(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv6, err := sockaddr.NewIPv6Addr(test.input)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
-		}
-
-		for passIdx, passInput := range test.pass {
-			passAddr, err := sockaddr.NewIPv6Addr(passInput)
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv6, err := sockaddr.NewIPv6Addr(test.input)
 			if err != nil {
-				t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, passIdx, passInput, err)
+				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
 			}
 
-			if !passAddr.ContainsAddress(ipv6.Address) {
-				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
-			}
-		}
+			for passIdx, passInput := range test.pass {
+				passAddr, err := sockaddr.NewIPv6Addr(passInput)
+				if err != nil {
+					t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, passIdx, passInput, err)
+				}
 
-		for failIdx, failInput := range test.fail {
-			failAddr, err := sockaddr.NewIPv6Addr(failInput)
-			if err != nil {
-				t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, failIdx, failInput, err)
+				if !passAddr.ContainsAddress(ipv6.Address) {
+					t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
+				}
 			}
 
-			if failAddr.ContainsAddress(ipv6.Address) {
-				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+			for failIdx, failInput := range test.fail {
+				failAddr, err := sockaddr.NewIPv6Addr(failInput)
+				if err != nil {
+					t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, failIdx, failInput, err)
+				}
+
+				if failAddr.ContainsAddress(ipv6.Address) {
+					t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -473,32 +481,34 @@ func TestSockAddr_IPv6Addr_ContainsNetwork(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv6, err := sockaddr.NewIPv6Addr(test.input)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
-		}
-
-		for passIdx, passInput := range test.pass {
-			passAddr, err := sockaddr.NewIPv6Addr(passInput)
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv6, err := sockaddr.NewIPv6Addr(test.input)
 			if err != nil {
-				t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, passIdx, passInput, err)
+				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
 			}
 
-			if !passAddr.ContainsNetwork(ipv6) {
-				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
-			}
-		}
+			for passIdx, passInput := range test.pass {
+				passAddr, err := sockaddr.NewIPv6Addr(passInput)
+				if err != nil {
+					t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, passIdx, passInput, err)
+				}
 
-		for failIdx, failInput := range test.fail {
-			failAddr, err := sockaddr.NewIPv6Addr(failInput)
-			if err != nil {
-				t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, failIdx, failInput, err)
+				if !passAddr.ContainsNetwork(ipv6) {
+					t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
+				}
 			}
 
-			if failAddr.ContainsNetwork(ipv6) {
-				t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+			for failIdx, failInput := range test.fail {
+				failAddr, err := sockaddr.NewIPv6Addr(failInput)
+				if err != nil {
+					t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, failIdx, failInput, err)
+				}
+
+				if failAddr.ContainsNetwork(ipv6) {
+					t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -521,31 +531,33 @@ func TestSockAddr_IPv6Addr_Equal(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		ipv6, err := sockaddr.NewIPv6Addr(test.input)
-		if err != nil {
-			t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
-		}
-
-		for goodIdx, passInput := range test.pass {
-			good, err := sockaddr.NewIPv6Addr(passInput)
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			ipv6, err := sockaddr.NewIPv6Addr(test.input)
 			if err != nil {
-				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, passInput, err)
+				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
 			}
 
-			if !ipv6.Equal(good) {
-				t.Errorf("[%d/%d] Expected %s's to be equal to %s", idx, goodIdx, test.input, passInput)
-			}
-		}
+			for goodIdx, passInput := range test.pass {
+				good, err := sockaddr.NewIPv6Addr(passInput)
+				if err != nil {
+					t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, passInput, err)
+				}
 
-		for failIdx, failInput := range test.fail {
-			fail, err := sockaddr.NewIPv6Addr(failInput)
-			if err != nil {
-				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, failInput, err)
+				if !ipv6.Equal(good) {
+					t.Errorf("[%d/%d] Expected %s's to be equal to %s", idx, goodIdx, test.input, passInput)
+				}
 			}
 
-			if ipv6.Equal(fail) {
-				t.Errorf("[%d/%d] Expected %s's to be not equal to %s", idx, failIdx, test.input, failInput)
+			for failIdx, failInput := range test.fail {
+				fail, err := sockaddr.NewIPv6Addr(failInput)
+				if err != nil {
+					t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, failInput, err)
+				}
+
+				if ipv6.Equal(fail) {
+					t.Errorf("[%d/%d] Expected %s's to be not equal to %s", idx, failIdx, test.input, failInput)
+				}
 			}
-		}
+		})
 	}
 }
