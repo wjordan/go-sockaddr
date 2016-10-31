@@ -1,7 +1,6 @@
 package sockaddr
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"net"
@@ -273,16 +272,16 @@ func IfReturnAttrNames(inputIfAddrs []IfAddrs) []string {
 
 // parseBSDDefaultIfName is a *BSD-specific parsing function for route(8)'s
 // output.
-func parseBSDDefaultIfName(routeOut []byte) (string, error) {
-	lines := strings.Split(string(routeOut), "\n")
+func parseBSDDefaultIfName(routeOut string) (string, error) {
+	lines := strings.Split(routeOut, "\n")
 	for _, line := range lines {
 		kvs := strings.SplitN(line, ":", 2)
 		if len(kvs) != 2 {
 			continue
 		}
 
-		if string(bytes.TrimSpace([]byte(kvs[0]))) == "interface" {
-			ifName := string(bytes.TrimSpace([]byte(kvs[1])))
+		if strings.TrimSpace(kvs[0]) == "interface" {
+			ifName := strings.TrimSpace(kvs[1])
 			return ifName, nil
 		}
 	}
@@ -290,3 +289,23 @@ func parseBSDDefaultIfName(routeOut []byte) (string, error) {
 	return "", errors.New("No default interface found")
 }
 
+// parseLinuxDefaultIfName is a Linux-specific parsing function for route(8)'s
+// output.
+func parseLinuxDefaultIfName(routeOut string) (string, error) {
+	lines := strings.Split(routeOut, "\n")
+	for _, line := range lines {
+		kvs := strings.SplitN(line, " ", 5)
+		if len(kvs) != 5 {
+			continue
+		}
+
+		if kvs[0] == "default" &&
+			kvs[1] == "via" &&
+			kvs[3] == "dev" {
+			ifName := strings.TrimSpace(kvs[4])
+			return ifName, nil
+		}
+	}
+
+	return "", errors.New("No default interface found")
+}

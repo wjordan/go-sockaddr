@@ -23,7 +23,7 @@ func getDefaultIfName() (string, error) {
 	}
 
 	var ifName string
-	if ifName, err = parseBSDDefaultIfName(out); err != nil {
+	if ifName, err = parseBSDDefaultIfName(string(out)); err != nil {
 		return "", errors.New("No default interface found")
 	}
 	return ifName, nil

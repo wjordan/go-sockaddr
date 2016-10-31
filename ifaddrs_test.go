@@ -69,7 +69,7 @@ func TestGetIfAddrs(t *testing.T) {
 // TestGetDefaultIfName tests to make sure a default interface name is always
 // returned from getDefaultIfName().
 func TestGetDefaultInterface(t *testing.T) {
-	ifAddr, err := sockaddr.GetDefaultInterface()
+	_, err := sockaddr.GetDefaultInterface()
 	if err != nil {
 		t.Fatal(err)
 	}
