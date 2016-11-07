@@ -55,7 +55,6 @@ DialStream    "tcp4" ""
 ListenPacket  "udp4" ""
 ListenStream  "tcp4" ""
 $ sockaddr dump -H -o host,address,port -o mask_bits 127.0.0.3:8600
-sockaddr dump -H -o host,address,port -o mask_bits 127.0.0.3:8600
 host	127.0.0.3:8600
 address	127.0.0.3
 port	8600
