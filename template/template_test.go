@@ -22,7 +22,7 @@ func TestSockAddr_Parse(t *testing.T) {
 			// NOTE(sean@): This test, as its written now, will only
 			// pass on macOS.
 			name:   "GetDefaultInterface",
-			input:  `{{GetDefaultInterface | includeByType "IPv4" | limit 1 | join "name" " " }}`,
+			input:  `{{GetDefaultInterfaces | includeByType "IPv4" | limit 1 | join "name" " " }}`,
 			output: `en0`,
 		},
 		{

@@ -143,8 +143,9 @@ func GetIfSockAddrs() ([]IfAddr, error) {
 	return ifAddrs, nil
 }
 
-// GetDefaultInterface returns the interface that has the default route.
-func GetDefaultInterface() ([]IfAddr, error) {
+// GetDefaultInterfaces returns []IfAddr of the addresses attached to the
+// default route.
+func GetDefaultInterfaces() ([]IfAddr, error) {
 	defaultIfName, err := getDefaultIfName()
 	if err != nil {
 		return nil, err

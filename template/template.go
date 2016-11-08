@@ -31,6 +31,9 @@ func init() {
 		// "dot" in the pipeline.
 		//
 		"GetIfSockAddrs": sockaddr.GetIfSockAddrs,
+
+		// Return an IfAddr that is attached to the default route.
+		"GetDefaultInterfaces": sockaddr.GetDefaultInterfaces,
 	}
 
 	SortFuncs = template.FuncMap{
