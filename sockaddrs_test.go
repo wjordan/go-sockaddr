@@ -20,7 +20,7 @@ type sockAddrStringInputs []struct {
 	inputAddrs    []string
 	sortedAddrs   []string
 	sortedTypes   []sockaddr.SockAddrType
-	sortFuncs     []sockaddr.CmpFunc
+	sortFuncs     []sockaddr.CmpAddrFunc
 	numIPv4Inputs int
 	numIPv6Inputs int
 	numUnixInputs int
@@ -50,7 +50,7 @@ func shuffleStrings(list []string) {
 func TestSockAddr_SockAddrs_AscAddress(t *testing.T) {
 	testInputs := sockAddrStringInputs{
 		{ // testNum: 0
-			sortFuncs: []sockaddr.CmpFunc{
+			sortFuncs: []sockaddr.CmpAddrFunc{
 				sockaddr.AscAddress,
 			},
 			numIPv4Inputs: 9,
@@ -98,7 +98,7 @@ func TestSockAddr_SockAddrs_AscAddress(t *testing.T) {
 			// Copy inputAddrs so we can manipulate it. wtb const.
 			sockAddrs := append(sockaddr.SockAddrs(nil), inputSockAddrs...)
 			filteredAddrs := sockAddrs.FilterByType(sockaddr.TypeIPv4)
-			sockaddr.OrderedBy(test.sortFuncs...).Sort(filteredAddrs)
+			sockaddr.OrderedAddrBy(test.sortFuncs...).Sort(filteredAddrs)
 			ipv4Addrs, nonIPv4s := filteredAddrs.OnlyIPv4()
 			if len(nonIPv4s) != 0 {
 				t.Fatalf("[%d] bad", idx)
@@ -115,12 +115,12 @@ func TestSockAddr_SockAddrs_AscAddress(t *testing.T) {
 
 func TestSockAddr_SockAddrs_AscPrivate(t *testing.T) {
 	testInputs := []struct {
-		sortFuncs   []sockaddr.CmpFunc
+		sortFuncs   []sockaddr.CmpAddrFunc
 		inputAddrs  []string
 		sortedAddrs []string
 	}{
 		{ // testNum: 0
-			sortFuncs: []sockaddr.CmpFunc{
+			sortFuncs: []sockaddr.CmpAddrFunc{
 				sockaddr.AscType,
 				sockaddr.AscPrivate,
 				sockaddr.AscAddress,
@@ -165,7 +165,7 @@ func TestSockAddr_SockAddrs_AscPrivate(t *testing.T) {
 			shuffleStrings(inputAddrs)
 			inputSockAddrs := convertToSockAddrs(t, inputAddrs)
 
-			sockaddr.OrderedBy(test.sortFuncs...).Sort(inputSockAddrs)
+			sockaddr.OrderedAddrBy(test.sortFuncs...).Sort(inputSockAddrs)
 
 			for i, sockAddr := range sortedAddrs {
 				if !sockAddr.Equal(inputSockAddrs[i]) {
@@ -182,7 +182,7 @@ func TestSockAddr_SockAddrs_AscPrivate(t *testing.T) {
 func TestSockAddr_SockAddrs_AscType(t *testing.T) {
 	testInputs := sockAddrStringInputs{
 		{ // testNum: 0
-			sortFuncs: []sockaddr.CmpFunc{
+			sortFuncs: []sockaddr.CmpAddrFunc{
 				sockaddr.AscType,
 			},
 			inputAddrs: []string{
@@ -219,7 +219,7 @@ func TestSockAddr_SockAddrs_AscType(t *testing.T) {
 			inputSockAddrs := convertToSockAddrs(t, test.inputAddrs)
 			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 
-			sockaddr.OrderedBy(test.sortFuncs...).Sort(inputSockAddrs)
+			sockaddr.OrderedAddrBy(test.sortFuncs...).Sort(inputSockAddrs)
 
 			for i, sockAddr := range sortedAddrs {
 				if sockAddr.Type() != sortedAddrs[i].Type() {

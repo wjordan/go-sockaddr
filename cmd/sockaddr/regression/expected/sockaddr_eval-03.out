@@ -1,3 +1,1 @@
-[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | joinAddrs \" \"}}"
-[0] out: "100:: fe80::1/64"
-
+100:: fe80::1/64

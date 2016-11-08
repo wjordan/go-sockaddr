@@ -12,39 +12,39 @@ type SockAddrs []SockAddr
 func (s SockAddrs) Len() int      { return len(s) }
 func (s SockAddrs) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
-// CmpFunc is the function signature that must be met to be used in the
-// OrderedBy multiSorter
-type CmpFunc func(p1, p2 *SockAddr) int
+// CmpAddrFunc is the function signature that must be met to be used in the
+// OrderedAddrBy multiAddrSorter
+type CmpAddrFunc func(p1, p2 *SockAddr) int
 
-// multiSorter implements the Sort interface, sorting the SockAddrs within.
-type multiSorter struct {
+// multiAddrSorter implements the Sort interface, sorting the SockAddrs within.
+type multiAddrSorter struct {
 	addrs SockAddrs
-	cmp   []CmpFunc
+	cmp   []CmpAddrFunc
 }
 
 // Sort sorts the argument slice according to the Cmp functions passed to
-// OrderedBy.
-func (ms *multiSorter) Sort(sockAddrs SockAddrs) {
+// OrderedAddrBy.
+func (ms *multiAddrSorter) Sort(sockAddrs SockAddrs) {
 	ms.addrs = sockAddrs
 	sort.Sort(ms)
 }
 
-// OrderedBy sorts SockAddr by the list of sort function pointers.
-func OrderedBy(cmpFuncs ...CmpFunc) *multiSorter {
-	return &multiSorter{
+// OrderedAddrBy sorts SockAddr by the list of sort function pointers.
+func OrderedAddrBy(cmpFuncs ...CmpAddrFunc) *multiAddrSorter {
+	return &multiAddrSorter{
 		cmp: cmpFuncs,
 	}
 }
 
 // Len is part of sort.Interface.
-func (ms *multiSorter) Len() int {
+func (ms *multiAddrSorter) Len() int {
 	return len(ms.addrs)
 }
 
 // Less is part of sort.Interface. It is implemented by looping along the
 // Cmp() functions until it finds a comparison that is either less than,
 // equal to, or greater than.
-func (ms *multiSorter) Less(i, j int) bool {
+func (ms *multiAddrSorter) Less(i, j int) bool {
 	p, q := &ms.addrs[i], &ms.addrs[j]
 	// Try all but the last comparison.
 	var k int
@@ -76,7 +76,7 @@ func (ms *multiSorter) Less(i, j int) bool {
 }
 
 // Swap is part of sort.Interface.
-func (ms *multiSorter) Swap(i, j int) {
+func (ms *multiAddrSorter) Swap(i, j int) {
 	ms.addrs[i], ms.addrs[j] = ms.addrs[j], ms.addrs[i]
 }
 
@@ -239,7 +239,7 @@ func ReverseAddrs(inputAddrs SockAddrs) SockAddrs {
 // non-deterministic.
 func SortByAddr(inputAddrs SockAddrs) SockAddrs {
 	sortedAddrs := append([]SockAddr(nil), inputAddrs...)
-	OrderedBy(AscAddress).Sort(inputAddrs)
+	OrderedAddrBy(AscAddress).Sort(sortedAddrs)
 	return sortedAddrs
 }
 
@@ -248,7 +248,7 @@ func SortByAddr(inputAddrs SockAddrs) SockAddrs {
 // will be at the end of the list (note: the sort order is non-deterministic).
 func SortByPort(inputAddrs SockAddrs) SockAddrs {
 	sortedAddrs := append([]SockAddr(nil), inputAddrs...)
-	OrderedBy(AscPort).Sort(inputAddrs)
+	OrderedAddrBy(AscPort).Sort(sortedAddrs)
 	return sortedAddrs
 }
 
@@ -256,7 +256,7 @@ func SortByPort(inputAddrs SockAddrs) SockAddrs {
 // that share a type are non-deterministic re: their sort order.
 func SortByType(inputAddrs SockAddrs) SockAddrs {
 	sortedAddrs := append([]SockAddr(nil), inputAddrs...)
-	OrderedBy(AscType).Sort(inputAddrs)
+	OrderedAddrBy(AscType).Sort(sortedAddrs)
 	return sortedAddrs
 }
 
@@ -264,7 +264,7 @@ func SortByType(inputAddrs SockAddrs) SockAddrs {
 // subnet (smallest to largest).
 func SortByNetworkSize(inputAddrs SockAddrs) SockAddrs {
 	sortedAddrs := append([]SockAddr(nil), inputAddrs...)
-	OrderedBy(AscNetworkSize).Sort(inputAddrs)
+	OrderedAddrBy(AscNetworkSize).Sort(sortedAddrs)
 	return sortedAddrs
 }
 

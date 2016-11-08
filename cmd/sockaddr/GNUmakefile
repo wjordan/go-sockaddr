@@ -12,7 +12,7 @@ $(BIN): $(SRCS)
 
 .PHONY: clean
 clean::
-	rm -f $(BIN)
+	rm -f $(BIN) regression/*.diff
 
 .PHONY: install
 install:: $(BIN)

@@ -1,3 +1,8 @@
-Usage: sockaddr eval [template ...]
+Usage: sockaddr eval [options] [template ...]
 
   Parse the sockaddr template and evaluates the output.
+
+Options:
+
+  -d  Debug output
+  -n  Suppress newlines between args

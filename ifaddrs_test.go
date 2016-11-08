@@ -18,7 +18,7 @@ func TestGetIfAddrs(t *testing.T) {
 		t.Skip()
 	}
 
-	var loInt *sockaddr.IfAddrs
+	var loInt *sockaddr.IfAddr
 	for _, ifAddr := range ifAddrs {
 		if ifAddr.Name == "lo0" {
 			loInt = &ifAddr
@@ -32,25 +32,23 @@ func TestGetIfAddrs(t *testing.T) {
 
 	haveIPv4, foundIPv4lo := false, false
 	haveIPv6, foundIPv6lo := false, false
-	for _, addr := range loInt.Addrs {
-		switch addr.Type() {
-		case sockaddr.TypeIPv4:
-			haveIPv4 = true
+	switch loInt.SockAddr.Type() {
+	case sockaddr.TypeIPv4:
+		haveIPv4 = true
 
-			// Make the semi-brittle assumption that if we have
-			// IPv4, we also have an address at 127.0.0.1 available
-			// to us.
-			if addr.String() == "127.0.0.1/8" {
-				foundIPv4lo = true
-			}
-		case sockaddr.TypeIPv6:
-			haveIPv6 = true
-			if addr.String() == "100::" {
-				foundIPv6lo = true
-			}
-		default:
-			t.Fatalf("Unsupported type %v for address %v", addr.Type(), addr)
+		// Make the semi-brittle assumption that if we have
+		// IPv4, we also have an address at 127.0.0.1 available
+		// to us.
+		if loInt.SockAddr.String() == "127.0.0.1/8" {
+			foundIPv4lo = true
 		}
+	case sockaddr.TypeIPv6:
+		haveIPv6 = true
+		if loInt.String() == "100::" {
+			foundIPv6lo = true
+		}
+	default:
+		t.Fatalf("Unsupported type %v for address %v", loInt.Type(), loInt)
 	}
 
 	// While not wise, it's entirely possible a host doesn't have IPv4
@@ -69,6 +67,8 @@ func TestGetIfAddrs(t *testing.T) {
 // TestGetDefaultIfName tests to make sure a default interface name is always
 // returned from getDefaultIfName().
 func TestGetDefaultInterface(t *testing.T) {
+	// TODO: only run this test if we have Up interfaces
+
 	_, err := sockaddr.GetDefaultInterface()
 	if err != nil {
 		t.Fatal(err)

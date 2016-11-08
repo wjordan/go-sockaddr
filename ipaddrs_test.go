@@ -445,7 +445,7 @@ func TestSockAddr_IPAddrs_IPAddrsByCmp(t *testing.T) {
 			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
 			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 
-			sockaddr.OrderedBy(sockaddr.AscType, sockaddr.AscPrivate, sockaddr.AscAddress, sockaddr.AscPort).Sort(inputAddrs)
+			sockaddr.OrderedAddrBy(sockaddr.AscType, sockaddr.AscPrivate, sockaddr.AscAddress, sockaddr.AscPort).Sort(inputAddrs)
 
 			for i, sockAddr := range inputAddrs {
 				if !sockAddr.Equal(sortedAddrs[i]) {
