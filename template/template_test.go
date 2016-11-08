@@ -135,11 +135,28 @@ func TestSockAddr_Parse(t *testing.T) {
 			output: `100:: fe80::1/64`,
 		},
 		// {
-		// 	// NOTE(sean@): This is the HashiCorp default in 2016.
-		// 	name:   "HashiCorpDefault2016",
-		// 	input:  `{{range . | includeByType "^IP(v[46])?$" | includeByRFC 1918 | sortByAddr }}{{ . }} {{end}}{{range . | includeByType "^IP(v[46])?$" | includeByRFC 6598 | sortByAddr }}{{ . }} {{end}}`,
-		// 	output: `true`,
+		// 	name:   "lo0 flags up and limit 1",
+		// 	input:  `{{. | includeByIfName "lo0" | includeByFlag "Up" | limitAddrs 1}}`,
+		// 	output: `[100::]`,
 		// },
+		{
+			// NOTE(sean@): This is the HashiCorp default in 2016.
+			// Indented for effect.  Using "true" as the output
+			// instead of printing the correct $rfc*Addrs values.
+			name: "HashiCorpDefault2016",
+			input: `
+{{- with $addrs := GetIfSockAddrs | includeByType "^IP(v[46])?$" -}}
+  {{- $rfc1918Addrs := $addrs | includeByRFC 1918 | ifAddrs | sortByAddr | limitAddrs 1 | joinAddrs " " -}}
+  {{- $rfc6598Addrs := $addrs | includeByRFC 6598 | ifAddrs | sortByAddr | limitAddrs 1 | joinAddrs " " -}}
+
+  {{- if ($rfc1918Addrs | len) gt 0 -}}
+    {{- print "true" -}}{{/* print $rfc1918Addrs*/ -}}
+  {{- else if ($rfc6598Addrs | len) gt 0 -}}
+    {{- print "true" -}}{{/* print $rfc6598Addrs*/ -}}
+  {{- end -}}
+{{- end -}}`,
+			output: `true`,
+		},
 	}
 
 	for _, test := range tests {
