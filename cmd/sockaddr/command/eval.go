@@ -1,8 +1,11 @@
 package command
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/hashicorp/go-sockaddr/template"
 	"github.com/mitchellh/cli"
@@ -36,8 +39,22 @@ func (c *EvalCommand) Run(args []string) int {
 	}
 
 	for i, in := range args {
+		if in == "-" {
+			var f io.Reader = os.Stdin
+			var buf bytes.Buffer
+			if _, err := io.Copy(&buf, f); err != nil {
+				c.Ui.Error(fmt.Sprintf("[ERROR]: Error reading from stdin: %v", err))
+				return 1
+			}
+			in = buf.String()
+			if len(in) == 0 {
+				return 0
+			}
+		}
+
 		out, err := template.Parse(in)
 		if err != nil {
+			c.Ui.Error(fmt.Sprintf("ERROR[%d] in: %q\n[%d] msg: %v\n", i, in, i, err))
 			return 1
 		}
 		c.Ui.Output(fmt.Sprintf("[%d] in: %q\n[%d] out: %q\n", i, in, i, out))

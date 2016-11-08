@@ -80,7 +80,9 @@ ListenStream  "unix" "/tmp/example.sock"
 
 The `sockaddr` library has the potential to be very complex, which is why the
 `sockaddr` command supports an `eval` subcommand in order to test configurations
-from the command line.  Here are a few impractical examples to get you started:
+from the command line.  If the argument passed to `eval` is a dash (`-`), then
+`sockaddr eval` will read from stdin.  Here are a few impractical examples to
+get you started:
 
 ```text
 $ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | joinAddrs " "}}'
@@ -93,6 +95,11 @@ $ sockaddr eval '{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByTy
 [0] in: "{{with $ifSet := includeByIfName \"lo0\" . }}{{ range includeByType \"IPv6\" $ifSet | ifAddrs | sortByAddr | reverseAddrs}}{{ . }} {{end}}{{end}}"
 [0] out: "fe80::1/64 100:: "
 $ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | joinAddrs " "}}'
+[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | joinAddrs \" \"}}"
+[0] out: "100:: fe80::1/64"
+$ cat <<'EOF' | sockaddr eval -
+{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | joinAddrs " "}}
+EOF
 [0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | joinAddrs \" \"}}"
 [0] out: "100:: fe80::1/64"
 ```
