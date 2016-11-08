@@ -81,8 +81,20 @@ ListenStream  "unix" "/tmp/example.sock"
 The `sockaddr` library has the potential to be very complex, which is why the
 `sockaddr` command supports an `eval` subcommand in order to test configurations
 from the command line.  If the argument passed to `eval` is a dash (`-`), then
-`sockaddr eval` will read from stdin.  Here are a few impractical examples to
-get you started:
+`sockaddr eval` will read from stdin.
+
+```
+Usage: sockaddr eval [options] [template ...]
+
+  Parse the sockaddr template and evaluates the output.
+
+Options:
+
+  -d  Debug output
+  -n  Suppress newlines between args
+```
+
+Here are a few impractical examples to get you started:
 
 ```text
 $ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | joinAddrs " "}}'
