@@ -71,7 +71,6 @@ func (ms *multiAddrSorter) Less(i, j int) bool {
 	default:
 		// Still a tie! Now what?
 		return false
-		panic("undefined sort order for remaining items in the list")
 	}
 }
 
