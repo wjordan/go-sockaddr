@@ -35,14 +35,6 @@ type SockAddr interface {
 	ListenPacketArgs() (string, string)
 	ListenStreamArgs() (string, string)
 
-	// // ListenArgs returns the necessary arguments required for
-	// // stream-based communication such as net.Listen().
-	// ListenArgs() (net.Listener, error)
-
-	// // ListenPacketArgs returns the necessary arguments required for
-	// // packet-based communication such as net.ListenPacket().
-	// ListenPacketArgs() (net.PacketConn, error)
-
 	// String returns the string representation of SockAddr
 	String() string
 
