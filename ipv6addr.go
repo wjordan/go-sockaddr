@@ -220,6 +220,8 @@ func (ipv6 IPv6Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
 	b := IsRFC(rfcNum, ipv6b)
 	switch {
 	case (a && b), (!a && !b):
+		// If a and b both belong to the RFC, or neither belong to
+		// rfcNum, defer sorting to the next sorter.
 		return 0
 	case a && !b:
 		return -1

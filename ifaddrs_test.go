@@ -6,6 +6,9 @@ import (
 	sockaddr "github.com/hashicorp/go-sockaddr"
 )
 
+// NOTE: A number of these code paths are exercised in template/ and
+// cmd/sockaddr/.
+//
 // TODO(sean@): Add better coverage for filtering functions (e.g. ExcludeBy*,
 // IncludeBy*).
 

@@ -13,6 +13,9 @@ func init() {
 	lib.SeedMathRand()
 }
 
+// NOTE: A number of these code paths are exercised in template/ and
+// cmd/sockaddr/
+
 // sockAddrStringInputs allows for easy test creation by developers.
 // Parallel arrays of string inputs are converted to their SockAddr
 // equivalents for use by unit tests.
