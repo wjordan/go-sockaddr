@@ -98,8 +98,8 @@ func IsRFC(rfcNum uint, sa SockAddr) bool {
 // ToIPAddr returns an IPAddr type, if possible, otherwise returns nil if the
 // type conversion fails.
 func ToIPAddr(sa SockAddr) *IPAddr {
-	switch sa.Type() {
-	case TypeIPv4, TypeIPv6:
+	switch sa.(type) {
+	case IPv4Addr, IPv6Addr:
 		ipa, ok := sa.(IPAddr)
 		if !ok {
 			return nil
@@ -111,8 +111,8 @@ func ToIPAddr(sa SockAddr) *IPAddr {
 }
 
 func ToIPv4Addr(sa SockAddr) *IPv4Addr {
-	switch sa.Type() {
-	case TypeIPv4:
+	switch sa.(type) {
+	case IPv4Addr:
 		ipv4, ok := sa.(IPv4Addr)
 		if !ok {
 			return nil
@@ -124,8 +124,8 @@ func ToIPv4Addr(sa SockAddr) *IPv4Addr {
 }
 
 func ToIPv6Addr(sa SockAddr) *IPv6Addr {
-	switch sa.Type() {
-	case TypeIPv6:
+	switch sa.(type) {
+	case IPv6Addr:
 		ipv6, ok := sa.(IPv6Addr)
 		if !ok {
 			return nil
@@ -137,8 +137,8 @@ func ToIPv6Addr(sa SockAddr) *IPv6Addr {
 }
 
 func ToUnixSock(sa SockAddr) *UnixSock {
-	switch sa.Type() {
-	case TypeUnix:
+	switch sa.(type) {
+	case UnixSock:
 		ua, ok := sa.(UnixSock)
 		if !ok {
 			return nil

@@ -311,9 +311,6 @@ func (ipv6 IPv6Addr) DialStreamArgs() (network, dialArgs string) {
 
 // Equal returns true if a SockAddr is equal to the receiving IPv4Addr.
 func (ipv6a IPv6Addr) Equal(sa SockAddr) bool {
-	if sa.Type() != TypeIPv6 {
-		return false
-	}
 	ipv6b, ok := sa.(IPv6Addr)
 	if !ok {
 		return false

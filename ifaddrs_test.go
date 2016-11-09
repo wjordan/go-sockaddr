@@ -32,8 +32,8 @@ func TestGetIfAddrs(t *testing.T) {
 
 	haveIPv4, foundIPv4lo := false, false
 	haveIPv6, foundIPv6lo := false, false
-	switch loInt.SockAddr.Type() {
-	case sockaddr.TypeIPv4:
+	switch loInt.SockAddr.(type) {
+	case sockaddr.IPv4Addr:
 		haveIPv4 = true
 
 		// Make the semi-brittle assumption that if we have
@@ -42,7 +42,7 @@ func TestGetIfAddrs(t *testing.T) {
 		if loInt.SockAddr.String() == "127.0.0.1/8" {
 			foundIPv4lo = true
 		}
-	case sockaddr.TypeIPv6:
+	case sockaddr.IPv6Addr:
 		haveIPv6 = true
 		if loInt.String() == "100::" {
 			foundIPv6lo = true

@@ -131,12 +131,12 @@ func (ipv4 IPv4Addr) BroadcastAddress() IPv4Network {
 // Cmp returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1 if it
 // should sort first, or 1 if it should sort after.
 func (ipv4 IPv4Addr) Cmp(sa SockAddr) int {
-	switch sa.Type() {
-	case TypeUnix:
+	switch sa.(type) {
+	case UnixSock:
 		return -1
-	case TypeIPv4:
+	case IPv4Addr:
 		break
-	case TypeIPv6:
+	case IPv6Addr:
 		return 1
 	default:
 		panic("unsupported type")
@@ -282,9 +282,6 @@ func (ipv4 IPv4Addr) DialStreamArgs() (network, dialArgs string) {
 
 // Equal returns true if a SockAddr is equal to the receiving IPv4Addr.
 func (ipv4 IPv4Addr) Equal(sa SockAddr) bool {
-	if sa.Type() != TypeIPv4 {
-		return false
-	}
 	ipv4b, ok := sa.(IPv4Addr)
 	if !ok {
 		return false
