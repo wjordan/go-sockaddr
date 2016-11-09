@@ -75,7 +75,7 @@ func NewSockAddr(s string) (SockAddr, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to convert %s to an IPv4 or IPv6 address, or a UNIX Socket", s)
+	return nil, fmt.Errorf("Unable to convert %q to an IPv4 or IPv6 address, or a UNIX Socket", s)
 }
 
 // IsRFC tests to see if an SockAddr matches the specified RFC
