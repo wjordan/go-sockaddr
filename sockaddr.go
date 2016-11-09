@@ -95,15 +95,8 @@ func IsRFC(rfcNum uint, sa SockAddr) bool {
 	return contained
 }
 
-// func NewPort(s string, port uint16) (ipa IPAddr, err error) {
-// 	ipa, err = New(s)
-// 	if err == nil {
-// 		ipa.SetPort(port)
-// 	}
-
-// 	return ipa, err
-// }
-
+// ToIPAddr returns an IPAddr type, if possible, otherwise returns nil if the
+// type conversion fails.
 func ToIPAddr(sa SockAddr) *IPAddr {
 	switch sa.Type() {
 	case TypeIPv4, TypeIPv6:
