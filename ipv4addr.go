@@ -155,16 +155,6 @@ func (ipv4 IPv4Addr) Cmp(sa SockAddr) int {
 	} else {
 		return 1
 	}
-
-	// // Sort hosts with a port of 0 after hosts with a non-zero port.  See
-	// // SortIPAddrsByNetworkSize() for details.
-	// if ipv4.Port == ipv4b.Port {
-	// 	return 0
-	// } else if (ipv4.Port != 0 && ipv4b.Port != 0) && ipv4.Port > ipv4b.Port {
-	// 	return 1
-	// } else {
-	// 	return -1
-	// }
 }
 
 // CmpAddress returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1
