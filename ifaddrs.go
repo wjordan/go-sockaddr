@@ -129,7 +129,7 @@ func GetIfSockAddrs() ([]IfAddr, error) {
 		for _, addr := range addrs {
 			ipAddr, err := NewIPAddr(addr.String())
 			if err != nil {
-				continue
+				return []IfAddr{}, fmt.Errorf("unable to create an IP address from %q", addr.String())
 			}
 
 			ifAddr := IfAddr{
