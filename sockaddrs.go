@@ -164,7 +164,7 @@ func AscType(p1Ptr, p2Ptr *SockAddr) int {
 	} else if p1Type > p2Type {
 		return 1
 	}
-	panic("bad, m'kay?")
+	return 0
 }
 
 // FilterByType filters SockAddrs and returns a list of the matching type
