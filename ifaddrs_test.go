@@ -6,6 +6,9 @@ import (
 	sockaddr "github.com/hashicorp/go-sockaddr"
 )
 
+// TODO(sean@): Add better coverage for filtering functions (e.g. ExcludeBy*,
+// IncludeBy*).
+
 // TestGetIfAddrs runs through the motions of calling sockaddr.GetIfAddrs(), but
 // doesn't do much in the way of testing beyond verifying that `lo0` has a
 // loopback address present.

@@ -128,8 +128,6 @@ func (ipv4 IPv4Addr) BroadcastAddress() IPv4Network {
 	return IPv4Network(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
 }
 
-// Cmp returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1 if it
-// should sort first, or 1 if it should sort after.
 func (ipv4 IPv4Addr) Cmp(sa SockAddr) int {
 	switch sa.(type) {
 	case UnixSock:

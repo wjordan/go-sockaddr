@@ -7,6 +7,9 @@ import (
 	"github.com/hashicorp/go-sockaddr"
 )
 
+// TODO(sean@): Either extend this test to include IPv6Addr and UnixSock, or
+// remove and find a good home to test this functionality elsewhere.
+
 func TestSockAddr_New(t *testing.T) {
 	type SockAddrFixture struct {
 		input              string
