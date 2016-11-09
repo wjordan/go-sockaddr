@@ -69,7 +69,7 @@ func TestGetIfAddrs(t *testing.T) {
 func TestGetDefaultInterface(t *testing.T) {
 	// TODO: only run this test if we have Up interfaces
 
-	_, err := sockaddr.GetDefaultInterface()
+	_, err := sockaddr.GetDefaultInterfaces()
 	if err != nil {
 		t.Fatal(err)
 	}
