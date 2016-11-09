@@ -7,8 +7,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-
-	"github.com/hashicorp/errwrap"
 )
 
 // IfAddr is a combined SockAddr and Interface
@@ -167,7 +165,7 @@ func GetDefaultInterfaces() ([]IfAddr, error) {
 func IfByName(inputRe string, ifAddrs []IfAddr) (matched, remainder []IfAddr, err error) {
 	re, err := regexp.Compile(inputRe)
 	if err != nil {
-		return nil, nil, errwrap.Wrapf(fmt.Sprintf("Unable to compile *ByName regexp %+q: {{err}}", inputRe), err)
+		return nil, nil, fmt.Errorf("Unable to compile *ByName regexp %+q: %v", inputRe, err)
 	}
 
 	matchedAddrs := make([]IfAddr, 0, len(ifAddrs))
@@ -188,7 +186,7 @@ func IfByName(inputRe string, ifAddrs []IfAddr) (matched, remainder []IfAddr, er
 func IfByNameExclude(inputRe string, ifAddrs []IfAddr) ([]IfAddr, error) {
 	_, addrs, err := IfByName(inputRe, ifAddrs)
 	if err != nil {
-		return nil, errwrap.Wrapf(fmt.Sprintf("Unable to compile excludeByName regexp %+q: {{err}}", inputRe), err)
+		return nil, fmt.Errorf("Unable to compile excludeByName regexp %+q: %v", inputRe, err)
 	}
 
 	return addrs, nil
@@ -199,7 +197,7 @@ func IfByNameExclude(inputRe string, ifAddrs []IfAddr) ([]IfAddr, error) {
 func IfByNameInclude(inputRe string, ifAddrs []IfAddr) ([]IfAddr, error) {
 	addrs, _, err := IfByName(inputRe, ifAddrs)
 	if err != nil {
-		return nil, errwrap.Wrapf(fmt.Sprintf("Unable to compile includeByName regexp %+q: {{err}}", inputRe), err)
+		return nil, fmt.Errorf("Unable to compile includeByName regexp %+q: %v", inputRe, err)
 	}
 
 	return addrs, nil
@@ -263,7 +261,7 @@ func IfByRFCInclude(inputRFC uint, ifAddrs []IfAddr) ([]IfAddr, error) {
 func IfByType(inputRe string, ifAddrs []IfAddr) (matched, remainder []IfAddr, err error) {
 	re, err := regexp.Compile(inputRe)
 	if err != nil {
-		return nil, nil, errwrap.Wrapf(fmt.Sprintf("Unable to compile includeByType regexp %+q: {{err}}", inputRe), err)
+		return nil, nil, fmt.Errorf("Unable to compile includeByType regexp %+q: %v", inputRe, err)
 	}
 
 	matchingIfAddrs := make([]IfAddr, 0, len(ifAddrs))
@@ -290,7 +288,7 @@ func IfByType(inputRe string, ifAddrs []IfAddr) (matched, remainder []IfAddr, er
 func IfByTypeExclude(inputRe string, ifAddrs []IfAddr) ([]IfAddr, error) {
 	_, addrs, err := IfByType(inputRe, ifAddrs)
 	if err != nil {
-		return nil, errwrap.Wrapf(fmt.Sprintf("Unable to compile excludeByType regexp %+q: {{err}}", inputRe), err)
+		return nil, fmt.Errorf("Unable to compile excludeByType regexp %+q: {{err}}", inputRe, err)
 	}
 
 	return addrs, nil
@@ -305,7 +303,7 @@ func IfByTypeExclude(inputRe string, ifAddrs []IfAddr) ([]IfAddr, error) {
 // Any addresses on those interfaces that don't match will be omitted from the
 // results.
 func IfByFlag(inputFlags string, ifAddrs []IfAddr) (matched, remainder []IfAddr, err error) {
-	return nil, nil, errwrap.Wrapf(fmt.Sprintf("Unable to compile includeByFlag regexp %+q: {{err}}", inputFlags), err)
+	return nil, nil, fmt.Errorf("Unable to compile includeByFlag regexp %+q: %v", inputFlags, err)
 }
 
 // IfByFlagInclude includes any interface and only the matching addresses that
@@ -319,7 +317,7 @@ func IfByFlag(inputFlags string, ifAddrs []IfAddr) (matched, remainder []IfAddr,
 func IfByFlagInclude(inputFlag string, ifAddrs []IfAddr) ([]IfAddr, error) {
 	addrs, _, err := IfByFlag(inputFlag, ifAddrs)
 	if err != nil {
-		return nil, errwrap.Wrapf(fmt.Sprintf("Invalid flag in includeByFlag %+q: {{err}}", inputFlag), err)
+		return nil, fmt.Errorf("Invalid flag in includeByFlag %+q: %v", inputFlag, err)
 	}
 
 	return addrs, nil
@@ -335,7 +333,7 @@ func IfByFlagInclude(inputFlag string, ifAddrs []IfAddr) ([]IfAddr, error) {
 func IfByFlagExclude(inputFlag string, ifAddrs []IfAddr) ([]IfAddr, error) {
 	_, addrs, err := IfByFlag(inputFlag, ifAddrs)
 	if err != nil {
-		return nil, errwrap.Wrapf(fmt.Sprintf("Invalid flag in excludeByFlag %+q: {{err}}", inputFlag), err)
+		return nil, fmt.Errorf("Invalid flag in excludeByFlag %+q: %v", inputFlag, err)
 	}
 
 	return addrs, nil
@@ -352,7 +350,7 @@ func IfByFlagExclude(inputFlag string, ifAddrs []IfAddr) ([]IfAddr, error) {
 func IfByTypeInclude(inputRe string, ifAddrs []IfAddr) ([]IfAddr, error) {
 	addrs, _, err := IfByType(inputRe, ifAddrs)
 	if err != nil {
-		return nil, errwrap.Wrapf(fmt.Sprintf("Unable to compile includeByType regexp %+q: {{err}}", inputRe), err)
+		return nil, fmt.Errorf("Unable to compile includeByType regexp %+q: %v", inputRe, err)
 	}
 
 	return addrs, nil
