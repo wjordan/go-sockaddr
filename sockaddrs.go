@@ -217,7 +217,7 @@ func (sas SockAddrs) OnlyIPv6() (IPv6Addrs, SockAddrs) {
 // are not comparable will be at the end of the list, however their order is
 // non-deterministic.
 func SortByAddr(inputAddrs SockAddrs) SockAddrs {
-	sortedAddrs := append([]SockAddr(nil), inputAddrs...)
+	sortedAddrs := append(SockAddrs(nil), inputAddrs...)
 	OrderedAddrBy(AscAddress).Sort(sortedAddrs)
 	return sortedAddrs
 }
@@ -226,7 +226,7 @@ func SortByAddr(inputAddrs SockAddrs) SockAddrs {
 // set.  SockAddrs that don't have a port set and are therefore not comparable
 // will be at the end of the list (note: the sort order is non-deterministic).
 func SortByPort(inputAddrs SockAddrs) SockAddrs {
-	sortedAddrs := append([]SockAddr(nil), inputAddrs...)
+	sortedAddrs := append(SockAddrs(nil), inputAddrs...)
 	OrderedAddrBy(AscPort).Sort(sortedAddrs)
 	return sortedAddrs
 }
@@ -234,7 +234,7 @@ func SortByPort(inputAddrs SockAddrs) SockAddrs {
 // SortByType returns an array of SockAddrs ordered by their type.  SockAddrs
 // that share a type are non-deterministic re: their sort order.
 func SortByType(inputAddrs SockAddrs) SockAddrs {
-	sortedAddrs := append([]SockAddr(nil), inputAddrs...)
+	sortedAddrs := append(SockAddrs(nil), inputAddrs...)
 	OrderedAddrBy(AscType).Sort(sortedAddrs)
 	return sortedAddrs
 }
@@ -242,7 +242,7 @@ func SortByType(inputAddrs SockAddrs) SockAddrs {
 // SortByNetworkSize returns an array of SockAddrs ordered by the size of the
 // subnet (smallest to largest).
 func SortByNetworkSize(inputAddrs SockAddrs) SockAddrs {
-	sortedAddrs := append([]SockAddr(nil), inputAddrs...)
+	sortedAddrs := append(SockAddrs(nil), inputAddrs...)
 	OrderedAddrBy(AscNetworkSize).Sort(sortedAddrs)
 	return sortedAddrs
 }

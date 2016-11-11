@@ -50,7 +50,7 @@ func (c *RFCListCommand) Run(args []string) int {
 	c.parseOpts(args)
 
 	var rfcs rfcNums
-	sockaddr.VisitAllRFCs(func(rfcNum uint, sas []sockaddr.SockAddr) {
+	sockaddr.VisitAllRFCs(func(rfcNum uint, sas sockaddr.SockAddrs) {
 		rfcs = append(rfcs, rfcNum)
 	})
 
