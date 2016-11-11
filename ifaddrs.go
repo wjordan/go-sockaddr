@@ -157,7 +157,7 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 	return ifs, nil
 }
 
-// IfByName returns a list of matched and non-matched IfAddr, or an error if
+// IfByName returns a list of matched and non-matched IfAddrs, or an error if
 // the regexp fails to compile.
 func IfByName(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
 	re, err := regexp.Compile(inputRe)
