@@ -246,13 +246,3 @@ func SortByNetworkSize(inputAddrs SockAddrs) SockAddrs {
 	OrderedAddrBy(AscNetworkSize).Sort(sortedAddrs)
 	return sortedAddrs
 }
-
-// LimitAddrs returns a slice of SockAddrs based on the limitAddrs
-func LimitAddrs(limitAddrs uint, inputAddrs SockAddrs) SockAddrs {
-	// Clamp the limit to the length of the array
-	if int(limitAddrs) > len(inputAddrs) {
-		limitAddrs = uint(len(inputAddrs))
-	}
-
-	return inputAddrs[0:limitAddrs]
-}
