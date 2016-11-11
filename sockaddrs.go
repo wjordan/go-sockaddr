@@ -3,7 +3,6 @@ package sockaddr
 import (
 	"bytes"
 	"sort"
-	"strings"
 )
 
 // SockAddrs is a collection of SockAddrs
@@ -212,15 +211,6 @@ func (sas SockAddrs) OnlyIPv6() (IPv6Addrs, SockAddrs) {
 	}
 
 	return ipv6Addrs, nonIPv6Addrs
-}
-
-// JoinAddrs joins a list of SockAddrs and returns a string
-func JoinAddrs(joinStr string, inputAddrs SockAddrs) string {
-	stringAddrs := make([]string, 0, len(inputAddrs))
-	for _, sa := range inputAddrs {
-		stringAddrs = append(stringAddrs, sa.String())
-	}
-	return strings.Join(stringAddrs, joinStr)
 }
 
 // ReverseAddrs reverses a list of SockAddrs.

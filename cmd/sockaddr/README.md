@@ -97,8 +97,8 @@ Options:
 Here are a few impractical examples to get you started:
 
 ```text
-$ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | joinAddrs " "}}'
-[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | joinAddrs \" \"}}"
+$ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | join "address" " "}}'
+[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | join "address" \" \"}}"
 [0] out: "100:: fe80::1/64"
 $ sockaddr eval '{{. | includeByRFC 1918 | ifNames | print | len | lt 2}}'
 [0] in: "{{. | includeByRFC 1918 | ifNames | print | len | lt 2}}"
@@ -106,13 +106,13 @@ $ sockaddr eval '{{. | includeByRFC 1918 | ifNames | print | len | lt 2}}'
 $ sockaddr eval '{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv6" $ifSet | ifAddrs | sortByAddr | reverseAddrs}}{{ . }} {{end}}{{end}}'
 [0] in: "{{with $ifSet := includeByIfName \"lo0\" . }}{{ range includeByType \"IPv6\" $ifSet | ifAddrs | sortByAddr | reverseAddrs}}{{ . }} {{end}}{{end}}"
 [0] out: "fe80::1/64 100:: "
-$ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | joinAddrs " "}}'
-[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | joinAddrs \" \"}}"
+$ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | join "address" " "}}'
+[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | join "address" \" \"}}"
 [0] out: "100:: fe80::1/64"
 $ cat <<'EOF' | sockaddr eval -
-{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | joinAddrs " "}}
+{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | join "address" " "}}
 EOF
-[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | joinAddrs \" \"}}"
+[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | join "address" \" \"}}"
 [0] out: "100:: fe80::1/64"
 ```
 
