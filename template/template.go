@@ -67,7 +67,6 @@ func init() {
 
 	HelperFuncs = template.FuncMap{
 		// Misc functions that operate on []SockAddr inputs
-		"reverseAddrs": sockaddr.ReverseAddrs,
 		"limitAddrs":   sockaddr.LimitAddrs,
 
 		// Misc functions that operate on []IfAddr inputs

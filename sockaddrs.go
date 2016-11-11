@@ -213,16 +213,6 @@ func (sas SockAddrs) OnlyIPv6() (IPv6Addrs, SockAddrs) {
 	return ipv6Addrs, nonIPv6Addrs
 }
 
-// ReverseAddrs reverses a list of SockAddrs.
-func ReverseAddrs(inputAddrs SockAddrs) SockAddrs {
-	reversedAddrs := append([]SockAddr(nil), inputAddrs...)
-	for i := len(reversedAddrs)/2 - 1; i >= 0; i-- {
-		opp := len(reversedAddrs) - 1 - i
-		reversedAddrs[i], reversedAddrs[opp] = reversedAddrs[opp], reversedAddrs[i]
-	}
-	return reversedAddrs
-}
-
 // SortByAddr returns an array of SockAddrs ordered by address.  SockAddrs that
 // are not comparable will be at the end of the list, however their order is
 // non-deterministic.

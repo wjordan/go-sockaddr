@@ -103,8 +103,8 @@ $ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | 
 $ sockaddr eval '{{. | includeByRFC 1918 | ifNames | print | len | lt 2}}'
 [0] in: "{{. | includeByRFC 1918 | ifNames | print | len | lt 2}}"
 [0] out: "true"
-$ sockaddr eval '{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv6" $ifSet | ifAddrs | sortByAddr | reverseAddrs}}{{ . }} {{end}}{{end}}'
-[0] in: "{{with $ifSet := includeByIfName \"lo0\" . }}{{ range includeByType \"IPv6\" $ifSet | ifAddrs | sortByAddr | reverseAddrs}}{{ . }} {{end}}{{end}}"
+$ sockaddr eval '{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv6" $ifSet | ifAddrs | sortByAddr | reverse}}{{ . }} {{end}}{{end}}'
+[0] in: "{{with $ifSet := includeByIfName \"lo0\" . }}{{ range includeByType \"IPv6\" $ifSet | ifAddrs | sortByAddr | reverse}}{{ . }} {{end}}{{end}}"
 [0] out: "fe80::1/64 100:: "
 $ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | join "address" " "}}'
 [0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | join "address" \" \"}}"
