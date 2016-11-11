@@ -356,39 +356,6 @@ func IfByTypeInclude(inputRe string, ifAddrs []IfAddr) ([]IfAddr, error) {
 	return addrs, nil
 }
 
-// GroupIfAddrsBy groups an []IfAddr based on the matching selector
-func GroupIfAddrsBy(selectorName string, inputIfAddrs []IfAddr) []IfAddr {
-	attrName := strings.ToLower(selectorName)
-
-	hash := make(map[string][]IfAddr, len(inputIfAddrs))
-
-	for _, ifAddr := range inputIfAddrs {
-		var out string
-		switch attrName {
-		case "address":
-			out = ifAddr.SockAddr.String()
-		case "name":
-			out = ifAddr.Name
-		default:
-			out = fmt.Sprintf("<unsupported method %+q>", selectorName)
-		}
-
-		if _, found := hash[out]; found {
-			hash[out] = append(hash[out], ifAddr)
-		} else {
-			hash[out] = []IfAddr{ifAddr}
-		}
-	}
-
-	ifs := make([]IfAddr, 0, len(inputIfAddrs))
-	for _, v := range hash {
-		for _, ifAddr := range v {
-			ifs = append(ifs, ifAddr)
-		}
-	}
-	return ifs
-}
-
 // UniqueIfAddrsBy creates a unique set of []IfAddr based on the matching
 // selector.  UniqueIfAddrsBy assumes the input has already been sorted.
 func UniqueIfAddrsBy(selectorName string, inputIfAddrs []IfAddr) []IfAddr {

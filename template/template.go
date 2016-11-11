@@ -71,7 +71,7 @@ func init() {
 		"reverseAddrs": sockaddr.ReverseAddrs,
 		"limitAddrs":   sockaddr.LimitAddrs,
 
-		"groupBy":  sockaddr.GroupIfAddrsBy,
+		// Misc functions that operate on []IfAddr inputs
 		"join":     sockaddr.JoinIfAddrs,
 		"limit":    sockaddr.LimitIfAddrs,
 		"reverse":  sockaddr.ReverseIfAddrs,
