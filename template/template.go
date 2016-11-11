@@ -66,7 +66,7 @@ func init() {
 	}
 
 	HelperFuncs = template.FuncMap{
-		// Misc functions that operate on []IfAddr inputs
+		// Misc functions that operate on IfAddrs inputs
 		"join":     sockaddr.JoinIfAddrs,
 		"limit":    sockaddr.LimitIfAddrs,
 		"reverse":  sockaddr.ReverseIfAddrs,
@@ -87,13 +87,13 @@ func Parse(input string) (string, error) {
 
 // ParseIfAddrs parses input as template input using the IfAddrs inputs, then
 // returns the string output if there are no errors.
-func ParseIfAddrs(input string, ifAddrs []sockaddr.IfAddr) (string, error) {
+func ParseIfAddrs(input string, ifAddrs sockaddr.IfAddrs) (string, error) {
 	return ParseIfAddrsTemplate(input, ifAddrs, template.New("sockaddr.Parse"))
 }
 
 // ParseIfAddrsTemplate parses input as template input using the IfAddrs inputs,
 // then returns the string output if there are no errors.
-func ParseIfAddrsTemplate(input string, ifAddrs []sockaddr.IfAddr, tmplIn *template.Template) (string, error) {
+func ParseIfAddrsTemplate(input string, ifAddrs sockaddr.IfAddrs, tmplIn *template.Template) (string, error) {
 	// Create a template, add the function map, and parse the text.
 	tmpl, err := tmplIn.Option("missingkey=error").
 		Funcs(SourceFuncs).
@@ -117,8 +117,8 @@ func ParseIfAddrsTemplate(input string, ifAddrs []sockaddr.IfAddr, tmplIn *templ
 // SortByAddrs takes an array of SockAddrs and orders them by address.
 // SockAddrs that are not comparable will be at the end of the list, however
 // their order is non-deterministic.
-func SortByAddrs(inputIfAddrs []sockaddr.IfAddr) []sockaddr.IfAddr {
-	sortedIfAddrs := append([]sockaddr.IfAddr(nil), inputIfAddrs...)
+func SortByAddrs(inputIfAddrs sockaddr.IfAddrs) sockaddr.IfAddrs {
+	sortedIfAddrs := append(sockaddr.IfAddrs(nil), inputIfAddrs...)
 	sockaddr.OrderedIfAddrBy(sockaddr.AscIfAddress).Sort(sortedIfAddrs)
 	return sortedIfAddrs
 }

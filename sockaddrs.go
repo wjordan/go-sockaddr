@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-// SockAddrs is a collection of SockAddrs
+// SockAddrs is a slice of SockAddrs
 type SockAddrs []SockAddr
 
 func (s SockAddrs) Len() int      { return len(s) }
