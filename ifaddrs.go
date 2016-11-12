@@ -93,6 +93,12 @@ func AscIfName(p1Ptr, p2Ptr *IfAddr) int {
 	return strings.Compare(p1Ptr.Name, p2Ptr.Name)
 }
 
+// AscIfNetworkSize is a sorting function to sort IfAddrs by their respective
+// network mask size.
+func AscIfNetworkSize(p1Ptr, p2Ptr *IfAddr) int {
+	return AscNetworkSize(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
 // AscIfPort is a sorting function to sort IfAddrs by their respective
 // port type.  Non-equal types are deferred in the sort.
 func AscIfPort(p1Ptr, p2Ptr *IfAddr) int {
@@ -351,6 +357,44 @@ func IfByTypeInclude(inputRe string, ifAddrs IfAddrs) (IfAddrs, error) {
 	}
 
 	return addrs, nil
+}
+
+// SortIfBy returns an IfAddrs sorted based on the passed in selector.
+func SortIfBy(selectorName string, inputIfAddrs IfAddrs) IfAddrs {
+	sortedIfs := append(IfAddrs(nil), inputIfAddrs...)
+	switch strings.ToLower(selectorName) {
+	case "address":
+		// The "address" selector returns an array of IfAddrs ordered by
+		// the network address.  IfAddrs that are not comparable will be
+		// at the end of the list and in a non-deterministic order.
+		OrderedIfAddrBy(AscIfAddress).Sort(sortedIfs)
+	case "name":
+		// The "name" selector returns an array of IfAddrs ordered by
+		// the interface name.
+		OrderedIfAddrBy(AscIfName).Sort(sortedIfs)
+	case "port":
+		// The "port" selector returns an array of IfAddrs ordered by
+		// the port, if included in the IfAddr.  IfAddrs that are not
+		// comparable will be at the end of the list and in a
+		// non-deterministic order.
+		OrderedIfAddrBy(AscIfPort).Sort(sortedIfs)
+	case "size":
+		// The "size" selector returns an array of IfAddrs ordered by
+		// the size of the network mask, smallest mask (fewest number of
+		// hosts per network) to largest (e.g. a /32 sorts before a
+		// /24).
+		OrderedIfAddrBy(AscIfNetworkSize).Sort(sortedIfs)
+	case "type":
+		// The "type" selector returns an array of IfAddrs ordered by
+		// the type of the IfAddr.  The sort order is Unix, IPv4, then
+		// IPv6.
+		OrderedIfAddrBy(AscIfType).Sort(sortedIfs)
+	default:
+		// Return an empty list for invalid sort types.
+		return IfAddrs{}
+	}
+
+	return sortedIfs
 }
 
 // UniqueIfAddrsBy creates a unique set of IfAddrs based on the matching

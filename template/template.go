@@ -37,12 +37,7 @@ func init() {
 	}
 
 	SortFuncs = template.FuncMap{
-		// *sortBy* functions sort their IfAddrs
-		//
-		"sortByAddr": sockaddr.SortIfByAddr,
-		"sortByName": sockaddr.SortIfByName,
-		"sortByPort": sockaddr.SortIfByPort,
-		"sortByType": sockaddr.SortIfByType,
+		"sort": sockaddr.SortIfBy,
 	}
 
 	FilterFuncs = template.FuncMap{

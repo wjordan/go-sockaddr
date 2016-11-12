@@ -27,27 +27,27 @@ func TestSockAddr_Parse(t *testing.T) {
 		},
 		{
 			name:   "includeByIfName regexp",
-			input:  `{{GetIfSockAddrs | includeByIfName "^(en|lo)0$" | excludeByIfName "^en0$" | sortByType | sortByAddr | join "address" " " }}`,
+			input:  `{{GetIfSockAddrs | includeByIfName "^(en|lo)0$" | excludeByIfName "^en0$" | sort "type" | sort "address" | join "address" " " }}`,
 			output: `127.0.0.1/8 100:: fe80::1/64`,
 		},
 		{
 			name:   "excludeByIfName",
-			input:  `{{. | includeByIfName "^(en|lo)0$" | excludeByIfName "^en0$" | sortByType | sortByAddr | join "address" " " }}`,
+			input:  `{{. | includeByIfName "^(en|lo)0$" | excludeByIfName "^en0$" | sort "type" | sort "address" | join "address" " " }}`,
 			output: `127.0.0.1/8 100:: fe80::1/64`,
 		},
 		{
 			name:   `"dot" pipeline, IPv4 type`,
-			input:  `{{. | includeByType "IPv4" | includeByIfName "^lo0$" | sortByType | sortByAddr }}`,
+			input:  `{{. | includeByType "IPv4" | includeByIfName "^lo0$" | sort "type" | sort "address" }}`,
 			output: `[127.0.0.1/8 {1 16384 lo0  up|loopback|multicast}]`,
 		},
 		{
 			name:   "includeByType IPv6",
-			input:  `{{. | includeByType "IPv6" | includeByIfName "^lo0$" | sortByAddr }}`,
+			input:  `{{. | includeByType "IPv6" | includeByIfName "^lo0$" | sort "address" }}`,
 			output: `[100:: {1 16384 lo0  up|loopback|multicast} fe80::1/64 {1 16384 lo0  up|loopback|multicast}]`,
 		},
 		{
 			name:   "better regexp example for IP types",
-			input:  `{{. | includeByType "^IPv[46]$" | includeByIfName "^lo0$" | sortByType | sortByAddr }}`,
+			input:  `{{. | includeByType "^IPv[46]$" | includeByIfName "^lo0$" | sort "type" | sort "address" }}`,
 			output: `[127.0.0.1/8 {1 16384 lo0  up|loopback|multicast} 100:: {1 16384 lo0  up|loopback|multicast} fe80::1/64 {1 16384 lo0  up|loopback|multicast}]`,
 		},
 		{
@@ -57,7 +57,7 @@ func TestSockAddr_Parse(t *testing.T) {
 		},
 		{
 			name:   "ifAddrs2",
-			input:  `{{. | includeByType "^IPv(4|6)$" | includeByIfName "^lo0$" | sortByType | sortByAddr }}`,
+			input:  `{{. | includeByType "^IPv(4|6)$" | includeByIfName "^lo0$" | sort "type" | sort "address" }}`,
 			output: `[127.0.0.1/8 {1 16384 lo0  up|loopback|multicast} 100:: {1 16384 lo0  up|loopback|multicast} fe80::1/64 {1 16384 lo0  up|loopback|multicast}]`,
 		},
 		// {
@@ -72,7 +72,7 @@ func TestSockAddr_Parse(t *testing.T) {
 		},
 		{
 			name:   "excludeByType",
-			input:  `{{. | excludeByType "^IPv(4)$" | includeByIfName "^lo0$" | sortByAddr | uniqueBy "name" | join "name" " "}} {{range . | excludeByType "^IPv(4)$" | includeByIfName "^lo0$"}}{{.SockAddr}} {{end}}`,
+			input:  `{{. | excludeByType "^IPv(4)$" | includeByIfName "^lo0$" | sort "address" | uniqueBy "name" | join "name" " "}} {{range . | excludeByType "^IPv(4)$" | includeByIfName "^lo0$"}}{{.SockAddr}} {{end}}`,
 			output: `lo0 100:: fe80::1/64 `,
 		},
 		{
@@ -117,33 +117,33 @@ func TestSockAddr_Parse(t *testing.T) {
 			fail:   true,
 		},
 		{
-			name:   "sortByAddr",
-			input:  `{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv4" $ifSet | sortByAddr}}{{ .SockAddr }} {{end}}{{ range includeByType "IPv6" $ifSet | sortByAddr}}{{ .SockAddr }} {{end}}{{end}}`,
+			name:   `sort "address"`,
+			input:  `{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv4" $ifSet | sort "address"}}{{ .SockAddr }} {{end}}{{ range includeByType "IPv6" $ifSet | sort "address"}}{{ .SockAddr }} {{end}}{{end}}`,
 			output: `127.0.0.1/8 100:: fe80::1/64 `,
 		},
 		{
-			name:   "sortByAddr with reverse",
-			input:  `{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv6" $ifSet | sortByAddr | reverse}}{{ .SockAddr }} {{end}}{{end}}`,
+			name:   `sort "address" | reverse`,
+			input:  `{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv6" $ifSet | sort "address" | reverse}}{{ .SockAddr }} {{end}}{{end}}`,
 			output: `fe80::1/64 100:: `,
 		},
 		{
-			name:   "sortByPort with reverse",
-			input:  `{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv6" $ifSet | sortByAddr | reverse}}{{ .SockAddr }} {{end}}{{end}}`,
+			name:   `sort "port" | reverse`,
+			input:  `{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv6" $ifSet | sort "address" | reverse}}{{ .SockAddr }} {{end}}{{end}}`,
 			output: `fe80::1/64 100:: `,
 		},
 		{
 			name:   "lo0 limit 1",
-			input:  `{{. | includeByIfName "lo0" | includeByType "IPv6" | sortByAddr | limit 1 | len}}`,
+			input:  `{{. | includeByIfName "lo0" | includeByType "IPv6" | sort "address" | limit 1 | len}}`,
 			output: `1`,
 		},
 		{
 			name:   "join address",
-			input:  `{{. | includeByIfName "lo0" | includeByType "IPv6" | sortByAddr | join "address" " " }}`,
+			input:  `{{. | includeByIfName "lo0" | includeByType "IPv6" | sort "address" | join "address" " " }}`,
 			output: `100:: fe80::1/64`,
 		},
 		{
 			name:   "join name",
-			input:  `{{. | includeByIfName "lo0" | includeByType "IPv6" | sortByAddr | join "name" " " }}`,
+			input:  `{{. | includeByIfName "lo0" | includeByType "IPv6" | sort "address" | join "name" " " }}`,
 			output: `lo0 lo0`,
 		},
 		// {
@@ -158,8 +158,8 @@ func TestSockAddr_Parse(t *testing.T) {
 			name: "HashiCorpDefault2016",
 			input: `
 {{- with $addrs := GetIfSockAddrs | includeByType "^IP(v[46])?$" -}}
-  {{- $rfc1918Addrs := $addrs | includeByRFC 1918 | sortByAddr | limit 1 | join "address" " " -}}
-  {{- $rfc6598Addrs := $addrs | includeByRFC 6598 | sortByAddr | limit 1 | join "address" " " -}}
+  {{- $rfc1918Addrs := $addrs | includeByRFC 1918 | sort "address" | limit 1 | join "address" " " -}}
+  {{- $rfc6598Addrs := $addrs | includeByRFC 6598 | sort "address" | limit 1 | join "address" " " -}}
 
   {{- if ($rfc1918Addrs | len) gt 0 -}}
     {{- print "true" -}}{{/* print $rfc1918Addrs*/ -}}
