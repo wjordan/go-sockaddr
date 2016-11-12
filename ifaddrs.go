@@ -462,14 +462,14 @@ func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) stri
 	return strings.Join(outputs, joinStr)
 }
 
-// LimitIfAddrs returns a slice of IfAddrss based on the limitIfAddrs
-func LimitIfAddrs(limitIfAddrs uint, inputIfAddrs IfAddrs) IfAddrs {
+// LimitIfAddrs returns a slice of IfAddrs based on the specified limit.
+func LimitIfAddrs(lim uint, in IfAddrs) IfAddrs {
 	// Clamp the limit to the length of the array
-	if int(limitIfAddrs) > len(inputIfAddrs) {
-		limitIfAddrs = uint(len(inputIfAddrs))
+	if int(lim) > len(in) {
+		lim = uint(len(in))
 	}
 
-	return inputIfAddrs[0:limitIfAddrs]
+	return in[0:lim]
 }
 
 // ReverseIfAddrs reverses an IfAddrs.
