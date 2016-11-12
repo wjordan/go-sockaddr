@@ -64,6 +64,7 @@ func init() {
 		// Misc functions that operate on IfAddrs inputs
 		"join":     sockaddr.JoinIfAddrs,
 		"limit":    sockaddr.LimitIfAddrs,
+		"offset":   sockaddr.OffsetIfAddrs,
 		"reverse":  sockaddr.ReverseIfAddrs,
 		"uniqueBy": sockaddr.UniqueIfAddrsBy,
 	}

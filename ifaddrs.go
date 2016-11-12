@@ -472,6 +472,24 @@ func LimitIfAddrs(lim uint, in IfAddrs) IfAddrs {
 	return in[0:lim]
 }
 
+// OffsetIfAddrs returns a slice of IfAddrs based on the specified offset.
+func OffsetIfAddrs(off int, in IfAddrs) IfAddrs {
+	var end bool
+	if off < 0 {
+		end = true
+		off = off * -1
+	}
+
+	if off > len(in) {
+		return IfAddrs{}
+	}
+
+	if end {
+		return in[len(in)-off : len(in)]
+	}
+	return in[off:len(in)]
+}
+
 // ReverseIfAddrs reverses an IfAddrs.
 func ReverseIfAddrs(inputIfAddrs IfAddrs) IfAddrs {
 	reversedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
