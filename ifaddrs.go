@@ -105,6 +105,14 @@ func AscIfPort(p1Ptr, p2Ptr *IfAddr) int {
 	return AscPort(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
 }
 
+// AscIfPrivate is a sorting function to sort IfAddrs by "private" values before
+// "public" values.  Both IPv4 and IPv6 are compared against RFC6890 (RFC6890
+// includes, and is not limited to, RFC1918 and RFC6598 for IPv4, and IPv6
+// includes RFC4193).
+func AscIfPrivate(p1Ptr, p2Ptr *IfAddr) int {
+	return AscPrivate(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
 // AscIfType is a sorting function to sort IfAddrs by their respective address
 // type.  Non-equal types are deferred in the sort.
 func AscIfType(p1Ptr, p2Ptr *IfAddr) int {
@@ -378,6 +386,12 @@ func SortIfBy(selectorName string, inputIfAddrs IfAddrs) IfAddrs {
 		// comparable will be at the end of the list and in a
 		// non-deterministic order.
 		OrderedIfAddrBy(AscIfPort).Sort(sortedIfs)
+	case "private":
+		// The "private" selector returns an array of IfAddrs ordered by
+		// private addresses first.  IfAddrs that are not comparable
+		// will be at the end of the list and in a non-deterministic
+		// order.
+		OrderedIfAddrBy(AscIfPrivate).Sort(sortedIfs)
 	case "size":
 		// The "size" selector returns an array of IfAddrs ordered by
 		// the size of the network mask, smallest mask (fewest number of
