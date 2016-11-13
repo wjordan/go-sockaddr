@@ -63,6 +63,11 @@ host	127.0.0.3:8600
 address	127.0.0.3
 port	8600
 mask_bits	32
+$ sockaddr dump -H -n -o host,address,port -o mask_bits 127.0.0.3:8600
+127.0.0.3:8600
+127.0.0.3
+8600
+32
 $ sockaddr dump -o type,address,hex,network '[2001:db8::3/32]'
 Attribute  Value
 type       IPv6
