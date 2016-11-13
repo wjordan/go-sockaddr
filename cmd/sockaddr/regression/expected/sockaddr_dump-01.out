@@ -12,6 +12,7 @@ hex           7f000001
 first_usable  127.0.0.1
 last_usable   127.0.0.1
 octets        127 0 0 1
+size          1
 broadcast     127.0.0.1
 uint32        2130706433
 DialPacket    "udp4" ""

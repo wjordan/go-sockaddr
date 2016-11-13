@@ -187,12 +187,18 @@ func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
 
 	if sa.Type() == sockaddr.TypeIPv4 {
 		ipv4 := *sockaddr.ToIPv4Addr(sa)
+		output = outFmt(output, "size", fmt.Sprintf("%d", 1<<uint(sockaddr.IPv4len*8-ipv4.Maskbits())))
 		output = outFmt(output, "broadcast", ipv4.Broadcast())
 		output = outFmt(output, "uint32", fmt.Sprintf("%d", uint32(ipv4.Address)))
 	}
 
 	if sa.Type() == sockaddr.TypeIPv6 {
 		ipv6 := *sockaddr.ToIPv6Addr(sa)
+		{
+			netSize := big.NewInt(1)
+			netSize = netSize.Lsh(netSize, uint(sockaddr.IPv6len*8-ipv6.Maskbits()))
+			output = outFmt(output, "size", netSize.Text(10))
+		}
 		{
 			b := big.Int(*ipv6.Address)
 			output = outFmt(output, "uint128", b.Text(10))

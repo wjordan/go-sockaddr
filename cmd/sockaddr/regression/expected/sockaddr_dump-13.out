@@ -12,6 +12,7 @@ hex           00000000
 first_usable  0.0.0.1
 last_usable   127.255.255.254
 octets        0 0 0 0
+size          2147483648
 broadcast     127.255.255.255
 uint32        0
 DialPacket    "udp4" ""
@@ -33,6 +34,7 @@ hex           00000000000000000000000000000000
 first_usable  ::
 last_usable   7fff:ffff::
 octets        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+size          2147483648
 uint128       0
 DialPacket    "udp6" ""
 DialStream    "tcp6" ""
@@ -52,6 +54,7 @@ hex           00000000000000000000000000000000
 first_usable  ::
 last_usable   7fff:ffff::
 octets        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+size          2147483648
 uint128       0
 DialPacket    "udp6" ""
 DialStream    "tcp6" ""

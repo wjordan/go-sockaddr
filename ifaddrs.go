@@ -651,8 +651,6 @@ func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) stri
 				out = ip.NetIPMask().String()
 			case "network":
 				out = ip.Network().String()
-			case "port":
-				out = fmt.Sprintf("%d", ip.IPPort())
 			case "octets":
 				octets := ip.Octets()
 				octetStrs := make([]string, 0, len(octets))
@@ -660,11 +658,15 @@ func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) stri
 					octetStrs = append(octetStrs, fmt.Sprintf("%d", octet))
 				}
 				out = strings.Join(octetStrs, " ")
+			case "port":
+				out = fmt.Sprintf("%d", ip.IPPort())
 			}
 
 			if sa.Type() == TypeIPv4 {
 				ipv4 := *ToIPv4Addr(sa)
 				switch attrName {
+				case "size":
+					out = fmt.Sprintf("%d", 1<<uint(IPv4len*8-ip.Maskbits()))
 				case "broadcast":
 					out = ipv4.Broadcast().String()
 				case "uint32":
@@ -675,6 +677,10 @@ func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) stri
 			if sa.Type() == TypeIPv6 {
 				ipv6 := *ToIPv6Addr(sa)
 				switch attrName {
+				case "size":
+					netSize := big.NewInt(1)
+					netSize = netSize.Lsh(netSize, uint(IPv6len*8-ip.Maskbits()))
+					out = netSize.Text(10)
 				case "uint128":
 					b := big.Int(*ipv6.Address)
 					out = b.Text(10)

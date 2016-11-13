@@ -12,6 +12,7 @@ hex           20010db8000000000000000000000003
 first_usable  2001:db8::3
 last_usable   2001:db8::3
 octets        32 1 13 184 0 0 0 0 0 0 0 0 0 0 0 3
+size          1
 uint128       42540766411282592856903984951653826563
 DialPacket    "udp6" ""
 DialStream    "tcp6" ""
