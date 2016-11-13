@@ -3,6 +3,7 @@ package sockaddr
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"regexp"
 	"sort"
@@ -516,13 +517,74 @@ func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) stri
 
 	for _, ifAddr := range inputIfAddrs {
 		var out string
+		sa := ifAddr.SockAddr
+		if sa.Type()&TypeIP != 0 {
+			ip := *ToIPAddr(sa)
+			switch attrName {
+			case "address":
+				out = ip.NetIP().String()
+			case "binary":
+				out = ip.AddressBinString()
+			case "first_usable":
+				out = ip.FirstUsable().String()
+			case "hex":
+				out = ip.AddressHexString()
+			case "host":
+				out = ip.Host().String()
+			case "last_usable":
+				out = ip.LastUsable().String()
+			case "mask_bits":
+				out = fmt.Sprintf("%d", ip.Maskbits())
+			case "name":
+				out = ifAddr.Name
+			case "netmask":
+				out = ip.NetIPMask().String()
+			case "network":
+				out = ip.Network().String()
+			case "port":
+				out = fmt.Sprintf("%d", ip.IPPort())
+			case "octets":
+				octets := ip.Octets()
+				octetStrs := make([]string, 0, len(octets))
+				for _, octet := range octets {
+					octetStrs = append(octetStrs, fmt.Sprintf("%d", octet))
+				}
+				out = strings.Join(octetStrs, " ")
+			}
+
+			if sa.Type() == TypeIPv4 {
+				ipv4 := *ToIPv4Addr(sa)
+				switch attrName {
+				case "broadcast":
+					out = ipv4.Broadcast().String()
+				case "uint32":
+					out = fmt.Sprintf("%d", uint32(ipv4.Address))
+				}
+			}
+
+			if sa.Type() == TypeIPv6 {
+				ipv6 := *ToIPv6Addr(sa)
+				switch attrName {
+				case "uint128":
+					b := big.Int(*ipv6.Address)
+					out = b.Text(10)
+				}
+			}
+		}
+
+		if sa.Type() == TypeUnix {
+			us := *ToUnixSock(sa)
+			switch attrName {
+			case "path":
+				out = us.Path()
+			}
+		}
+
 		switch attrName {
-		case "address":
-			out = ifAddr.SockAddr.String()
-		case "name":
-			out = ifAddr.Name
-		default:
-			out = fmt.Sprintf("<unsupported method %+q>", selectorName)
+		case "type":
+			out = sa.Type().String()
+		case "string":
+			out = sa.String()
 		}
 		outputs = append(outputs, out)
 	}

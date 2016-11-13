@@ -29,12 +29,12 @@ func TestSockAddr_Parse(t *testing.T) {
 		{
 			name:   `include "name" regexp`,
 			input:  `{{GetIfSockAddrs | include "name" "^(en|lo)0$" | exclude "name" "^en0$" | sort "type" | sort "address" | join "address" " " }}`,
-			output: `127.0.0.1/8 100:: fe80::1/64`,
+			output: `127.0.0.1 100:: fe80::1`,
 		},
 		{
 			name:   `exclude "name"`,
 			input:  `{{. | include "name" "^(en|lo)0$" | exclude "name" "^en0$" | sort "type" | sort "address" | join "address" " " }}`,
-			output: `127.0.0.1/8 100:: fe80::1/64`,
+			output: `127.0.0.1 100:: fe80::1`,
 		},
 		{
 			name:   `"dot" pipeline, IPv4 type`,
@@ -140,7 +140,7 @@ func TestSockAddr_Parse(t *testing.T) {
 		{
 			name:   "join address",
 			input:  `{{. | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " " }}`,
-			output: `100:: fe80::1/64`,
+			output: `100:: fe80::1`,
 		},
 		{
 			name:   "join name",
