@@ -16,7 +16,7 @@ import (
 // doesn't do much in the way of testing beyond verifying that `lo0` has a
 // loopback address present.
 func TestGetIfAddrs(t *testing.T) {
-	ifAddrs, err := sockaddr.GetIfSockAddrs()
+	ifAddrs, err := sockaddr.GetAllInterfaces()
 	if err != nil {
 		t.Fatalf("Unable to proceed: %v", err)
 	}

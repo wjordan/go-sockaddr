@@ -188,6 +188,102 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 	return ifs, nil
 }
 
+// GetPrivateIP returns a string with a single IP address that is part of RFC
+// 6890 and has a default route.  If the system can't determine its IP address
+// or find an RFC 6890 IP address, an empty string will be returned instead.
+// This function is the `eval` equivilant of:
+//
+// ```
+// $ sockaddr eval -raw '{{GetPrivateInterfaces | limit 1 | join "address" " "}}'
+/// ```
+func GetPrivateIP() string {
+	privateIfs := GetPrivateInterfaces()
+	if len(privateIfs) < 1 {
+		return ""
+	}
+
+	ifAddr := privateIfs[0]
+	ip := *ToIPAddr(ifAddr.SockAddr)
+	return ip.NetIP().String()
+}
+
+// GetPrivateInterfaces returns an IfAddrs that is part of RFC 6890 and has a
+// default route.  If the system can't determine its IP address or find an RFC
+// 6890 IP address, an empty IfAddrs will be returned instead.  This function is
+// the `eval` equivilant of:
+//
+// ```
+// $ sockaddr eval -raw '{{GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | limit 1 | join "address" " "}}'
+/// ```
+func GetPrivateInterfaces() IfAddrs {
+	privateIfs, err := GetDefaultInterfaces()
+	if len(privateIfs) == 0 {
+		return IfAddrs{}
+	}
+
+	privateIfs, _ = FilterIfByType(privateIfs, TypeIP)
+	if len(privateIfs) == 0 {
+		return IfAddrs{}
+	}
+
+	OrderedIfAddrBy(AscIfType, AscIfNetworkSize).Sort(privateIfs)
+
+	privateIfs, _, err = IfByRFC(6890, privateIfs)
+	if err != nil || len(privateIfs) == 0 {
+		return IfAddrs{}
+	}
+
+	return privateIfs
+}
+
+// GetPublicInterfaces returns an IfAddrs that is NOT part of RFC 6890 and has a
+// default route.  If the system can't determine its IP address or find a non
+// RFC 6890 IP address, an empty IfAddrs will be returned instead.  This
+// function is the `eval` equivilant of:
+//
+// ```
+// $ sockaddr eval -raw '{{GetDefaultInterfaces | sort "type,size" | exclude "RFC" "6890" }}'
+/// ```
+func GetPublicInterfaces() IfAddrs {
+	publicIfs, err := GetDefaultInterfaces()
+	if len(publicIfs) == 0 {
+		return IfAddrs{}
+	}
+
+	publicIfs, _ = FilterIfByType(publicIfs, TypeIP)
+	if len(publicIfs) == 0 {
+		return IfAddrs{}
+	}
+
+	OrderedIfAddrBy(AscIfType, AscIfNetworkSize).Sort(publicIfs)
+
+	_, publicIfs, err = IfByRFC(6890, publicIfs)
+	if err != nil || len(publicIfs) == 0 {
+		return IfAddrs{}
+	}
+
+	return publicIfs
+}
+
+// GetPublicIP returns a string with a single IP address that is NOT part of RFC
+// 6890 and has a default route.  If the system can't determine its IP address
+// or find a non RFC 6890 IP address, an empty string will be returned instead.
+// This function is the `eval` equivilant of:
+//
+// ```
+// $ sockaddr eval -raw '{{GetPublicInterfaces | limit 1 | join "address" " "}}'
+/// ```
+func GetPublicIP() string {
+	publicIfs := GetPublicInterfaces()
+	if len(publicIfs) < 1 {
+		return ""
+	}
+
+	ifAddr := publicIfs[0]
+	ip := *ToIPAddr(ifAddr.SockAddr)
+	return ip.NetIP().String()
+}
+
 // IfByAddress returns a list of matched and non-matched IfAddrs, or an error if
 // the regexp fails to compile.
 func IfByAddress(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
@@ -271,12 +367,16 @@ func IfByRFC(inputRFC uint, ifAddrs IfAddrs) (matched, remainder IfAddrs, err er
 	}
 
 	for _, ifAddr := range ifAddrs {
+		var contained bool
 		for _, rfcNet := range rfcNets {
 			if rfcNet.Contains(ifAddr.SockAddr) {
 				matchedIfAddrs = append(matchedIfAddrs, ifAddr)
-			} else {
-				remainingIfAddrs = append(remainingIfAddrs, ifAddr)
+				contained = true
+				break
 			}
+		}
+		if !contained {
+			remainingIfAddrs = append(remainingIfAddrs, ifAddr)
 		}
 	}
 
@@ -469,9 +569,9 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
 			sortFuncs[i] = AscIfPrivate
 		case "size":
 			// The "size" selector returns an array of IfAddrs
-			// ordered by the size of the network mask, smallest
-			// mask (fewest number of hosts per network) to largest
-			// (e.g. a /32 sorts before a /24).
+			// ordered by the size of the network mask, largest mask
+			// (larger number of hosts per network) to smallest
+			// (e.g. a /24 sorts before a /32).
 			sortFuncs[i] = AscIfNetworkSize
 		case "type":
 			// The "type" selector returns an array of IfAddrs

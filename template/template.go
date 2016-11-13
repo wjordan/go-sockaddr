@@ -34,6 +34,14 @@ func init() {
 
 		// Return an IfAddr that is attached to the default route.
 		"GetDefaultInterfaces": sockaddr.GetDefaultInterfaces,
+
+		// Return a single IfAddr that represents a Private RFC 6890 IP
+		// address that is attached to the default route.
+		"GetPrivateInterfaces": sockaddr.GetPrivateInterfaces,
+
+		// Return a single IfAddr that represents a Public RFC 6890 IP
+		// address that is attached to the default route.
+		"GetPublicInterfaces": sockaddr.GetPublicInterfaces,
 	}
 
 	SortFuncs = template.FuncMap{
@@ -52,6 +60,14 @@ func init() {
 		"offset":   sockaddr.OffsetIfAddrs,
 		"reverse":  sockaddr.ReverseIfAddrs,
 		"uniqueBy": sockaddr.UniqueIfAddrsBy,
+
+		// Return a Private RFC 6890 IP address string that is attached
+		// to the default route.
+		"GetPrivateIP": sockaddr.GetPrivateIP,
+
+		// Return a Public RFC 6890 IP address string that is attached
+		// to the default route.
+		"GetPublicIP": sockaddr.GetPublicIP,
 	}
 }
 
