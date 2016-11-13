@@ -41,23 +41,8 @@ func init() {
 	}
 
 	FilterFuncs = template.FuncMap{
-		// The exclude* and include* functions filter IfAddrs
-		//
-		// *ByIfName filters by Interface.Name
-		"excludeByIfName": sockaddr.IfByNameExclude,
-		"includeByIfName": sockaddr.IfByNameInclude,
-
-		// *ByType filters by address types
-		"excludeByType": sockaddr.IfByTypeExclude,
-		"includeByType": sockaddr.IfByTypeInclude,
-
-		// *ByRFC filters by RFC status
-		"excludeByRFC": sockaddr.IfByRFCExclude,
-		"includeByRFC": sockaddr.IfByRFCInclude,
-
-		// *ByFlag filters by interface flags
-		"excludeByFlag": sockaddr.IfByFlagExclude,
-		"includeByFlag": sockaddr.IfByFlagInclude,
+		"exclude": sockaddr.ExcludeIfs,
+		"include": sockaddr.IncludeIfs,
 	}
 
 	HelperFuncs = template.FuncMap{

@@ -6,6 +6,7 @@ import (
 	"net"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -119,6 +120,21 @@ func AscIfType(p1Ptr, p2Ptr *IfAddr) int {
 	return AscType(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
 }
 
+// FilterIfByType filters IfAddrs and returns a list of the matching type
+func FilterIfByType(ifAddrs IfAddrs, type_ SockAddrType) (matchedIfs, excludedIfs IfAddrs) {
+	excludedIfs = make(IfAddrs, 0, len(ifAddrs))
+	matchedIfs = make(IfAddrs, 0, len(ifAddrs))
+
+	for _, ifAddr := range ifAddrs {
+		if ifAddr.SockAddr.Type()&type_ != 0 {
+			matchedIfs = append(matchedIfs, ifAddr)
+		} else {
+			excludedIfs = append(excludedIfs, ifAddr)
+		}
+	}
+	return matchedIfs, excludedIfs
+}
+
 // GetIfSockAddrs iterates over all available network interfaces and finds all
 // available IP addresses on each interface and converts them to
 // sockaddr.IPAddrs, and returning the result as an array of IfAddr.
@@ -152,8 +168,8 @@ func GetIfSockAddrs() (IfAddrs, error) {
 	return ifAddrs, nil
 }
 
-// GetDefaultInterfaces returns IfAddrs of the addresses attached to the
-// default route.
+// GetDefaultInterfaces returns IfAddrs of the addresses attached to the default
+// route.
 func GetDefaultInterfaces() (IfAddrs, error) {
 	defaultIfName, err := getDefaultIfName()
 	if err != nil {
@@ -171,12 +187,33 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 	return ifs, nil
 }
 
+// IfByAddress returns a list of matched and non-matched IfAddrs, or an error if
+// the regexp fails to compile.
+func IfByAddress(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
+	re, err := regexp.Compile(inputRe)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Unable to compile address regexp %+q: %v", inputRe, err)
+	}
+
+	matchedAddrs := make(IfAddrs, 0, len(ifAddrs))
+	excludedAddrs := make(IfAddrs, 0, len(ifAddrs))
+	for _, addr := range ifAddrs {
+		if re.MatchString(addr.SockAddr.String()) {
+			matchedAddrs = append(matchedAddrs, addr)
+		} else {
+			excludedAddrs = append(excludedAddrs, addr)
+		}
+	}
+
+	return matchedAddrs, excludedAddrs, nil
+}
+
 // IfByName returns a list of matched and non-matched IfAddrs, or an error if
 // the regexp fails to compile.
 func IfByName(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
 	re, err := regexp.Compile(inputRe)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to compile *ByName regexp %+q: %v", inputRe, err)
+		return nil, nil, fmt.Errorf("Unable to compile name regexp %+q: %v", inputRe, err)
 	}
 
 	matchedAddrs := make(IfAddrs, 0, len(ifAddrs))
@@ -192,26 +229,32 @@ func IfByName(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err 
 	return matchedAddrs, excludedAddrs, nil
 }
 
-// IfByNameExclude excludes any interface that matches the given regular
-// expression (e.g. a regexp blacklist).
-func IfByNameExclude(inputRe string, ifAddrs IfAddrs) (IfAddrs, error) {
-	_, addrs, err := IfByName(inputRe, ifAddrs)
+// IfByPort returns a list of matched and non-matched IfAddrs, or an error if
+// the regexp fails to compile.
+func IfByPort(inputRe string, ifAddrs IfAddrs) (matchedIfs, excludedIfs IfAddrs, err error) {
+	re, err := regexp.Compile(inputRe)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to compile excludeByName regexp %+q: %v", inputRe, err)
+		return nil, nil, fmt.Errorf("Unable to compile port regexp %+q: %v", inputRe, err)
 	}
 
-	return addrs, nil
-}
+	ipIfs, nonIfs := FilterIfByType(ifAddrs, TypeIP)
+	matchedIfs = make(IfAddrs, 0, len(ipIfs))
+	excludedIfs = append(IfAddrs(nil), nonIfs...)
+	for _, addr := range ipIfs {
+		ipAddr := ToIPAddr(addr.SockAddr)
+		if ipAddr == nil {
+			continue
+		}
 
-// IfByNameInclude includes any interface that matches the given regular
-// expression (e.g. a regexp whitelist).
-func IfByNameInclude(inputRe string, ifAddrs IfAddrs) (IfAddrs, error) {
-	addrs, _, err := IfByName(inputRe, ifAddrs)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to compile includeByName regexp %+q: %v", inputRe, err)
+		port := strconv.FormatInt(int64((*ipAddr).IPPort()), 10)
+		if re.MatchString(port) {
+			matchedIfs = append(matchedIfs, addr)
+		} else {
+			excludedIfs = append(excludedIfs, addr)
+		}
 	}
 
-	return addrs, nil
+	return matchedIfs, excludedIfs, nil
 }
 
 // IfByRFC returns a list of matched and non-matched IfAddrs, or an error if the
@@ -239,32 +282,32 @@ func IfByRFC(inputRFC uint, ifAddrs IfAddrs) (matched, remainder IfAddrs, err er
 	return matchedIfAddrs, remainingIfAddrs, nil
 }
 
-// IfByRFCExclude excludes any interface that matches the given regular
-// expression (e.g. a regexp blacklist).
-func IfByRFCExclude(inputRFC uint, ifAddrs IfAddrs) (IfAddrs, error) {
-	_, addrs, err := IfByRFC(inputRFC, ifAddrs)
-	if err != nil {
-		return nil, err
+// IfByMaskSize returns a list of matched and non-matched IfAddrs that have the
+// matching mask size.
+func IfByMaskSize(maskSize uint, ifAddrs IfAddrs) (matchedIfs, excludedIfs IfAddrs, err error) {
+	ipIfs, nonIfs := FilterIfByType(ifAddrs, TypeIP)
+	matchedIfs = make(IfAddrs, 0, len(ipIfs))
+	excludedIfs = append(IfAddrs(nil), nonIfs...)
+	for _, addr := range ipIfs {
+		ipAddr := ToIPAddr(addr.SockAddr)
+		if ipAddr == nil {
+			continue
+		}
+
+		if (*ipAddr).Maskbits() == int(maskSize) {
+			matchedIfs = append(matchedIfs, addr)
+		} else {
+			excludedIfs = append(excludedIfs, addr)
+		}
 	}
 
-	return addrs, nil
-}
-
-// IfByRFCInclude includes any interface that matches the given regular
-// expression (e.g. a regexp whitelist).
-func IfByRFCInclude(inputRFC uint, ifAddrs IfAddrs) (IfAddrs, error) {
-	addrs, _, err := IfByRFC(inputRFC, ifAddrs)
-	if err != nil {
-		return nil, err
-	}
-
-	return addrs, nil
+	return matchedIfs, excludedIfs, nil
 }
 
 // IfByType returns a list of matching and non-matching IfAddr that match the
 // specified type.  For instance:
 //
-// includeByType "^(IPv4|IPv6)$"
+// include "type" "^(IPv4|IPv6)$"
 //
 // will include any IfAddrs that contain at least one IPv4 or IPv6 address.  Any
 // addresses on those interfaces that don't match will be omitted from the
@@ -272,7 +315,7 @@ func IfByRFCInclude(inputRFC uint, ifAddrs IfAddrs) (IfAddrs, error) {
 func IfByType(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
 	re, err := regexp.Compile(inputRe)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to compile includeByType regexp %+q: %v", inputRe, err)
+		return nil, nil, fmt.Errorf("Unable to compile type regexp %+q: %v", inputRe, err)
 	}
 
 	matchingIfAddrs := make(IfAddrs, 0, len(ifAddrs))
@@ -288,83 +331,107 @@ func IfByType(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err 
 	return matchingIfAddrs, remainingIfAddrs, nil
 }
 
-// IfByTypeExclude excludes any addresses that are not of the input type.  For
-// instance:
-//
-// excludeByType "^(IPv6)$"
-//
-// will only include IfAddrs that have at least one non-IPv6 address.  Any
-// addresses on those interfaces that don't match will be omitted from the
-// results.
-func IfByTypeExclude(inputRe string, ifAddrs IfAddrs) (IfAddrs, error) {
-	_, addrs, err := IfByType(inputRe, ifAddrs)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to compile excludeByType regexp %+q: {{err}}", inputRe, err)
-	}
-
-	return addrs, nil
-}
-
 // IfByFlag returns a list of matching and non-matching IfAddrs that match the
 // specified type.  For instance:
 //
-// includeByFlag "up broadcast"
+// include "flag" "up broadcast"
 //
 // will include any IfAddrs that have both the "up" and "broadcast" flags set.
 // Any addresses on those interfaces that don't match will be omitted from the
 // results.
 func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
-	return nil, nil, fmt.Errorf("Unable to compile includeByFlag regexp %+q: %v", inputFlags, err)
+	return nil, nil, fmt.Errorf("Unable to compile flag regexp %+q: %v", inputFlags, err)
 }
 
-// IfByFlagInclude includes any interface and only the matching addresses that
-// are of the input type.  For instance:
-//
-// includeByFlag "up broadcast"
-//
-// will include any IfAddrs that have the flag "up" and "broadcast" set.  Any
-// addresses on those interfaces that don't match will be omitted from the
-// results.
-func IfByFlagInclude(inputFlag string, ifAddrs IfAddrs) (IfAddrs, error) {
-	addrs, _, err := IfByFlag(inputFlag, ifAddrs)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid flag in includeByFlag %+q: %v", inputFlag, err)
+// IncludeIfs returns an IfAddrs based on the passed in selector.
+func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
+	var includedIfs IfAddrs
+	var err error
+
+	switch strings.ToLower(selectorName) {
+	case "address":
+		includedIfs, _, err = IfByAddress(selectorParam, inputIfAddrs)
+	case "name":
+		includedIfs, _, err = IfByName(selectorParam, inputIfAddrs)
+	case "port":
+		includedIfs, _, err = IfByPort(selectorParam, inputIfAddrs)
+	case "rfc":
+		rfcs := strings.Split(selectorParam, " ")
+		for _, rfcStr := range rfcs {
+			rfc, err := strconv.ParseUint(rfcStr, 10, 64)
+			if err != nil {
+				continue
+			}
+
+			includedRFCIfs, _, err := IfByRFC(uint(rfc), inputIfAddrs)
+			if err != nil {
+				continue
+			}
+			includedIfs = append(includedIfs, includedRFCIfs...)
+		}
+	case "size":
+		maskSize, err := strconv.ParseUint(selectorParam, 10, 64)
+		if err != nil {
+			return IfAddrs{}
+		}
+		includedIfs, _, err = IfByMaskSize(uint(maskSize), inputIfAddrs)
+	case "type":
+		includedIfs, _, err = IfByType(selectorParam, inputIfAddrs)
+	default:
+		// Return an empty list for invalid sort types.
+		return IfAddrs{}
 	}
 
-	return addrs, nil
+	if err != nil {
+		return IfAddrs{}
+	}
+
+	return includedIfs
 }
 
-// IfByFlagExclude excludes any interfaces that don't have the appropriate flag
-// set.  For instance:
-//
-// excludeByFlag "up"
-//
-// will only include IfAddrs that don't have the "Up" flag set.  Any addresses
-// on those interfaces that don't match will be omitted from the results.
-func IfByFlagExclude(inputFlag string, ifAddrs IfAddrs) (IfAddrs, error) {
-	_, addrs, err := IfByFlag(inputFlag, ifAddrs)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid flag in excludeByFlag %+q: %v", inputFlag, err)
+// ExcludeIfs returns an IfAddrs based on the passed in selector.
+func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
+	var excludedIfs IfAddrs
+	var err error
+
+	switch strings.ToLower(selectorName) {
+	case "address":
+		_, excludedIfs, err = IfByAddress(selectorParam, inputIfAddrs)
+	case "name":
+		_, excludedIfs, err = IfByName(selectorParam, inputIfAddrs)
+	case "port":
+		_, excludedIfs, err = IfByPort(selectorParam, inputIfAddrs)
+	case "rfc":
+		rfcs := strings.Split(selectorParam, " ")
+		for _, rfcStr := range rfcs {
+			rfc, err := strconv.ParseUint(rfcStr, 10, 64)
+			if err == nil {
+				continue
+			}
+
+			_, excludedRFCIfs, err := IfByRFC(uint(rfc), inputIfAddrs)
+			if err != nil {
+				continue
+			}
+			excludedIfs = append(excludedIfs, excludedRFCIfs...)
+		}
+	case "size":
+		maskSize, err := strconv.ParseUint(selectorParam, 10, 64)
+		if err != nil {
+			return IfAddrs{}
+		}
+		_, excludedIfs, err = IfByMaskSize(uint(maskSize), inputIfAddrs)
+	case "type":
+		_, excludedIfs, err = IfByType(selectorParam, inputIfAddrs)
+	default:
+		// Return an empty list for invalid sort types.
+		return IfAddrs{}
 	}
 
-	return addrs, nil
-}
-
-// IfByTypeInclude includes any interface and only the matching addresses that
-// are of the input type.  For instance:
-//
-// includeByType "^(IPv4|IPv6)$"
-//
-// will include any IfAddrs that contain at least one IPv4 or IPv6 address.  Any
-// addresses on those interfaces that don't match will be omitted from the
-// results.
-func IfByTypeInclude(inputRe string, ifAddrs IfAddrs) (IfAddrs, error) {
-	addrs, _, err := IfByType(inputRe, ifAddrs)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to compile includeByType regexp %+q: %v", inputRe, err)
+		return IfAddrs{}
 	}
-
-	return addrs, nil
+	return excludedIfs
 }
 
 // SortIfBy returns an IfAddrs sorted based on the passed in selector.
