@@ -136,10 +136,10 @@ func FilterIfByType(ifAddrs IfAddrs, type_ SockAddrType) (matchedIfs, excludedIf
 	return matchedIfs, excludedIfs
 }
 
-// GetIfSockAddrs iterates over all available network interfaces and finds all
+// GetAllInterfaces iterates over all available network interfaces and finds all
 // available IP addresses on each interface and converts them to
 // sockaddr.IPAddrs, and returning the result as an array of IfAddr.
-func GetIfSockAddrs() (IfAddrs, error) {
+func GetAllInterfaces() (IfAddrs, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 	}
 
 	var ifs IfAddrs
-	ifAddrs, err := GetIfSockAddrs()
+	ifAddrs, err := GetAllInterfaces()
 	for _, ifAddr := range ifAddrs {
 		if ifAddr.Name == defaultIfName {
 			ifs = append(ifs, ifAddr)

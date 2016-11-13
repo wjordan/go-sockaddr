@@ -27,10 +27,10 @@ var (
 func init() {
 	SourceFuncs = template.FuncMap{
 		// Generates a set of IfAddr inputs for the rest of the template
-		// pipeline.  `GetIfSockAddrs` is the default input and original
-		// "dot" in the pipeline.
+		// pipeline.  `GetAllInterfaces` is the default input and
+		// original "dot" in the pipeline.
 		//
-		"GetIfSockAddrs": sockaddr.GetIfSockAddrs,
+		"GetAllInterfaces": sockaddr.GetAllInterfaces,
 
 		// Return an IfAddr that is attached to the default route.
 		"GetDefaultInterfaces": sockaddr.GetDefaultInterfaces,
@@ -58,7 +58,7 @@ func init() {
 // Parse parses input as template input using the addresses available on the
 // host, then returns the string output if there are no errors.
 func Parse(input string) (string, error) {
-	addrs, err := sockaddr.GetIfSockAddrs()
+	addrs, err := sockaddr.GetAllInterfaces()
 	if err != nil {
 		return "", errwrap.Wrapf("unable to query interface addresses: {{err}}", err)
 	}

@@ -16,7 +16,7 @@ func TestSockAddr_Parse(t *testing.T) {
 	}{
 		{
 			name:   `basic include "name"`,
-			input:  `{{GetIfSockAddrs | include "name" "lo0" | printf "%v"}}`,
+			input:  `{{GetAllInterfaces | include "name" "lo0" | printf "%v"}}`,
 			output: `[127.0.0.1/8 {1 16384 lo0  up|loopback|multicast} 100:: {1 16384 lo0  up|loopback|multicast} fe80::1/64 {1 16384 lo0  up|loopback|multicast}]`,
 		},
 		{
@@ -28,7 +28,7 @@ func TestSockAddr_Parse(t *testing.T) {
 		},
 		{
 			name:   `include "name" regexp`,
-			input:  `{{GetIfSockAddrs | include "name" "^(en|lo)0$" | exclude "name" "^en0$" | sort "type" | sort "address" | join "address" " " }}`,
+			input:  `{{GetAllInterfaces | include "name" "^(en|lo)0$" | exclude "name" "^en0$" | sort "type" | sort "address" | join "address" " " }}`,
 			output: `127.0.0.1 100:: fe80::1`,
 		},
 		{
@@ -158,7 +158,7 @@ func TestSockAddr_Parse(t *testing.T) {
 			// instead of printing the correct $rfc*Addrs values.
 			name: "HashiCorpDefault2016",
 			input: `
-{{- with $addr := GetIfSockAddrs | include "type" "^IP(v[46])?$" | include "rfc" "1918,6598" | sort "address" | limit 1 | join "address" " " -}}
+{{- with $addr := GetAllInterfaces | include "type" "^IP(v[46])?$" | include "rfc" "1918,6598" | sort "address" | limit 1 | join "address" " " -}}
 
   {{- if ($addr | len) gt 0 -}}
     {{- print "true" -}}{{/* print $addr*/ -}}
