@@ -26,6 +26,18 @@ type DumpCommand struct {
 
 	// valueOnly changes the output format to include only values
 	valueOnly bool
+
+	// ipOnly parses the input as an IP address (either IPv4 or IPv6)
+	ipOnly bool
+
+	// v4Only parses the input exclusively as an IPv4 address
+	v4Only bool
+
+	// v6Only parses the input exclusively as an IPv6 address
+	v6Only bool
+
+	// unixOnly parses the input exclusively as a UNIX Socket
+	unixOnly bool
 }
 
 // Description is the long-form command help.
@@ -45,6 +57,10 @@ func (c *DumpCommand) InitOpts() {
 	c.flags.Usage = func() { c.Ui.Output(c.Help()) }
 	c.flags.BoolVar(&c.machineMode, "H", false, "Machine readable output")
 	c.flags.BoolVar(&c.valueOnly, "n", false, "Show only the value")
+	c.flags.BoolVar(&c.v4Only, "4", false, "Parse the address as IPv4 only")
+	c.flags.BoolVar(&c.v6Only, "6", false, "Parse the address as IPv6 only")
+	c.flags.BoolVar(&c.ipOnly, "i", false, "Parse the address as IP address (either IPv4 or IPv6)")
+	c.flags.BoolVar(&c.unixOnly, "u", false, "Parse the address as a UNIX Socket only")
 	c.flags.Var((*MultiArg)(&c.attrNames), "o", "Name of an attribute to pass through")
 }
 
@@ -58,8 +74,22 @@ func (c *DumpCommand) Run(args []string) int {
 	c.InitOpts()
 	addrs := c.parseOpts(args)
 	for _, addr := range addrs {
-		sa, err := sockaddr.NewSockAddr(addr)
+		var sa sockaddr.SockAddr
+		var err error
+		switch {
+		case c.v4Only:
+			sa, err = sockaddr.NewIPv4Addr(addr)
+		case c.v6Only:
+			sa, err = sockaddr.NewIPv6Addr(addr)
+		case c.unixOnly:
+			sa, err = sockaddr.NewUnixSock(addr)
+		case c.ipOnly:
+			sa, err = sockaddr.NewIPAddr(addr)
+		default:
+			sa, err = sockaddr.NewSockAddr(addr)
+		}
 		if err != nil {
+			c.Ui.Error(fmt.Sprintf("Unable to parse %+q: %v", addr, err))
 			return 1
 		}
 		c.dumpSockAddr(sa)
@@ -216,6 +246,24 @@ func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
 // a list of non-parsed flags.
 func (c *DumpCommand) parseOpts(args []string) []string {
 	if err := c.flags.Parse(args); err != nil {
+		return nil
+	}
+
+	conflictingOptsCount := 0
+	if c.v4Only {
+		conflictingOptsCount++
+	}
+	if c.v6Only {
+		conflictingOptsCount++
+	}
+	if c.unixOnly {
+		conflictingOptsCount++
+	}
+	if c.ipOnly {
+		conflictingOptsCount++
+	}
+	if conflictingOptsCount > 1 {
+		c.Ui.Error("Conflicting options specified, only one parsing mode may be specified at a time")
 		return nil
 	}
 

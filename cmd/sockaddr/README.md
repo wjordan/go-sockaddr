@@ -27,8 +27,13 @@ Usage: sockaddr dump [options] address [...]
 
 Options:
 
+  -4  Parse the address as IPv4 only
+  -6  Parse the address as IPv6 only
   -H  Machine readable output
+  -i  Parse the address as IP address (either IPv4 or IPv6)
+  -n  Show only the value
   -o  Name of an attribute to pass through
+  -u  Parse the address as a UNIX Socket only
 ```
 
 ### `sockaddr dump` example output
