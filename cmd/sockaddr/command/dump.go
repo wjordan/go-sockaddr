@@ -44,6 +44,7 @@ func (c *DumpCommand) InitOpts() {
 	c.flags = flag.NewFlagSet("dump", flag.ContinueOnError)
 	c.flags.Usage = func() { c.Ui.Output(c.Help()) }
 	c.flags.BoolVar(&c.machineMode, "H", false, "Machine readable output")
+	c.flags.BoolVar(&c.valueOnly, "n", false, "Show only the value")
 	c.flags.Var((*MultiArg)(&c.attrNames), "o", "Name of an attribute to pass through")
 }
 

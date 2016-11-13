@@ -5,4 +5,5 @@ Usage: sockaddr dump [options] address [...]
 Options:
 
   -H  Machine readable output
+  -n  Show only the value
   -o  Name of an attribute to pass through
