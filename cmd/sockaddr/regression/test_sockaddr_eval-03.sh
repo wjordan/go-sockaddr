@@ -2,4 +2,4 @@
 
 set -e
 exec 2>&1
-exec ../sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | sortByAddr | join "address" " "}}'
+exec ../sockaddr eval '{{. | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "}}'

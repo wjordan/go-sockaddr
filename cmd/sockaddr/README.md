@@ -4,6 +4,10 @@
 from the command line.
 
 ```text
+$ go install github.com/hashicorp/go-sockaddr/cmd/sockaddr
+```
+
+```text
 % sockaddr -h
 usage: sockaddr [--version] [--help] <command> [<args>]
 
