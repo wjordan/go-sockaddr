@@ -1,5 +1,14 @@
 # go-sockaddr
-Socket convenience functions for Go
+
+Socket convenience functions for Go.  There is a CLI
+utility,
+[`sockaddr`](https://github.com/hashicorp/go-sockaddr/tree/master/cmd/sockaddr)
+that accompanies this library and exposes a bunch of this functionality to
+userspace.
+
+```text
+$ go install github.com/hashicorp/go-sockaddr/cmd/sockaddr
+```
 
 If you're familiar with UNIX's `sockaddr` struct's, the following diagram
 mapping the C `sockaddr` (top) to `go-sockaddr` structs (bottom) and
