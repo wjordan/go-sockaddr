@@ -101,23 +101,18 @@ Options:
 Here are a few impractical examples to get you started:
 
 ```text
-$ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | join "address" " "}}'
-[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | join "address" \" \"}}"
-[0] out: "100:: fe80::1/64"
-$ sockaddr eval '{{. | includeByRFC 1918 | ifNames | print | len | lt 2}}'
-[0] in: "{{. | includeByRFC 1918 | ifNames | print | len | lt 2}}"
-[0] out: "true"
-$ sockaddr eval '{{with $ifSet := includeByIfName "lo0" . }}{{ range includeByType "IPv6" $ifSet | ifAddrs | sortByAddr | reverse}}{{ . }} {{end}}{{end}}'
-[0] in: "{{with $ifSet := includeByIfName \"lo0\" . }}{{ range includeByType \"IPv6\" $ifSet | ifAddrs | sortByAddr | reverse}}{{ . }} {{end}}{{end}}"
-[0] out: "fe80::1/64 100:: "
-$ sockaddr eval '{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | join "address" " "}}'
-[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | join "address" \" \"}}"
-[0] out: "100:: fe80::1/64"
+$ sockaddr eval '{{GetIfSockAddrs | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "}}'
+100:: fe80::1
+$ sockaddr eval '{{. | include "rfc" "1918" | print | len | lt 2}}'
+true
+$ sockaddr eval '{{with $ifSet := include "name" "lo0" . }}{{ range include "type" "IPv6" $ifSet | sort "address" | reverse}}{{ . }} {{end}}{{end}}'
+fe80::1/64 {1 16384 lo0  up|loopback|multicast} 100:: {1 16384 lo0  up|loopback|multicast}
+$ sockaddr eval '{{. | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "}}'
+100:: fe80::1
 $ cat <<'EOF' | sockaddr eval -
-{{. | includeByIfName "lo0" | includeByType "IPv6" | ifAddrs | sortByAddr | join "address" " "}}
+{{. | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "}}
 EOF
-[0] in: "{{. | includeByIfName \"lo0\" | includeByType \"IPv6\" | ifAddrs | sortByAddr | join "address" \" \"}}"
-[0] out: "100:: fe80::1/64"
+100:: fe80::1
 ```
 
 ## `sockaddr rfc`
