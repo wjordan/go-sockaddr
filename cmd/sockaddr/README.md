@@ -84,8 +84,11 @@ ListenStream  "unix" "/tmp/example.sock"
 
 The `sockaddr` library has the potential to be very complex, which is why the
 `sockaddr` command supports an `eval` subcommand in order to test configurations
-from the command line.  If the argument passed to `eval` is a dash (`-`), then
-`sockaddr eval` will read from stdin.
+from the command line.  The `eval` subcommand automatically wraps its input with
+the `{{` and `}}` template delimiters unless the `-r` command is specified, in
+which case `eval` parses the raw input.  If the `template` argument passed to
+`eval` is a dash (`-`), then `sockaddr eval` will read from stdin and
+automatically sets the `-r` flag.
 
 ```
 Usage: sockaddr eval [options] [template ...]
@@ -96,18 +99,19 @@ Options:
 
   -d  Debug output
   -n  Suppress newlines between args
+  -r  Suppress wrapping the input with {{ }} delimiters
 ```
 
 Here are a few impractical examples to get you started:
 
 ```text
-$ sockaddr eval '{{GetIfSockAddrs | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "}}'
+$ sockaddr eval 'GetIfSockAddrs | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "'
 100:: fe80::1
-$ sockaddr eval '{{. | include "rfc" "1918" | print | len | lt 2}}'
+$ sockaddr eval '. | include "rfc" "1918" | print | len | lt 2'
 true
-$ sockaddr eval '{{with $ifSet := include "name" "lo0" . }}{{ range include "type" "IPv6" $ifSet | sort "address" | reverse}}{{ . }} {{end}}{{end}}'
+$ sockaddr eval -r '{{with $ifSet := include "name" "lo0" . }}{{ range include "type" "IPv6" $ifSet | sort "address" | reverse}}{{ . }} {{end}}{{end}}'
 fe80::1/64 {1 16384 lo0  up|loopback|multicast} 100:: {1 16384 lo0  up|loopback|multicast}
-$ sockaddr eval '{{. | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "}}'
+$ sockaddr eval '. | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "'
 100:: fe80::1
 $ cat <<'EOF' | sockaddr eval -
 {{. | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "}}
