@@ -112,6 +112,8 @@ Options:
 Here are a few impractical examples to get you started:
 
 ```text
+$ sockaddr eval 'GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | limit 1 | join "address" " "'
+172.14.6.167
 $ sockaddr eval 'GetIfSockAddrs | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "'
 100:: fe80::1
 $ sockaddr eval '. | include "rfc" "1918" | print | len | lt 2'

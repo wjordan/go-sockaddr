@@ -158,7 +158,7 @@ func TestSockAddr_Parse(t *testing.T) {
 			// instead of printing the correct $rfc*Addrs values.
 			name: "HashiCorpDefault2016",
 			input: `
-{{- with $addr := GetIfSockAddrs | include "type" "^IP(v[46])?$" | include "rfc" "1918 6598" | sort "address" | limit 1 | join "address" " " -}}
+{{- with $addr := GetIfSockAddrs | include "type" "^IP(v[46])?$" | include "rfc" "1918,6598" | sort "address" | limit 1 | join "address" " " -}}
 
   {{- if ($addr | len) gt 0 -}}
     {{- print "true" -}}{{/* print $addr*/ -}}

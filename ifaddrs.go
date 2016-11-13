@@ -357,7 +357,7 @@ func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddr
 	case "port":
 		includedIfs, _, err = IfByPort(selectorParam, inputIfAddrs)
 	case "rfc":
-		rfcs := strings.Split(selectorParam, " ")
+		rfcs := strings.Split(selectorParam, ",")
 		for _, rfcStr := range rfcs {
 			rfc, err := strconv.ParseUint(rfcStr, 10, 64)
 			if err != nil {
@@ -403,7 +403,7 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddr
 	case "port":
 		_, excludedIfs, err = IfByPort(selectorParam, inputIfAddrs)
 	case "rfc":
-		rfcs := strings.Split(selectorParam, " ")
+		rfcs := strings.Split(selectorParam, ",")
 		for _, rfcStr := range rfcs {
 			rfc, err := strconv.ParseUint(rfcStr, 10, 64)
 			if err == nil {
@@ -435,46 +435,56 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddr
 	return excludedIfs
 }
 
-// SortIfBy returns an IfAddrs sorted based on the passed in selector.
-func SortIfBy(selectorName string, inputIfAddrs IfAddrs) IfAddrs {
+// SortIfBy returns an IfAddrs sorted based on the passed in selector.  Multiple
+// sort clauses can be passed in as a comma delimited list without whitespace.
+func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
 	sortedIfs := append(IfAddrs(nil), inputIfAddrs...)
-	switch strings.ToLower(selectorName) {
-	case "address":
-		// The "address" selector returns an array of IfAddrs ordered by
-		// the network address.  IfAddrs that are not comparable will be
-		// at the end of the list and in a non-deterministic order.
-		OrderedIfAddrBy(AscIfAddress).Sort(sortedIfs)
-	case "name":
-		// The "name" selector returns an array of IfAddrs ordered by
-		// the interface name.
-		OrderedIfAddrBy(AscIfName).Sort(sortedIfs)
-	case "port":
-		// The "port" selector returns an array of IfAddrs ordered by
-		// the port, if included in the IfAddr.  IfAddrs that are not
-		// comparable will be at the end of the list and in a
-		// non-deterministic order.
-		OrderedIfAddrBy(AscIfPort).Sort(sortedIfs)
-	case "private":
-		// The "private" selector returns an array of IfAddrs ordered by
-		// private addresses first.  IfAddrs that are not comparable
-		// will be at the end of the list and in a non-deterministic
-		// order.
-		OrderedIfAddrBy(AscIfPrivate).Sort(sortedIfs)
-	case "size":
-		// The "size" selector returns an array of IfAddrs ordered by
-		// the size of the network mask, smallest mask (fewest number of
-		// hosts per network) to largest (e.g. a /32 sorts before a
-		// /24).
-		OrderedIfAddrBy(AscIfNetworkSize).Sort(sortedIfs)
-	case "type":
-		// The "type" selector returns an array of IfAddrs ordered by
-		// the type of the IfAddr.  The sort order is Unix, IPv4, then
-		// IPv6.
-		OrderedIfAddrBy(AscIfType).Sort(sortedIfs)
-	default:
-		// Return an empty list for invalid sort types.
-		return IfAddrs{}
+
+	clauses := strings.Split(selectorParam, ",")
+	sortFuncs := make([]CmpIfAddrFunc, len(clauses))
+
+	for i, clause := range clauses {
+		switch strings.ToLower(clause) {
+		case "address":
+			// The "address" selector returns an array of IfAddrs
+			// ordered by the network address.  IfAddrs that are not
+			// comparable will be at the end of the list and in a
+			// non-deterministic order.
+			sortFuncs[i] = AscIfAddress
+		case "name":
+			// The "name" selector returns an array of IfAddrs
+			// ordered by the interface name.
+			sortFuncs[i] = AscIfName
+		case "port":
+			// The "port" selector returns an array of IfAddrs
+			// ordered by the port, if included in the IfAddr.
+			// IfAddrs that are not comparable will be at the end of
+			// the list and in a non-deterministic order.
+			sortFuncs[i] = AscIfPort
+		case "private":
+			// The "private" selector returns an array of IfAddrs
+			// ordered by private addresses first.  IfAddrs that are
+			// not comparable will be at the end of the list and in
+			// a non-deterministic order.
+			sortFuncs[i] = AscIfPrivate
+		case "size":
+			// The "size" selector returns an array of IfAddrs
+			// ordered by the size of the network mask, smallest
+			// mask (fewest number of hosts per network) to largest
+			// (e.g. a /32 sorts before a /24).
+			sortFuncs[i] = AscIfNetworkSize
+		case "type":
+			// The "type" selector returns an array of IfAddrs
+			// ordered by the type of the IfAddr.  The sort order is
+			// Unix, IPv4, then IPv6.
+			sortFuncs[i] = AscIfType
+		default:
+			// Return an empty list for invalid sort types.
+			return IfAddrs{}
+		}
 	}
+
+	OrderedIfAddrBy(sortFuncs...).Sort(sortedIfs)
 
 	return sortedIfs
 }
