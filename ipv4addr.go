@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 )
 
 type (
@@ -43,6 +44,36 @@ type IPv4Addr struct {
 // To create uint32 values from net.IP, always test to make sure the address
 // returned can be converted to a 4 byte array using To4().
 func NewIPv4Addr(ipv4Str string) (IPv4Addr, error) {
+	// Parse as an IPv4 CIDR
+	ipAddr, network, err := net.ParseCIDR(ipv4Str)
+	if err == nil {
+		ipv4 := ipAddr.To4()
+		if ipv4 == nil {
+			return IPv4Addr{}, fmt.Errorf("Unable to convert %s to an IPv4 address", ipv4Str)
+		}
+
+		// If we see an IPv6 netmask, convert it to an IPv4 mask.
+		netmaskSepPos := strings.LastIndexByte(ipv4Str, '/')
+		if netmaskSepPos != -1 && netmaskSepPos+1 < len(ipv4Str) {
+			netMask, err := strconv.ParseUint(ipv4Str[netmaskSepPos+1:], 10, 8)
+			if err != nil {
+				return IPv4Addr{}, fmt.Errorf("Unable to convert %s to an IPv4 address: unable to parse CIDR netmask: %v", ipv4Str, err)
+			} else if netMask > 128 {
+				return IPv4Addr{}, fmt.Errorf("Unable to convert %s to an IPv4 address: invalid CIDR netmask", ipv4Str)
+			}
+
+			if netMask >= 96 {
+				// Convert the IPv6 netmask to an IPv4 netmask
+				network.Mask = net.CIDRMask(int(netMask-96), IPv4len*8)
+			}
+		}
+		ipv4Addr := IPv4Addr{
+			Address: IPv4Address(binary.BigEndian.Uint32(ipv4)),
+			Mask:    IPv4Mask(binary.BigEndian.Uint32(network.Mask)),
+		}
+		return ipv4Addr, nil
+	}
+
 	// Attempt to parse ipv4Str as a /32 host with a port number.
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ipv4Str)
 	if err == nil {
@@ -73,21 +104,6 @@ func NewIPv4Addr(ipv4Str string) (IPv4Addr, error) {
 		ipv4Addr := IPv4Addr{
 			Address: IPv4Address(ipv4Uint32),
 			Mask:    IPv4HostMask,
-		}
-		return ipv4Addr, nil
-	}
-
-	// Parse as an IPv4 CIDR
-	ipAddr, network, err := net.ParseCIDR(ipv4Str)
-	if err == nil {
-		ipv4 := ipAddr.To4()
-		if ipv4 == nil {
-			return IPv4Addr{}, fmt.Errorf("Unable to convert %s to an IPv4 address", ipv4Str)
-		}
-
-		ipv4Addr := IPv4Addr{
-			Address: IPv4Address(binary.BigEndian.Uint32(ipv4)),
-			Mask:    IPv4Mask(binary.BigEndian.Uint32(network.Mask)),
 		}
 		return ipv4Addr, nil
 	}
