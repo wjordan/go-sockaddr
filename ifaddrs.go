@@ -370,6 +370,7 @@ func IfByRFC(inputRFC uint, ifAddrs IfAddrs) (matched, remainder IfAddrs, err er
 	matchedIfAddrs := make(IfAddrs, 0, len(ifAddrs))
 	remainingIfAddrs := make(IfAddrs, 0, len(ifAddrs))
 
+	rfcNetMap := KnownRFCs()
 	rfcNets, ok := rfcNetMap[inputRFC]
 	if !ok {
 		return nil, nil, fmt.Errorf("unsupported RFC %d", inputRFC)

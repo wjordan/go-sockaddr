@@ -89,6 +89,7 @@ func NewSockAddr(s string) (SockAddr, error) {
 
 // IsRFC tests to see if an SockAddr matches the specified RFC
 func IsRFC(rfcNum uint, sa SockAddr) bool {
+	rfcNetMap := KnownRFCs()
 	rfcNets, ok := rfcNetMap[rfcNum]
 	if !ok {
 		return false
