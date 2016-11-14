@@ -444,13 +444,43 @@ func IfByType(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err 
 // IfByFlag returns a list of matching and non-matching IfAddrs that match the
 // specified type.  For instance:
 //
-// include "flag" "up broadcast"
+// include "flag" "up,broadcast"
 //
 // will include any IfAddrs that have both the "up" and "broadcast" flags set.
 // Any addresses on those interfaces that don't match will be omitted from the
 // results.
 func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
-	return nil, nil, fmt.Errorf("Unable to compile flag regexp %+q: %v", inputFlags, err)
+	matchedAddrs := make(IfAddrs, 0, len(ifAddrs))
+	excludedAddrs := make(IfAddrs, 0, len(ifAddrs))
+
+	var flag, want net.Flags
+	for _, flagName := range strings.Split(strings.ToLower(inputFlags), ",") {
+		switch flagName {
+		case "broadcast":
+			flag, want = flag|net.FlagBroadcast, want|net.FlagBroadcast
+		case "down":
+			flag, want = flag|net.FlagUp, want|0
+		case "loopback":
+			flag, want = flag|net.FlagLoopback, want|net.FlagLoopback
+		case "multicast":
+			flag, want = flag|net.FlagMulticast, want|net.FlagMulticast
+		case "point-to-point":
+			flag, want = flag|net.FlagPointToPoint, want|net.FlagPointToPoint
+		case "up":
+			flag, want = flag|net.FlagUp, want|net.FlagUp
+		default:
+			return nil, nil, fmt.Errorf("Unknown interface flag: %+q", flagName)
+		}
+	}
+
+	for _, ifAddr := range ifAddrs {
+		if ifAddr.Interface.Flags&flag == want {
+			matchedAddrs = append(matchedAddrs, ifAddr)
+		} else {
+			excludedAddrs = append(excludedAddrs, ifAddr)
+		}
+	}
+	return matchedAddrs, excludedAddrs, nil
 }
 
 // IncludeIfs returns an IfAddrs based on the passed in selector.
@@ -461,6 +491,8 @@ func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddr
 	switch strings.ToLower(selectorName) {
 	case "address":
 		includedIfs, _, err = IfByAddress(selectorParam, inputIfAddrs)
+	case "flag", "flags":
+		includedIfs, _, err = IfByFlag(selectorParam, inputIfAddrs)
 	case "name":
 		includedIfs, _, err = IfByName(selectorParam, inputIfAddrs)
 	case "port":
@@ -507,6 +539,8 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddr
 	switch strings.ToLower(selectorName) {
 	case "address":
 		_, excludedIfs, err = IfByAddress(selectorParam, inputIfAddrs)
+	case "flag", "flags":
+		_, excludedIfs, err = IfByFlag(selectorParam, inputIfAddrs)
 	case "name":
 		_, excludedIfs, err = IfByName(selectorParam, inputIfAddrs)
 	case "port":

@@ -41,7 +41,9 @@ func (ifAddr IfAddr) Attr(attrName AttrName) string {
 		// Random attribute names that are Interface specific
 		switch attrName {
 		case "name":
-			return ifAddr.Name
+			return ifAddr.Interface.Name
+		case "flags":
+			return ifAddr.Interface.Flags.String()
 		}
 	case sockType == TypeUnix:
 		us := *ToUnixSock(sa)
