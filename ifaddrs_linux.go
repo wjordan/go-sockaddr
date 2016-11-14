@@ -21,7 +21,7 @@ func getDefaultIfName() (string, error) {
 	}
 
 	var ifName string
-	if ifName, err = parseLinuxDefaultIfName(out); err != nil {
+	if ifName, err = parseDefaultIfNameFromIPCmd(string(out)); err != nil {
 		return "", errors.New("No default interface found")
 	}
 	return ifName, nil

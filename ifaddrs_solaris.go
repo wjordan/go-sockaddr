@@ -1,5 +1,3 @@
-// +build solaris
-
 package sockaddr
 
 import (
@@ -13,8 +11,8 @@ func defaultSolarisIfNameCmd() []string {
 	return []string{"/usr/sbin/route", "-n", "get", "default"}
 }
 
-// getDefaultIfName is a Solaris-specific function for extracting the name of the
-// interface from route(8).
+// getDefaultIfName is an Solaris-specific function for extracting the name of
+// the interface from route(8).
 func getDefaultIfName() (string, error) {
 	var cmd []string = defaultSolarisIfNameCmd()
 	out, err := exec.Command(cmd[0], cmd[1:]...).Output()
@@ -22,9 +20,8 @@ func getDefaultIfName() (string, error) {
 		return "", err
 	}
 
-	// The outputs of BSD and Solaris route(8) are of the same format.
 	var ifName string
-	if ifName, err = parseBSDDefaultIfName(string(out)); err != nil {
+	if ifName, err = parseDefaultIfNameFromRoute(string(out)); err != nil {
 		return "", errors.New("No default interface found")
 	}
 	return ifName, nil

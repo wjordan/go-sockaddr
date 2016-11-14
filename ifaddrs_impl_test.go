@@ -25,7 +25,7 @@ destination: default
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := parseBSDDefaultIfName(tc.routeOut)
+			got, err := parseDefaultIfNameFromRoute(tc.routeOut)
 			if err != nil {
 				t.Fatalf("unable to parse default interface from route output: %v", err)
 			}
@@ -54,7 +54,7 @@ func Test_parseLinuxDefaultIfName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := parseLinuxDefaultIfName(tc.routeOut)
+			got, err := parseDefaultIfNameFromIPCmd(tc.routeOut)
 			if err != nil {
 				t.Fatalf("unable to parse default interface from route output: %v", err)
 			}

@@ -256,7 +256,7 @@ func KnownRFCs() map[uint]SockAddrs {
 		4038: SockAddrs{
 			// [RFC4038] Application Aspects of IPv6 Transition
 
-			// RFC4038], §4.2. IPv6 Applications in a Dual-Stack Node
+			// [RFC4038], §4.2. IPv6 Applications in a Dual-Stack Node
 			mustIPv6Addr("0:0:0:0:0:ffff::/96"),
 		},
 		4193: SockAddrs{

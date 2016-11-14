@@ -751,9 +751,9 @@ func SortIfByType(inputIfAddrs IfAddrs) IfAddrs {
 	return sortedIfAddrs
 }
 
-// parseBSDDefaultIfName is a *BSD-specific parsing function for route(8)'s
-// output.
-func parseBSDDefaultIfName(routeOut string) (string, error) {
+// parseDefaultIfNameFromRoute parses standard route(8)'s output for the *BSDs
+// and Solaris.
+func parseDefaultIfNameFromRoute(routeOut string) (string, error) {
 	lines := strings.Split(routeOut, "\n")
 	for _, line := range lines {
 		kvs := strings.SplitN(line, ":", 2)
@@ -770,9 +770,9 @@ func parseBSDDefaultIfName(routeOut string) (string, error) {
 	return "", errors.New("No default interface found")
 }
 
-// parseLinuxDefaultIfName is a Linux-specific parsing function for route(8)'s
-// output.
-func parseLinuxDefaultIfName(routeOut string) (string, error) {
+// parseDefaultIfNameFromIPCmd parses the default interface from ip(8) for
+// Linux.
+func parseDefaultIfNameFromIPCmd(routeOut string) (string, error) {
 	lines := strings.Split(routeOut, "\n")
 	for _, line := range lines {
 		kvs := strings.SplitN(line, " ", 5)

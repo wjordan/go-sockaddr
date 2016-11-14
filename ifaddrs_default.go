@@ -1,4 +1,4 @@
-// +build android nacl plan9 solaris windows
+// +build android nacl plan9 windows
 
 package sockaddr
 
