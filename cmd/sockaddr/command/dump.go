@@ -3,8 +3,6 @@ package command
 import (
 	"flag"
 	"fmt"
-	"math/big"
-	"strings"
 
 	sockaddr "github.com/hashicorp/go-sockaddr"
 	"github.com/mitchellh/cli"
@@ -113,21 +111,21 @@ func (c *DumpCommand) VisitAllFlags(fn func(*flag.Flag)) {
 }
 
 func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
-	reservedAttrs := []string{"Attribute"}
+	reservedAttrs := []sockaddr.AttrName{"Attribute"}
 	const maxNumAttrs = 32
 
 	output := make([]string, 0, maxNumAttrs+len(reservedAttrs))
-	allowedAttrs := make(map[string]struct{}, len(c.attrNames)+len(reservedAttrs))
+	allowedAttrs := make(map[sockaddr.AttrName]struct{}, len(c.attrNames)+len(reservedAttrs))
 	for _, attr := range reservedAttrs {
 		allowedAttrs[attr] = struct{}{}
 	}
 	for _, attr := range c.attrNames {
-		allowedAttrs[attr] = struct{}{}
+		allowedAttrs[sockaddr.AttrName(attr)] = struct{}{}
 	}
 
 	// allowedAttr returns true if the attribute is allowed to be appended
 	// to the output.
-	allowedAttr := func(k string) bool {
+	allowedAttr := func(k sockaddr.AttrName) bool {
 		if len(allowedAttrs) == len(reservedAttrs) {
 			return true
 		}
@@ -138,7 +136,7 @@ func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
 
 	// outFmt is a small helper function to reduce the tedium below.  outFmt
 	// returns a new slice and expects the value to already be a string.
-	outFmt := func(o []string, k string, v interface{}) []string {
+	outFmt := func(o []string, k sockaddr.AttrName, v interface{}) []string {
 		if !allowedAttr(k) {
 			return o
 		}
@@ -158,56 +156,38 @@ func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
 		output = outFmt(output, "Attribute", "Value")
 	}
 
-	output = outFmt(output, "type", sa.Type())
-	output = outFmt(output, "string", sa)
+	// Attributes for all SockAddr types
+	for _, attr := range sockaddr.SockAddrAttrs() {
+		output = outFmt(output, attr, sockaddr.SockAddrAttr(sa, attr))
+	}
 
 	// Attributes for all IP types (both IPv4 and IPv6)
 	if sa.Type()&sockaddr.TypeIP != 0 {
 		ip := *sockaddr.ToIPAddr(sa)
-		output = outFmt(output, "host", ip.Host())
-		output = outFmt(output, "address", ip.NetIP())
-		output = outFmt(output, "port", fmt.Sprintf("%d", ip.IPPort()))
-		output = outFmt(output, "netmask", ip.NetIPMask())
-		output = outFmt(output, "network", ip.Network())
-		output = outFmt(output, "mask_bits", fmt.Sprintf("%d", ip.Maskbits()))
-		output = outFmt(output, "binary", ip.AddressBinString())
-		output = outFmt(output, "hex", ip.AddressHexString())
-		output = outFmt(output, "first_usable", ip.FirstUsable())
-		output = outFmt(output, "last_usable", ip.LastUsable())
-
-		{
-			octets := ip.Octets()
-			octetStrs := make([]string, 0, len(octets))
-			for _, octet := range octets {
-				octetStrs = append(octetStrs, fmt.Sprintf("%d", octet))
-			}
-			output = outFmt(output, "octets", strings.Join(octetStrs, " "))
+		for _, attr := range sockaddr.IPAttrs() {
+			output = outFmt(output, attr, sockaddr.IPAddrAttr(ip, attr))
 		}
 	}
 
 	if sa.Type() == sockaddr.TypeIPv4 {
 		ipv4 := *sockaddr.ToIPv4Addr(sa)
-		output = outFmt(output, "size", fmt.Sprintf("%d", 1<<uint(sockaddr.IPv4len*8-ipv4.Maskbits())))
-		output = outFmt(output, "broadcast", ipv4.Broadcast())
-		output = outFmt(output, "uint32", fmt.Sprintf("%d", uint32(ipv4.Address)))
+		for _, attr := range sockaddr.IPv4Attrs() {
+			output = outFmt(output, attr, sockaddr.IPv4AddrAttr(ipv4, attr))
+		}
 	}
 
 	if sa.Type() == sockaddr.TypeIPv6 {
 		ipv6 := *sockaddr.ToIPv6Addr(sa)
-		{
-			netSize := big.NewInt(1)
-			netSize = netSize.Lsh(netSize, uint(sockaddr.IPv6len*8-ipv6.Maskbits()))
-			output = outFmt(output, "size", netSize.Text(10))
-		}
-		{
-			b := big.Int(*ipv6.Address)
-			output = outFmt(output, "uint128", b.Text(10))
+		for _, attr := range sockaddr.IPv6Attrs() {
+			output = outFmt(output, attr, sockaddr.IPv6AddrAttr(ipv6, attr))
 		}
 	}
 
 	if sa.Type() == sockaddr.TypeUnix {
 		us := *sockaddr.ToUnixSock(sa)
-		output = outFmt(output, "path", us.Path())
+		for _, attr := range sockaddr.UnixSockAttrs() {
+			output = outFmt(output, attr, sockaddr.UnixSockAttr(us, attr))
+		}
 	}
 
 	// Developer-focused arguments

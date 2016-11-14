@@ -24,6 +24,10 @@ const IPv6HostPrefix = IPPrefixLen(128)
 // This value must be a constant and always set to all ones.
 var ipv6HostMask IPv6Mask
 
+// ipv6AddrAttrMap is a map of the IPv6Addr type-specific attributes.
+var ipv6AddrAttrMap map[AttrName]func(IPv6Addr) string
+var ipv6AddrAttrs []AttrName
+
 func init() {
 	biMask := new(big.Int)
 	biMask.SetBytes([]byte{
@@ -38,6 +42,8 @@ func init() {
 	},
 	)
 	ipv6HostMask = IPv6Mask(biMask)
+
+	ipv6AddrInit()
 }
 
 // IPv6Addr implements a convenience wrapper around the union of Go's
@@ -499,4 +505,41 @@ func (ipv6 IPv6Addr) String() string {
 // Type is used as a type switch and returns TypeIPv6
 func (IPv6Addr) Type() SockAddrType {
 	return TypeIPv6
+}
+
+// IPv6Attrs returns a list of attributes supported by the IPv6Addr type
+func IPv6Attrs() []AttrName {
+	return ipv6AddrAttrs
+}
+
+// IPv6AddrAttr returns a string representation of an attribute for the given
+// IPv6Addr.
+func IPv6AddrAttr(ipv6 IPv6Addr, selector AttrName) string {
+	fn, found := ipv6AddrAttrMap[selector]
+	if !found {
+		return ""
+	}
+
+	return fn(ipv6)
+}
+
+// ipv6AddrInit is called once at init()
+func ipv6AddrInit() {
+	// Sorted for human readability
+	ipv6AddrAttrs = []AttrName{
+		"size", // Same position as in IPv6 for output consistency
+		"uint128",
+	}
+
+	ipv6AddrAttrMap = map[AttrName]func(ipv6 IPv6Addr) string{
+		"size": func(ipv6 IPv6Addr) string {
+			netSize := big.NewInt(1)
+			netSize = netSize.Lsh(netSize, uint(IPv6len*8-ipv6.Maskbits()))
+			return netSize.Text(10)
+		},
+		"uint128": func(ipv6 IPv6Addr) string {
+			b := big.Int(*ipv6.Address)
+			return b.Text(10)
+		},
+	}
 }

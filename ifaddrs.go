@@ -3,7 +3,6 @@ package sockaddr
 import (
 	"errors"
 	"fmt"
-	"math/big"
 	"net"
 	"regexp"
 	"sort"
@@ -119,6 +118,16 @@ func AscIfPrivate(p1Ptr, p2Ptr *IfAddr) int {
 // type.  Non-equal types are deferred in the sort.
 func AscIfType(p1Ptr, p2Ptr *IfAddr) int {
 	return AscType(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
+// IfAttr forwards the selector to IfAttr.Attr() for resolution
+func IfAttr(selectorName string, ifAddrs IfAddrs) string {
+	if len(ifAddrs) == 0 {
+		return ""
+	}
+
+	attrName := AttrName(strings.ToLower(selectorName))
+	return ifAddrs[0].Attr(attrName)
 }
 
 // FilterIfByType filters IfAddrs and returns a list of the matching type
@@ -621,88 +630,11 @@ func UniqueIfAddrsBy(selectorName string, inputIfAddrs IfAddrs) IfAddrs {
 
 // JoinIfAddrs joins an IfAddrs and returns a string
 func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) string {
-	attrName := strings.ToLower(selectorName)
-
 	outputs := make([]string, 0, len(inputIfAddrs))
+	attrName := AttrName(strings.ToLower(selectorName))
 
 	for _, ifAddr := range inputIfAddrs {
-		var out string
-		sa := ifAddr.SockAddr
-		if sa.Type()&TypeIP != 0 {
-			ip := *ToIPAddr(sa)
-			switch attrName {
-			case "address":
-				out = ip.NetIP().String()
-			case "binary":
-				out = ip.AddressBinString()
-			case "first_usable":
-				out = ip.FirstUsable().String()
-			case "hex":
-				out = ip.AddressHexString()
-			case "host":
-				out = ip.Host().String()
-			case "last_usable":
-				out = ip.LastUsable().String()
-			case "mask_bits":
-				out = fmt.Sprintf("%d", ip.Maskbits())
-			case "name":
-				out = ifAddr.Name
-			case "netmask":
-				out = ip.NetIPMask().String()
-			case "network":
-				out = ip.Network().String()
-			case "octets":
-				octets := ip.Octets()
-				octetStrs := make([]string, 0, len(octets))
-				for _, octet := range octets {
-					octetStrs = append(octetStrs, fmt.Sprintf("%d", octet))
-				}
-				out = strings.Join(octetStrs, " ")
-			case "port":
-				out = fmt.Sprintf("%d", ip.IPPort())
-			}
-
-			if sa.Type() == TypeIPv4 {
-				ipv4 := *ToIPv4Addr(sa)
-				switch attrName {
-				case "size":
-					out = fmt.Sprintf("%d", 1<<uint(IPv4len*8-ip.Maskbits()))
-				case "broadcast":
-					out = ipv4.Broadcast().String()
-				case "uint32":
-					out = fmt.Sprintf("%d", uint32(ipv4.Address))
-				}
-			}
-
-			if sa.Type() == TypeIPv6 {
-				ipv6 := *ToIPv6Addr(sa)
-				switch attrName {
-				case "size":
-					netSize := big.NewInt(1)
-					netSize = netSize.Lsh(netSize, uint(IPv6len*8-ip.Maskbits()))
-					out = netSize.Text(10)
-				case "uint128":
-					b := big.Int(*ipv6.Address)
-					out = b.Text(10)
-				}
-			}
-		}
-
-		if sa.Type() == TypeUnix {
-			us := *ToUnixSock(sa)
-			switch attrName {
-			case "path":
-				out = us.Path()
-			}
-		}
-
-		switch attrName {
-		case "type":
-			out = sa.Type().String()
-		case "string":
-			out = sa.String()
-		}
-		outputs = append(outputs, out)
+		outputs = append(outputs, ifAddr.Attr(attrName))
 	}
 	return strings.Join(outputs, joinStr)
 }

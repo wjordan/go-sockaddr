@@ -8,6 +8,14 @@ type UnixSock struct {
 }
 type UnixSocks []*UnixSock
 
+// unixAttrMap is a map of the UnixSockAddr type-specific attributes.
+var unixAttrMap map[AttrName]func(UnixSock) string
+var unixAttrs []AttrName
+
+func init() {
+	unixAttrInit()
+}
+
 // NewUnixSock creates an UnixSock from a string path.  String can be in the
 // form of either URI-based string (e.g. `file:///etc/passwd`), an absolute
 // path (e.g. `/etc/passwd`), or a relative path (e.g. `./foo`).
@@ -53,4 +61,34 @@ func (us UnixSock) String() string {
 // Type is used as a type switch and returns TypeUnix
 func (UnixSock) Type() SockAddrType {
 	return TypeUnix
+}
+
+// UnixSockAttrs returns a list of attributes supported by the UnixSockAddr type
+func UnixSockAttrs() []AttrName {
+	return unixAttrs
+}
+
+// UnixSockAttr returns a string representation of an attribute for the given
+// UnixSock.
+func UnixSockAttr(us UnixSock, attrName AttrName) string {
+	fn, found := unixAttrMap[attrName]
+	if !found {
+		return ""
+	}
+
+	return fn(us)
+}
+
+// unixAttrInit is called once at init()
+func unixAttrInit() {
+	// Sorted for human readability
+	unixAttrs = []AttrName{
+		"path",
+	}
+
+	unixAttrMap = map[AttrName]func(us UnixSock) string{
+		"path": func(us UnixSock) string {
+			return us.Path()
+		},
+	}
 }

@@ -55,11 +55,12 @@ func init() {
 
 	HelperFuncs = template.FuncMap{
 		// Misc functions that operate on IfAddrs inputs
-		"join":     sockaddr.JoinIfAddrs,
-		"limit":    sockaddr.LimitIfAddrs,
-		"offset":   sockaddr.OffsetIfAddrs,
-		"reverse":  sockaddr.ReverseIfAddrs,
-		"uniqueBy": sockaddr.UniqueIfAddrsBy,
+		"attr":    sockaddr.IfAttr,
+		"join":    sockaddr.JoinIfAddrs,
+		"limit":   sockaddr.LimitIfAddrs,
+		"offset":  sockaddr.OffsetIfAddrs,
+		"reverse": sockaddr.ReverseIfAddrs,
+		"unique":  sockaddr.UniqueIfAddrsBy,
 
 		// Return a Private RFC 6890 IP address string that is attached
 		// to the default route.

@@ -23,6 +23,10 @@ type (
 // (i.e. 255.255.255.255).
 const IPv4HostMask = IPv4Mask(0xffffffff)
 
+// ipv4AddrAttrMap is a map of the IPv4Addr type-specific attributes.
+var ipv4AddrAttrMap map[AttrName]func(IPv4Addr) string
+var ipv4AddrAttrs []AttrName
+
 // IPv4Addr implements a convenience wrapper around the union of Go's
 // built-in net.IP and net.IPNet types.  In UNIX-speak, IPv4Addr implements
 // `sockaddr` when the the address family is set to AF_INET
@@ -32,6 +36,10 @@ type IPv4Addr struct {
 	Address IPv4Address
 	Mask    IPv4Mask
 	Port    IPPort
+}
+
+func init() {
+	ipv4AddrInit()
 }
 
 // NewIPv4Addr creates an IPv4Addr from a string.  String can be in the form
@@ -460,4 +468,42 @@ func (ipv4 IPv4Addr) String() string {
 // Type is used as a type switch and returns TypeIPv4
 func (IPv4Addr) Type() SockAddrType {
 	return TypeIPv4
+}
+
+// IPv4AddrAttr returns a string representation of an attribute for the given
+// IPv4Addr.
+func IPv4AddrAttr(ipv4 IPv4Addr, selector AttrName) string {
+	fn, found := ipv4AddrAttrMap[selector]
+	if !found {
+		return ""
+	}
+
+	return fn(ipv4)
+}
+
+// IPv4Attrs returns a list of attributes supported by the IPv4Addr type
+func IPv4Attrs() []AttrName {
+	return ipv4AddrAttrs
+}
+
+// ipv4AddrInit is called once at init()
+func ipv4AddrInit() {
+	// Sorted for human readability
+	ipv4AddrAttrs = []AttrName{
+		"size", // Same position as in IPv6 for output consistency
+		"broadcast",
+		"uint32",
+	}
+
+	ipv4AddrAttrMap = map[AttrName]func(ipv4 IPv4Addr) string{
+		"broadcast": func(ipv4 IPv4Addr) string {
+			return ipv4.Broadcast().String()
+		},
+		"size": func(ipv4 IPv4Addr) string {
+			return fmt.Sprintf("%d", 1<<uint(IPv4len*8-ipv4.Maskbits()))
+		},
+		"uint32": func(ipv4 IPv4Addr) string {
+			return fmt.Sprintf("%d", uint32(ipv4.Address))
+		},
+	}
 }

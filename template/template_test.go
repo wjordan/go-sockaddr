@@ -23,7 +23,7 @@ func TestSockAddr_Parse(t *testing.T) {
 			// NOTE(sean@): This test, as its written now, will only
 			// pass on macOS.
 			name:   "GetDefaultInterface",
-			input:  `{{GetDefaultInterfaces | include "type" "IPv4" | limit 1 | join "name" " " }}`,
+			input:  `{{GetDefaultInterfaces | include "type" "IPv4" | attr "name" }}`,
 			output: `en0`,
 		},
 		{
@@ -73,7 +73,7 @@ func TestSockAddr_Parse(t *testing.T) {
 		},
 		{
 			name:   `exclude "type"`,
-			input:  `{{. | exclude "type" "^IPv(4)$" | include "name" "^lo0$" | sort "address" | uniqueBy "name" | join "name" " "}} {{range . | exclude "type" "^IPv(4)$" | include "name" "^lo0$"}}{{.SockAddr}} {{end}}`,
+			input:  `{{. | exclude "type" "^IPv(4)$" | include "name" "^lo0$" | sort "address" | unique "name" | join "name" " "}} {{range . | exclude "type" "^IPv(4)$" | include "name" "^lo0$"}}{{.SockAddr}} {{end}}`,
 			output: `lo0 100:: fe80::1/64 `,
 		},
 		{
@@ -90,7 +90,7 @@ func TestSockAddr_Parse(t *testing.T) {
 			// In this case, we ass-u-me that the host running the
 			// test has at least one RFC1918 address on their host.
 			name:          `include "rfc"`,
-			input:         `{{(. | include "rfc" "1918" | limit 1 | join "name" " ")}}`,
+			input:         `{{(. | include "rfc" "1918" | attr "name")}}`,
 			output:        `en0`,
 			requireOnline: true,
 		},
@@ -158,7 +158,7 @@ func TestSockAddr_Parse(t *testing.T) {
 			// instead of printing the correct $rfc*Addrs values.
 			name: "HashiCorpDefault2016",
 			input: `
-{{- with $addr := GetAllInterfaces | include "type" "^IP(v[46])?$" | include "rfc" "1918,6598" | sort "address" | limit 1 | join "address" " " -}}
+{{- with $addr := GetAllInterfaces | include "type" "^IP(v[46])?$" | include "rfc" "1918,6598" | sort "address" | attr "address" -}}
 
   {{- if ($addr | len) gt 0 -}}
     {{- print "true" -}}{{/* print $addr*/ -}}

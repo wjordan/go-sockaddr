@@ -6,6 +6,7 @@ import (
 )
 
 type SockAddrType int
+type AttrName string
 
 const (
 	TypeUnknown SockAddrType = 0x0
@@ -40,6 +41,14 @@ type SockAddr interface {
 
 	// Type returns the SockAddrType
 	Type() SockAddrType
+}
+
+// sockAddrAttrMap is a map of the SockAddr type-specific attributes.
+var sockAddrAttrMap map[AttrName]func(SockAddr) string
+var sockAddrAttrs []AttrName
+
+func init() {
+	sockAddrInit()
 }
 
 // New creates a new SockAddr from the string.  The order in which New()
@@ -149,6 +158,17 @@ func ToUnixSock(sa SockAddr) *UnixSock {
 	}
 }
 
+// SockAddrAttr returns a string representation of an attribute for the given
+// SockAddr.
+func SockAddrAttr(sa SockAddr, selector AttrName) string {
+	fn, found := sockAddrAttrMap[selector]
+	if !found {
+		return ""
+	}
+
+	return fn(sa)
+}
+
 // String() for SockAddrType returns a string representation of the
 // SockAddrType (e.g. "IPv4", "IPv6", "UNIX", "IP", or "unknown").
 func (sat SockAddrType) String() string {
@@ -164,4 +184,26 @@ func (sat SockAddrType) String() string {
 	default:
 		return "unknown"
 	}
+}
+
+// sockAddrInit is called once at init()
+func sockAddrInit() {
+	sockAddrAttrs = []AttrName{
+		"type", // type should be first
+		"string",
+	}
+
+	sockAddrAttrMap = map[AttrName]func(sa SockAddr) string{
+		"string": func(sa SockAddr) string {
+			return sa.String()
+		},
+		"type": func(sa SockAddr) string {
+			return sa.Type().String()
+		},
+	}
+}
+
+// UnixSockAttrs returns a list of attributes supported by the UnixSock type
+func SockAddrAttrs() []AttrName {
+	return sockAddrAttrs
 }
