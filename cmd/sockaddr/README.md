@@ -118,8 +118,18 @@ Options:
 Here are a few impractical examples to get you started:
 
 ```text
+$ sockaddr eval 'GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | attr "address"'
+172.14.6.167
 $ sockaddr eval 'GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | limit 1 | join "address" " "'
 172.14.6.167
+$ sockaddr eval 'GetPublicIP'
+203.0.113.4
+$ sockaddr eval 'GetPrivateIP'
+172.14.6.167
+$ sockaddr eval 'GetPrivateInterfaces | join "type" " "'
+IPv4 IPv6
+$ sockaddr eval 'GetPublicInterfaces | join "address" " "'
+203.0.113.4 2001:0DB8::1
 $ sockaddr eval 'GetAllInterfaces | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "'
 100:: fe80::1
 $ sockaddr eval '. | include "rfc" "1918" | print | len | lt 2'
@@ -136,21 +146,40 @@ EOF
 
 ## `sockaddr rfc`
 
-> Tests a given IP address to see if it is part of a known RFC.  If the IP
-> address belongs to a known RFC, return exit code 0 and print the status.  If
-> the IP does not belong to an RFC, return 1.  If the RFC is not known, return
-> 2.
-
 ```text
+$ sockaddr rfc
+Usage: sockaddr rfc [RFC Number] [IP Address]
+
+  Tests a given IP address to see if it is part of a known
+  RFC.  If the IP address belongs to a known RFC, return exit
+  code 0 and print the status.  If the IP does not belong to
+  an RFC, return 1.  If the RFC is not known, return 2.
+
+Options:
+
+  -s  Silent, only return different exit codes
 $ sockaddr rfc 1918 192.168.1.10
 192.168.1.10 is part of RFC 1918
 $ sockaddr rfc 6890 '[::1]'
 100:: is part of RFC 6890
 $ sockaddr rfc list
+1112
 1918
+2544
+2765
+2928
+3056
+3068
+3171
+3330
+4038
 4193
+4291
+4773
+5180
 5735
 6598
+6666
 6890
 ```
 
