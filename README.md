@@ -1,6 +1,7 @@
 # go-sockaddr
 
 ## `sockaddr` Library
+
 Socket address convenience functions for Go.  `go-sockaddr` is a convenience
 library that makes doing the right thing with IP addresses easy.  `go-sockaddr`
 is loosely modeled after the UNIX `sockaddr_t` and creates a union of the family
@@ -11,6 +12,37 @@ at
 The primary intent of the library was to make it possible to define heuristics
 for selecting IP addresses at process initialization time.  See the docs, tests,
 and CLI utility for details and hints as to how to use this library.
+
+With this library it is possible to find an IP address that:
+
+* is attached to a default route
+  ([`GetDefaultInterfaces()`](https://godoc.org/github.com/hashicorp/go-sockaddr#GetDefaultInterfaces))
+* is an RFC1918 address
+  ([`IfByRFC(1918)`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByRFC))
+* ordered
+  ([`OrderedIfAddrBy(args)`](https://godoc.org/github.com/hashicorp/go-sockaddr#OrderedIfAddrBy) where
+  `args` includes, but is not limited
+  to,
+  [`AscIfType`](https://godoc.org/github.com/hashicorp/go-sockaddr#AscIfType),
+  [`AscNetworkSize`](https://godoc.org/github.com/hashicorp/go-sockaddr#AscNetworkSize))
+* excludes all IPv6 addresses
+  ([`IfByType("^(IPv4)$")`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByType)); and
+* is larger than a `/32`
+  ([`IfByMaskSize(32)`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByMaskSize))
+
+or:
+
+* exclude all interfaces that are `down`
+  ([`ExcludeIfs("flags", "down")`](https://godoc.org/github.com/hashicorp/go-sockaddr#ExcludeIfs))
+* preferring IPv6 over IPv4
+  ([`SortIfByType()`](https://godoc.org/github.com/hashicorp/go-sockaddr#SortIfByType) +
+  [`ReverseIfAddrs()`](https://godoc.org/github.com/hashicorp/go-sockaddr#ReverseIfAddrs))
+* and excluding any IP in RFC6890 address
+  ([`IfByRFC(6890)`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByRFC))
+
+There are also a few simple helper functions such as `GetPublicIP` and
+`GetPrivateIP` which both return strings and select the first public or private
+IP address on the default interface, respectively.
 
 ## `sockaddr` CLI
 

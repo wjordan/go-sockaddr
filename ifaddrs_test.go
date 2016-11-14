@@ -1,6 +1,7 @@
 package sockaddr_test
 
 import (
+	"net"
 	"testing"
 
 	sockaddr "github.com/hashicorp/go-sockaddr"
@@ -73,10 +74,16 @@ func TestGetIfAddrs(t *testing.T) {
 // TestGetDefaultIfName tests to make sure a default interface name is always
 // returned from getDefaultIfName().
 func TestGetDefaultInterface(t *testing.T) {
-	// TODO: only run this test if we have Up interfaces
-
-	_, err := sockaddr.GetDefaultInterfaces()
+	ifAddrs, err := sockaddr.GetDefaultInterfaces()
 	if err != nil {
-		t.Fatal(err)
+		switch {
+		case len(ifAddrs) == 0:
+			t.Fatal(err)
+		case ifAddrs[0].Flags&net.FlagUp == 0:
+			// if the first IfAddr isn't up, skip.
+			t.Skip(err)
+		default:
+			t.Fatal(err)
+		}
 	}
 }
