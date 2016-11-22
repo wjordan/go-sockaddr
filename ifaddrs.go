@@ -150,16 +150,6 @@ func DescIfType(p1Ptr, p2Ptr *IfAddr) int {
 	return -1 * AscType(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
 }
 
-// IfAttr forwards the selector to IfAttr.Attr() for resolution
-func IfAttr(selectorName string, ifAddrs IfAddrs) string {
-	if len(ifAddrs) == 0 {
-		return ""
-	}
-
-	attrName := AttrName(strings.ToLower(selectorName))
-	return ifAddrs[0].Attr(attrName)
-}
-
 // FilterIfByType filters IfAddrs and returns a list of the matching type
 func FilterIfByType(ifAddrs IfAddrs, type_ SockAddrType) (matchedIfs, excludedIfs IfAddrs) {
 	excludedIfs = make(IfAddrs, 0, len(ifAddrs))
@@ -173,6 +163,17 @@ func FilterIfByType(ifAddrs IfAddrs, type_ SockAddrType) (matchedIfs, excludedIf
 		}
 	}
 	return matchedIfs, excludedIfs
+}
+
+// IfAttr forwards the selector to IfAttr.Attr() for resolution
+func IfAttr(selectorName string, ifAddrs IfAddrs) (string, error) {
+	if len(ifAddrs) == 0 {
+		return "", nil
+	}
+
+	attrName := AttrName(strings.ToLower(selectorName))
+	attrVal, err := ifAddrs[0].Attr(attrName)
+	return attrVal, err
 }
 
 // GetAllInterfaces iterates over all available network interfaces and finds all
@@ -789,7 +790,11 @@ func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) (str
 	attrName := AttrName(strings.ToLower(selectorName))
 
 	for _, ifAddr := range inputIfAddrs {
-		outputs = append(outputs, ifAddr.Attr(attrName))
+		attrVal, err := ifAddr.Attr(attrName)
+		if err != nil {
+			return "", err
+		}
+		outputs = append(outputs, attrVal)
 	}
 	return strings.Join(outputs, joinStr), nil
 }

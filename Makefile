@@ -1,20 +1,24 @@
 TOOLS= golang.org/x/tools/cover
-GOCOVERFILE?=	.cover.out
+GOCOVER_TMPFILE?=	$(GOCOVER_FILE).tmp
+GOCOVER_FILE?=	.cover.out
 GOCOVERHTML?=	coverage.html
 
-test:: $(GOCOVERFILE)
+test:: $(GOCOVER_FILE)
 	@$(MAKE) -C cmd/sockaddr test
 
 cover:: coverage_report
 
-${GOCOVERFILE}::
-	find * -type d ! -path 'cmd/*' ! -path 'cmd' -print0 | xargs -0 -I % sh -c "cd %; go test -v -race -cover -coverprofile=$(GOCOVERFILE)"
+$(GOCOVER_FILE)::
+	@find . -type d ! -path '*cmd*' ! -path '*.git*' -print0 | xargs -0 -I % sh -ec "cd % && rm -f $(GOCOVER_TMPFILE) && go test -coverprofile=$(GOCOVER_TMPFILE)"
 
-$(GOCOVERHTML): $(GOCOVERFILE)
-	go tool cover -html=$(GOCOVERFILE) -o $(GOCOVERHTML)
+	@echo 'mode: set' > $(GOCOVER_FILE)
+	@find . -type f ! -path '*cmd*' ! -path '*.git*' -name "$(GOCOVER_TMPFILE)" -print0 | xargs -0 -n1 cat $(GOCOVER_TMPFILE) | grep -v '^mode: ' >> ${PWD}/$(GOCOVER_FILE)
 
-coverage_report:: $(GOCOVERFILE)
-	go tool cover -html=$(GOCOVERFILE)
+$(GOCOVERHTML): $(GOCOVER_FILE)
+	go tool cover -html=$(GOCOVER_FILE) -o $(GOCOVERHTML)
+
+coverage_report:: $(GOCOVER_FILE)
+	go tool cover -html=$(GOCOVER_FILE)
 
 audit_tools::
 	@go get -u github.com/golang/lint/golint && echo "Installed golint:"
@@ -33,4 +37,4 @@ audit::
 	misspell *.go
 
 clean::
-	rm -f $(GOCOVERFILE) $(GOCOVERHTML)
+	rm -f $(GOCOVER_FILE) $(GOCOVERHTML)
