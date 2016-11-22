@@ -76,7 +76,7 @@ func NewSockAddr(s string) (SockAddr, error) {
 	}
 
 	// Check to make sure the string begins with either a '.' or '/', or
-	// contains a '/'.  Not gunna do it.  Not gunna reverse that order.
+	// contains a '/'.
 	if len(s) > 1 && (strings.IndexAny(s[0:1], "./") != -1 || strings.IndexByte(s, '/') != -1) {
 		unixSock, err := NewUnixSock(s)
 		if err == nil {
