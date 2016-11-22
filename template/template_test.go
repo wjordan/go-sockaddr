@@ -168,8 +168,11 @@ func TestSockAddr_Parse(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for i, test := range tests {
 		test := test // capture range variable
+		if test.name == "" {
+			t.Fatalf("test number %d has an empty test name", i)
+		}
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			out, err := socktmpl.Parse(test.input)
