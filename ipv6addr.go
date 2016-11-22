@@ -125,12 +125,10 @@ LOOP:
 		ipv6BigIntMask := new(big.Int)
 		ipv6BigIntMask.Set(ipv6HostMask)
 
-		ipv6Addr := IPv6Addr{
+		return IPv6Addr{
 			Address: IPv6Address(ipv6BigIntAddr),
 			Mask:    IPv6Mask(ipv6BigIntMask),
-		}
-
-		return ipv6Addr, nil
+		}, nil
 	}
 
 	// Parse as an IPv6 CIDR

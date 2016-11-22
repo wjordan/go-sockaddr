@@ -235,15 +235,18 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 // ```
 // $ sockaddr eval -raw '{{GetPrivateInterfaces | limit 1 | join "address" " "}}'
 /// ```
-func GetPrivateIP() string {
-	privateIfs := GetPrivateInterfaces()
+func GetPrivateIP() (string, error) {
+	privateIfs, err := GetPrivateInterfaces()
+	if err != nil {
+		return "", err
+	}
 	if len(privateIfs) < 1 {
-		return ""
+		return "", nil
 	}
 
 	ifAddr := privateIfs[0]
 	ip := *ToIPAddr(ifAddr.SockAddr)
-	return ip.NetIP().String()
+	return ip.NetIP().String(), nil
 }
 
 // GetPrivateInterfaces returns an IfAddrs that is part of RFC 6890 and has a
@@ -254,25 +257,30 @@ func GetPrivateIP() string {
 // ```
 // $ sockaddr eval -raw '{{GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | limit 1 | join "address" " "}}'
 /// ```
-func GetPrivateInterfaces() IfAddrs {
+func GetPrivateInterfaces() (IfAddrs, error) {
 	privateIfs, err := GetDefaultInterfaces()
+	if err != nil {
+		return IfAddrs{}, err
+	}
 	if len(privateIfs) == 0 {
-		return IfAddrs{}
+		return IfAddrs{}, nil
 	}
 
 	privateIfs, _ = FilterIfByType(privateIfs, TypeIP)
 	if len(privateIfs) == 0 {
-		return IfAddrs{}
+		return IfAddrs{}, nil
 	}
 
 	OrderedIfAddrBy(AscIfType, AscIfNetworkSize).Sort(privateIfs)
 
 	privateIfs, _, err = IfByRFC(6890, privateIfs)
-	if err != nil || len(privateIfs) == 0 {
-		return IfAddrs{}
+	if err != nil {
+		return IfAddrs{}, err
+	} else if len(privateIfs) == 0 {
+		return IfAddrs{}, nil
 	}
 
-	return privateIfs
+	return privateIfs, nil
 }
 
 // GetPublicInterfaces returns an IfAddrs that is NOT part of RFC 6890 and has a
@@ -283,25 +291,30 @@ func GetPrivateInterfaces() IfAddrs {
 // ```
 // $ sockaddr eval -raw '{{GetDefaultInterfaces | sort "type,size" | exclude "RFC" "6890" }}'
 /// ```
-func GetPublicInterfaces() IfAddrs {
+func GetPublicInterfaces() (IfAddrs, error) {
 	publicIfs, err := GetDefaultInterfaces()
+	if err != nil {
+		return IfAddrs{}, err
+	}
 	if len(publicIfs) == 0 {
-		return IfAddrs{}
+		return IfAddrs{}, nil
 	}
 
 	publicIfs, _ = FilterIfByType(publicIfs, TypeIP)
 	if len(publicIfs) == 0 {
-		return IfAddrs{}
+		return IfAddrs{}, nil
 	}
 
 	OrderedIfAddrBy(AscIfType, AscIfNetworkSize).Sort(publicIfs)
 
 	_, publicIfs, err = IfByRFC(6890, publicIfs)
-	if err != nil || len(publicIfs) == 0 {
-		return IfAddrs{}
+	if err != nil {
+		return IfAddrs{}, err
+	} else if len(publicIfs) == 0 {
+		return IfAddrs{}, nil
 	}
 
-	return publicIfs
+	return publicIfs, nil
 }
 
 // GetPublicIP returns a string with a single IP address that is NOT part of RFC
@@ -312,15 +325,17 @@ func GetPublicInterfaces() IfAddrs {
 // ```
 // $ sockaddr eval -raw '{{GetPublicInterfaces | limit 1 | join "address" " "}}'
 /// ```
-func GetPublicIP() string {
-	publicIfs := GetPublicInterfaces()
-	if len(publicIfs) < 1 {
-		return ""
+func GetPublicIP() (string, error) {
+	publicIfs, err := GetPublicInterfaces()
+	if err != nil {
+		return "", err
+	} else if len(publicIfs) < 1 {
+		return "", nil
 	}
 
 	ifAddr := publicIfs[0]
 	ip := *ToIPAddr(ifAddr.SockAddr)
-	return ip.NetIP().String()
+	return ip.NetIP().String(), nil
 }
 
 // IfByAddress returns a list of matched and non-matched IfAddrs, or an error if
@@ -448,24 +463,41 @@ func IfByMaskSize(maskSize uint, ifAddrs IfAddrs) (matchedIfs, excludedIfs IfAdd
 // IfByType returns a list of matching and non-matching IfAddr that match the
 // specified type.  For instance:
 //
-// include "type" "^(IPv4|IPv6)$"
+// include "type" "IPv4,IPv6"
 //
-// will include any IfAddrs that contain at least one IPv4 or IPv6 address.  Any
-// addresses on those interfaces that don't match will be omitted from the
-// results.
-func IfByType(inputRe string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
-	re, err := regexp.Compile(inputRe)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to compile type regexp %+q: %v", inputRe, err)
-	}
-
+// will include any IfAddrs that is either an IPv4 or IPv6 address.  Any
+// addresses on those interfaces that don't match will be included in the
+// remainder results.
+func IfByType(inputTypes string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
 	matchingIfAddrs := make(IfAddrs, 0, len(ifAddrs))
 	remainingIfAddrs := make(IfAddrs, 0, len(ifAddrs))
+
+	ifTypes := strings.Split(strings.ToLower(inputTypes), "|")
+	for _, ifType := range ifTypes {
+		if ifType != "ip" && ifType != "ipv4" && ifType != "ipv6" && ifType != "unix" {
+			return nil, nil, fmt.Errorf("unsupported type %q %q", ifType, inputTypes)
+		}
+	}
+
 	for _, ifAddr := range ifAddrs {
-		if re.MatchString(ifAddr.SockAddr.Type().String()) {
-			matchingIfAddrs = append(matchingIfAddrs, ifAddr)
-		} else {
-			remainingIfAddrs = append(remainingIfAddrs, ifAddr)
+		for _, ifType := range ifTypes {
+			var matched bool
+			switch {
+			case ifType == "ip" && ifAddr.SockAddr.Type()&TypeIP != 0:
+				matched = true
+			case ifType == "ipv4" && ifAddr.SockAddr.Type()&TypeIPv4 != 0:
+				matched = true
+			case ifType == "ipv6" && ifAddr.SockAddr.Type()&TypeIPv6 != 0:
+				matched = true
+			case ifType == "unix" && ifAddr.SockAddr.Type()&TypeUnix != 0:
+				matched = true
+			}
+
+			if matched {
+				matchingIfAddrs = append(matchingIfAddrs, ifAddr)
+			} else {
+				remainingIfAddrs = append(remainingIfAddrs, ifAddr)
+			}
 		}
 	}
 
@@ -515,7 +547,7 @@ func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 }
 
 // IncludeIfs returns an IfAddrs based on the passed in selector.
-func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
+func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 	var includedIfs IfAddrs
 	var err error
 
@@ -545,25 +577,24 @@ func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddr
 	case "size":
 		maskSize, err := strconv.ParseUint(selectorParam, 10, 64)
 		if err != nil {
-			return IfAddrs{}
+			return IfAddrs{}, fmt.Errorf("invalid include size argument (%q): %v", selectorParam, err)
 		}
 		includedIfs, _, err = IfByMaskSize(uint(maskSize), inputIfAddrs)
 	case "type":
 		includedIfs, _, err = IfByType(selectorParam, inputIfAddrs)
 	default:
-		// Return an empty list for invalid sort types.
-		return IfAddrs{}
+		return IfAddrs{}, fmt.Errorf("invalid include selector %q", selectorName)
 	}
 
 	if err != nil {
-		return IfAddrs{}
+		return IfAddrs{}, err
 	}
 
-	return includedIfs
+	return includedIfs, nil
 }
 
 // ExcludeIfs returns an IfAddrs based on the passed in selector.
-func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
+func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 	var excludedIfs IfAddrs
 	var err error
 
@@ -593,25 +624,25 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) IfAddr
 	case "size":
 		maskSize, err := strconv.ParseUint(selectorParam, 10, 64)
 		if err != nil {
-			return IfAddrs{}
+			return IfAddrs{}, fmt.Errorf("invalid exclude size argument (%q): %v", selectorParam, err)
 		}
 		_, excludedIfs, err = IfByMaskSize(uint(maskSize), inputIfAddrs)
 	case "type":
 		_, excludedIfs, err = IfByType(selectorParam, inputIfAddrs)
 	default:
-		// Return an empty list for invalid sort types.
-		return IfAddrs{}
+		return IfAddrs{}, fmt.Errorf("invalid exclude selector %q", selectorName)
 	}
 
 	if err != nil {
-		return IfAddrs{}
+		return IfAddrs{}, err
 	}
-	return excludedIfs
+
+	return excludedIfs, nil
 }
 
 // SortIfBy returns an IfAddrs sorted based on the passed in selector.  Multiple
 // sort clauses can be passed in as a comma delimited list without whitespace.
-func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
+func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 	sortedIfs := append(IfAddrs(nil), inputIfAddrs...)
 
 	clauses := strings.Split(selectorParam, ",")
@@ -677,7 +708,7 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
 
 // UniqueIfAddrsBy creates a unique set of IfAddrs based on the matching
 // selector.  UniqueIfAddrsBy assumes the input has already been sorted.
-func UniqueIfAddrsBy(selectorName string, inputIfAddrs IfAddrs) IfAddrs {
+func UniqueIfAddrsBy(selectorName string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 	attrName := strings.ToLower(selectorName)
 
 	ifs := make(IfAddrs, 0, len(inputIfAddrs))
@@ -702,32 +733,32 @@ func UniqueIfAddrsBy(selectorName string, inputIfAddrs IfAddrs) IfAddrs {
 		}
 	}
 
-	return ifs
+	return ifs, nil
 }
 
 // JoinIfAddrs joins an IfAddrs and returns a string
-func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) string {
+func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) (string, error) {
 	outputs := make([]string, 0, len(inputIfAddrs))
 	attrName := AttrName(strings.ToLower(selectorName))
 
 	for _, ifAddr := range inputIfAddrs {
 		outputs = append(outputs, ifAddr.Attr(attrName))
 	}
-	return strings.Join(outputs, joinStr)
+	return strings.Join(outputs, joinStr), nil
 }
 
 // LimitIfAddrs returns a slice of IfAddrs based on the specified limit.
-func LimitIfAddrs(lim uint, in IfAddrs) IfAddrs {
+func LimitIfAddrs(lim uint, in IfAddrs) (IfAddrs, error) {
 	// Clamp the limit to the length of the array
 	if int(lim) > len(in) {
 		lim = uint(len(in))
 	}
 
-	return in[0:lim]
+	return in[0:lim], nil
 }
 
 // OffsetIfAddrs returns a slice of IfAddrs based on the specified offset.
-func OffsetIfAddrs(off int, in IfAddrs) IfAddrs {
+func OffsetIfAddrs(off int, in IfAddrs) (IfAddrs, error) {
 	var end bool
 	if off < 0 {
 		end = true
@@ -735,11 +766,11 @@ func OffsetIfAddrs(off int, in IfAddrs) IfAddrs {
 	}
 
 	if off > len(in) {
-		return IfAddrs{}
+		return IfAddrs{}, fmt.Errorf("unable to seek past the end of the interface array: offset (%d) exceeds the number of interfaces (%d)", off, len(in))
 	}
 
 	if end {
-		return in[len(in)-off : len(in)]
+		return in[len(in)-off : len(in)], nil
 	}
 	return in[off:len(in)], nil
 }
@@ -751,36 +782,36 @@ func (ifAddr IfAddr) String() string {
 // SortIfByAddr returns an IfAddrs ordered by address.  IfAddr that are not
 // comparable will be at the end of the list, however their order is
 // non-deterministic.
-func SortIfByAddr(inputIfAddrs IfAddrs) IfAddrs {
+func SortIfByAddr(inputIfAddrs IfAddrs) (IfAddrs, error) {
 	sortedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
 	OrderedIfAddrBy(AscIfAddress).Sort(sortedIfAddrs)
-	return sortedIfAddrs
+	return sortedIfAddrs, nil
 }
 
 // SortIfByName returns an IfAddrs ordered by interface name.  IfAddr that are
 // not comparable will be at the end of the list, however their order is
 // non-deterministic.
-func SortIfByName(inputIfAddrs IfAddrs) IfAddrs {
+func SortIfByName(inputIfAddrs IfAddrs) (IfAddrs, error) {
 	sortedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
 	OrderedIfAddrBy(AscIfName).Sort(sortedIfAddrs)
-	return sortedIfAddrs
+	return sortedIfAddrs, nil
 }
 
 // SortIfByPort returns an IfAddrs ordered by their port number, if set.
 // IfAddrs that don't have a port set and are therefore not comparable will be
 // at the end of the list (note: the sort order is non-deterministic).
-func SortIfByPort(inputIfAddrs IfAddrs) IfAddrs {
+func SortIfByPort(inputIfAddrs IfAddrs) (IfAddrs, error) {
 	sortedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
 	OrderedIfAddrBy(AscIfPort).Sort(sortedIfAddrs)
-	return sortedIfAddrs
+	return sortedIfAddrs, nil
 }
 
 // SortIfByType returns an IfAddrs ordered by their type.  IfAddr that share a
 // type are non-deterministic re: their sort order.
-func SortIfByType(inputIfAddrs IfAddrs) IfAddrs {
+func SortIfByType(inputIfAddrs IfAddrs) (IfAddrs, error) {
 	sortedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
 	OrderedIfAddrBy(AscIfType).Sort(sortedIfAddrs)
-	return sortedIfAddrs
+	return sortedIfAddrs, nil
 }
 
 // parseDefaultIfNameFromRoute parses standard route(8)'s output for the *BSDs
