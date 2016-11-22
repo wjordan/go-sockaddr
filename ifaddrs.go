@@ -741,17 +741,7 @@ func OffsetIfAddrs(off int, in IfAddrs) IfAddrs {
 	if end {
 		return in[len(in)-off : len(in)]
 	}
-	return in[off:len(in)]
-}
-
-// ReverseIfAddrs reverses an IfAddrs.
-func ReverseIfAddrs(inputIfAddrs IfAddrs) IfAddrs {
-	reversedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
-	for i := len(reversedIfAddrs)/2 - 1; i >= 0; i-- {
-		opp := len(reversedIfAddrs) - 1 - i
-		reversedIfAddrs[i], reversedIfAddrs[opp] = reversedIfAddrs[opp], reversedIfAddrs[i]
-	}
-	return reversedIfAddrs
+	return in[off:len(in)], nil
 }
 
 func (ifAddr IfAddr) String() string {
