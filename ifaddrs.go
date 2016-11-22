@@ -516,28 +516,75 @@ func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 	matchedAddrs := make(IfAddrs, 0, len(ifAddrs))
 	excludedAddrs := make(IfAddrs, 0, len(ifAddrs))
 
-	var flag, want net.Flags
-	for _, flagName := range strings.Split(strings.ToLower(inputFlags), ",") {
+	var wantForwardable,
+		wantGlobalUnicast,
+		wantInterfaceLocalMulticast,
+		wantLinkLocalMulticast,
+		wantLinkLocalUnicast,
+		wantLoopback,
+		wantMulticast,
+		wantUnspecified bool
+	var ifFlag, ifWant net.Flags
+	for _, flagName := range strings.Split(strings.ToLower(inputFlags), "|") {
 		switch flagName {
 		case "broadcast":
-			flag, want = flag|net.FlagBroadcast, want|net.FlagBroadcast
+			ifFlag, ifWant = ifFlag|net.FlagBroadcast, ifWant|net.FlagBroadcast
 		case "down":
-			flag, want = flag|net.FlagUp, want|0
+			ifFlag, ifWant = ifFlag|net.FlagUp, ifWant|0
+		case "forwardable":
+			wantForwardable = true
+		case "global unicast":
+			wantGlobalUnicast = true
+		case "interface-local multicast":
+			wantInterfaceLocalMulticast = true
+		case "link-local multicast":
+			wantLinkLocalMulticast = true
+		case "link-local unicast":
+			wantLinkLocalUnicast = true
 		case "loopback":
-			flag, want = flag|net.FlagLoopback, want|net.FlagLoopback
+			ifFlag, ifWant = ifFlag|net.FlagLoopback, ifWant|net.FlagLoopback
+			wantLoopback = true
 		case "multicast":
-			flag, want = flag|net.FlagMulticast, want|net.FlagMulticast
+			ifFlag, ifWant = ifFlag|net.FlagMulticast, ifWant|net.FlagMulticast
+			wantMulticast = true
 		case "point-to-point":
-			flag, want = flag|net.FlagPointToPoint, want|net.FlagPointToPoint
+			ifFlag, ifWant = ifFlag|net.FlagPointToPoint, ifWant|net.FlagPointToPoint
+		case "unspecified":
+			wantUnspecified = true
 		case "up":
-			flag, want = flag|net.FlagUp, want|net.FlagUp
+			ifFlag, ifWant = ifFlag|net.FlagUp, ifWant|net.FlagUp
 		default:
 			return nil, nil, fmt.Errorf("Unknown interface flag: %+q", flagName)
 		}
 	}
 
 	for _, ifAddr := range ifAddrs {
-		if ifAddr.Interface.Flags&flag == want {
+		var matched bool
+		if ifFlag != 0 && ifWant != 0 && ifAddr.Interface.Flags&ifFlag == ifWant {
+			matched = true
+		} else if ip := ToIPAddr(ifAddr.SockAddr); ip != nil {
+			netIP := (*ip).NetIP()
+			switch {
+			case wantForwardable && !IsRFC(ForwardingBlacklist, ifAddr.SockAddr):
+				matched = true
+			case wantGlobalUnicast && netIP.IsGlobalUnicast():
+				matched = true
+			case wantInterfaceLocalMulticast && netIP.IsInterfaceLocalMulticast():
+				matched = true
+			case wantLinkLocalMulticast && netIP.IsLinkLocalMulticast():
+				matched = true
+			case wantLinkLocalUnicast && netIP.IsLinkLocalUnicast():
+				matched = true
+			case wantLoopback && netIP.IsLoopback():
+				matched = true
+			case wantMulticast && netIP.IsMulticast():
+				matched = true
+			case wantUnspecified && netIP.IsUnspecified():
+				matched = true
+			}
+		}
+
+		if matched {
 			matchedAddrs = append(matchedAddrs, ifAddr)
 		} else {
 			excludedAddrs = append(excludedAddrs, ifAddr)
