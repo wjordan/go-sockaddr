@@ -2,33 +2,9 @@ package sockaddr
 
 import "log"
 
-// VisitAllRFCs iterates over all known RFCs and calls the visitor
-func VisitAllRFCs(fn func(rfcNum uint, sockaddrs SockAddrs)) {
-	rfcNetMap := KnownRFCs()
-	for rfcNum, sas := range rfcNetMap {
-		fn(rfcNum, sas)
-	}
-}
-
-// mustIPv4Addr is a helper method that must return an IPv4Addr or panic on
-// invalid input.
-func mustIPv4Addr(addr string) IPv4Addr {
-	ipv4, err := NewIPv4Addr(addr)
-	if err != nil {
-		log.Fatalf("Unable to create an IPv4Addr from %+q: %v", addr, err)
-	}
-	return ipv4
-}
-
-// mustIPv6Addr is a helper method that must return an IPv6Addr or panic on invalid
-// input.
-func mustIPv6Addr(addr string) IPv6Addr {
-	ipv6, err := NewIPv6Addr(addr)
-	if err != nil {
-		log.Fatalf("Unable to create an IPv6Addr from %+q: %v", addr, err)
-	}
-	return ipv6
-}
+// ForwardingBlacklist is a faux RFC that includes a list of non-forwardable IP
+// blocks.
+const ForwardingBlacklist = 4294967295
 
 // KnownRFCs returns an initial set of known RFCs.
 //
@@ -906,5 +882,70 @@ func KnownRFCs() map[uint]SockAddrs {
 			// [RFC7335] IPv4 Service Continuity Prefix
 			mustIPv4Addr("192.0.0.0/29"), // [RFC7335], §6 IANA Considerations
 		},
+		ForwardingBlacklist: SockAddrs{ // Pseudo-RFC
+			// Blacklist of non-forwardable IP blocks taken from RFC6890
+			//
+			// TODO: the attributes for forwardable should be
+			// searcahble and embedded in the main list of RFCs
+			// above.
+			mustIPv4Addr("0.0.0.0/8"),
+			mustIPv4Addr("127.0.0.0/8"),
+			mustIPv4Addr("169.254.0.0/16"),
+			mustIPv4Addr("192.0.0.0/24"),
+			mustIPv4Addr("192.0.2.0/24"),
+			mustIPv4Addr("198.51.100.0/24"),
+			mustIPv4Addr("203.0.113.0/24"),
+			mustIPv4Addr("240.0.0.0/4"),
+			mustIPv4Addr("255.255.255.255/32"),
+			mustIPv6Addr("::1/128"),
+			mustIPv6Addr("::/128"),
+			mustIPv6Addr("::ffff:0:0/96"),
+
+			// There is no way of expressing a whitelist per RFC2928
+			// atm without creating a negative mask, which I don't
+			// want to do atm.
+			//mustIPv6Addr("2001::/23"),
+
+			mustIPv6Addr("2001:db8::/32"),
+			mustIPv6Addr("2001:10::/28"),
+			mustIPv6Addr("fe80::/10"),
+		},
 	}
+}
+
+// VisitAllRFCs iterates over all known RFCs and calls the visitor
+func VisitAllRFCs(fn func(rfcNum uint, sockaddrs SockAddrs)) {
+	rfcNetMap := KnownRFCs()
+
+	// Blacklist of faux-RFCs.  Don't show the world that we're abusing the
+	// RFC system in this library.
+	rfcBlacklist := map[uint]struct{}{
+		ForwardingBlacklist: struct{}{},
+	}
+
+	for rfcNum, sas := range rfcNetMap {
+		if _, found := rfcBlacklist[rfcNum]; !found {
+			fn(rfcNum, sas)
+		}
+	}
+}
+
+// mustIPv4Addr is a helper method that must return an IPv4Addr or panic on
+// invalid input.
+func mustIPv4Addr(addr string) IPv4Addr {
+	ipv4, err := NewIPv4Addr(addr)
+	if err != nil {
+		log.Fatalf("Unable to create an IPv4Addr from %+q: %v", addr, err)
+	}
+	return ipv4
+}
+
+// mustIPv6Addr is a helper method that must return an IPv6Addr or panic on invalid
+// input.
+func mustIPv6Addr(addr string) IPv6Addr {
+	ipv6, err := NewIPv6Addr(addr)
+	if err != nil {
+		log.Fatalf("Unable to create an IPv6Addr from %+q: %v", addr, err)
+	}
+	return ipv6
 }

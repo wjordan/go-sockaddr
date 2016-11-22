@@ -607,8 +607,8 @@ func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 		includedIfs, _, err = IfByName(selectorParam, inputIfAddrs)
 	case "port":
 		includedIfs, _, err = IfByPort(selectorParam, inputIfAddrs)
-	case "rfc":
-		rfcs := strings.Split(selectorParam, ",")
+	case "rfc", "rfcs":
+		rfcs := strings.Split(selectorParam, "|")
 		for _, rfcStr := range rfcs {
 			rfc, err := strconv.ParseUint(rfcStr, 10, 64)
 			if err != nil {
@@ -654,11 +654,11 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 		_, excludedIfs, err = IfByName(selectorParam, inputIfAddrs)
 	case "port":
 		_, excludedIfs, err = IfByPort(selectorParam, inputIfAddrs)
-	case "rfc":
-		rfcs := strings.Split(selectorParam, ",")
+	case "rfc", "rfcs":
+		rfcs := strings.Split(selectorParam, "|")
 		for _, rfcStr := range rfcs {
 			rfc, err := strconv.ParseUint(rfcStr, 10, 64)
-			if err == nil {
+			if err != nil {
 				continue
 			}
 
