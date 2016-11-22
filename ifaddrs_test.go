@@ -27,10 +27,17 @@ func TestGetIfAddrs(t *testing.T) {
 
 	var loInt *sockaddr.IfAddr
 	for _, ifAddr := range ifAddrs {
-		if ifAddr.Name == "lo0" {
+		val := sockaddr.IfAddrAttr(ifAddr, "name")
+		if val == "" {
+			t.Fatalf("name failed")
+		} else if val == "lo0" {
 			loInt = &ifAddr
 			break
 		}
+	}
+
+	if val := sockaddr.IfAddrAttr(*loInt, "flags"); val != "up|loopback|multicast" {
+		t.Fatalf("expected different flags from lo0: %q", val)
 	}
 
 	if loInt == nil {

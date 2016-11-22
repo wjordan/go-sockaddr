@@ -13,6 +13,14 @@ import (
 // IfAddrs is a slice of IfAddr
 type IfAddrs []IfAddr
 
+// ifAddrAttrMap is a map of the IfAddr type-specific attributes.
+var ifAddrAttrMap map[AttrName]func(IfAddr) string
+var ifAddrAttrs []AttrName
+
+func init() {
+	ifAddrAttrInit()
+}
+
 func (ifs IfAddrs) Len() int { return len(ifs) }
 
 // CmpIfFunc is the function signature that must be met to be used in the
@@ -869,4 +877,38 @@ func parseDefaultIfNameFromIPCmd(routeOut string) (string, error) {
 	}
 
 	return "", errors.New("No default interface found")
+}
+
+// IfAddrAttrs returns a list of attributes supported by the IfAddr type
+func IfAddrAttrs() []AttrName {
+	return ifAddrAttrs
+}
+
+// IfAddrAttr returns a string representation of an attribute for the given
+// IfAddr.
+func IfAddrAttr(ifAddr IfAddr, attrName AttrName) string {
+	fn, found := ifAddrAttrMap[attrName]
+	if !found {
+		return ""
+	}
+
+	return fn(ifAddr)
+}
+
+// ifAddrAttrInit is called once at init()
+func ifAddrAttrInit() {
+	// Sorted for human readability
+	ifAddrAttrs = []AttrName{
+		"flags",
+		"name",
+	}
+
+	ifAddrAttrMap = map[AttrName]func(ifAddr IfAddr) string{
+		"flags": func(ifAddr IfAddr) string {
+			return ifAddr.Interface.Flags.String()
+		},
+		"name": func(ifAddr IfAddr) string {
+			return ifAddr.Interface.Name
+		},
+	}
 }

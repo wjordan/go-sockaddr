@@ -13,7 +13,16 @@ type IfAddr struct {
 
 // Attr returns the named attribute as a string
 func (ifAddr IfAddr) Attr(attrName AttrName) (string, error) {
-	sa := ifAddr.SockAddr
+	val := IfAddrAttr(ifAddr, attrName)
+	if val != "" {
+		return val, nil
+	}
+
+	return Attr(ifAddr.SockAddr, attrName)
+}
+
+// Attr returns the named attribute as a string
+func Attr(sa SockAddr, attrName AttrName) (string, error) {
 	switch sockType := sa.Type(); {
 	case sockType&TypeIP != 0:
 		ip := *ToIPAddr(sa)
@@ -22,15 +31,13 @@ func (ifAddr IfAddr) Attr(attrName AttrName) (string, error) {
 			return attrVal, nil
 		}
 
-		if sa.Type() == TypeIPv4 {
+		if sockType == TypeIPv4 {
 			ipv4 := *ToIPv4Addr(sa)
 			attrVal := IPv4AddrAttr(ipv4, attrName)
 			if attrVal != "" {
 				return attrVal, nil
 			}
-		}
-
-		if sa.Type() == TypeIPv6 {
+		} else if sockType == TypeIPv6 {
 			ipv6 := *ToIPv6Addr(sa)
 			attrVal := IPv6AddrAttr(ipv6, attrName)
 			if attrVal != "" {
@@ -38,13 +45,6 @@ func (ifAddr IfAddr) Attr(attrName AttrName) (string, error) {
 			}
 		}
 
-		// Random attribute names that are Interface specific
-		switch attrName {
-		case "name":
-			return ifAddr.Interface.Name, nil
-		case "flags":
-			return ifAddr.Interface.Flags.String(), nil
-		}
 	case sockType == TypeUnix:
 		us := *ToUnixSock(sa)
 		attrVal := UnixSockAttr(us, attrName)
