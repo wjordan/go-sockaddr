@@ -1,6 +1,8 @@
 package sockaddr
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"net"
@@ -425,10 +427,7 @@ func (ipv6 IPv6Addr) Maskbits() int {
 
 // NetIP returns the address as a net.IP.
 func (ipv6 IPv6Addr) NetIP() *net.IP {
-	x := make(net.IP, IPv6len)
-	b := big.Int(*ipv6.Address)
-	copy(x, b.Bytes())
-	return &x
+	return bigIntToNetIPv6(ipv6.Address)
 }
 
 // NetIPMask create a new net.IPMask from the IPv6Addr.
@@ -474,12 +473,12 @@ func (ipv6 IPv6Addr) NetworkAddress() IPv6Network {
 // Octets returns a slice of the 16 octets in an IPv6Addr's Address.  The
 // order of the bytes is big endian.
 func (ipv6 IPv6Addr) Octets() []int {
-	octets := make([]int, IPv6len)
-	b := big.Int(*ipv6.Address)
-	for i, o := range b.Bytes() {
-		octets[i] = int(o)
+	x := make([]int, IPv6len)
+	for i, b := range *bigIntToNetIPv6(ipv6.Address) {
+		x[i] = int(b)
 	}
-	return octets
+
+	return x
 }
 
 // SetPort is a setter method to set an IPv6Addr's port number
@@ -542,4 +541,37 @@ func ipv6AddrInit() {
 			return b.Text(10)
 		},
 	}
+}
+
+// bigIntToNetIPv6 is a helper function that correctly returns a net.IP with the
+// correctly padded values.
+func bigIntToNetIPv6(bi *big.Int) *net.IP {
+	x := make(net.IP, IPv6len)
+	ipv6Bytes := bi.Bytes()
+
+	// It's possibe for ipv6Bytes to be less than IPv6len bytes in size.  If
+	// they are different sizes we to pad the size of response.
+	if len(ipv6Bytes) < IPv6len {
+		buf := new(bytes.Buffer)
+		buf.Grow(IPv6len)
+
+		for i := len(ipv6Bytes); i < IPv6len; i++ {
+			if err := binary.Write(buf, binary.BigEndian, byte(0)); err != nil {
+				panic(fmt.Sprintf("Unable to pad byte %d of input %v: %v", i, bi, err))
+			}
+		}
+
+		for _, b := range ipv6Bytes {
+			if err := binary.Write(buf, binary.BigEndian, b); err != nil {
+				panic(fmt.Sprintf("Unable to preserve endianness of input %v: %v", bi, err))
+			}
+		}
+
+		ipv6Bytes = buf.Bytes()
+	}
+	i := copy(x, ipv6Bytes)
+	if i != IPv6len {
+		panic("IPv6 wrong size")
+	}
+	return &x
 }
