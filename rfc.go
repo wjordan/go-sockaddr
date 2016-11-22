@@ -368,7 +368,7 @@ func KnownRFCs() map[uint]SockAddrs {
 		},
 		6666: SockAddrs{
 			// [RFC6666] A Discard Prefix for IPv6
-			mustIPv6Addr("100::/64"),
+			mustIPv6Addr("0100::/64"),
 		},
 		6890: SockAddrs{
 			// [RFC6890] Special-Purpose IP Address Registries

@@ -120,6 +120,36 @@ func AscIfType(p1Ptr, p2Ptr *IfAddr) int {
 	return AscType(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
 }
 
+// DescIfAddress is identical to AscIfAddress but reverse ordered.
+func DescIfAddress(p1Ptr, p2Ptr *IfAddr) int {
+	return -1 * AscAddress(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
+// DescIfName is identical to AscIfName but reverse ordered.
+func DescIfName(p1Ptr, p2Ptr *IfAddr) int {
+	return -1 * strings.Compare(p1Ptr.Name, p2Ptr.Name)
+}
+
+// DescIfNetworkSize is identical to AscIfNetworkSize but reverse ordered.
+func DescIfNetworkSize(p1Ptr, p2Ptr *IfAddr) int {
+	return -1 * AscNetworkSize(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
+// DescIfPort is identical to AscIfPort but reverse ordered.
+func DescIfPort(p1Ptr, p2Ptr *IfAddr) int {
+	return -1 * AscPort(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
+// DescIfPrivate is identical to AscIfPrivate but reverse ordered.
+func DescIfPrivate(p1Ptr, p2Ptr *IfAddr) int {
+	return -1 * AscPrivate(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
+// DescIfType is identical to AscIfType but reverse ordered.
+func DescIfType(p1Ptr, p2Ptr *IfAddr) int {
+	return -1 * AscType(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
 // IfAttr forwards the selector to IfAttr.Attr() for resolution
 func IfAttr(selectorName string, ifAddrs IfAddrs) string {
 	if len(ifAddrs) == 0 {
@@ -589,48 +619,60 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) IfAddrs {
 
 	for i, clause := range clauses {
 		switch strings.ToLower(clause) {
-		case "address":
+		case "address", "+address":
 			// The "address" selector returns an array of IfAddrs
 			// ordered by the network address.  IfAddrs that are not
 			// comparable will be at the end of the list and in a
 			// non-deterministic order.
 			sortFuncs[i] = AscIfAddress
-		case "name":
+		case "-address":
+			sortFuncs[i] = DescIfAddress
+		case "name", "+name":
 			// The "name" selector returns an array of IfAddrs
 			// ordered by the interface name.
 			sortFuncs[i] = AscIfName
-		case "port":
+		case "-name":
+			sortFuncs[i] = DescIfName
+		case "port", "+port":
 			// The "port" selector returns an array of IfAddrs
 			// ordered by the port, if included in the IfAddr.
 			// IfAddrs that are not comparable will be at the end of
 			// the list and in a non-deterministic order.
 			sortFuncs[i] = AscIfPort
-		case "private":
+		case "-port":
+			sortFuncs[i] = DescIfPort
+		case "private", "+private":
 			// The "private" selector returns an array of IfAddrs
 			// ordered by private addresses first.  IfAddrs that are
 			// not comparable will be at the end of the list and in
 			// a non-deterministic order.
 			sortFuncs[i] = AscIfPrivate
-		case "size":
+		case "-private":
+			sortFuncs[i] = DescIfPrivate
+		case "size", "+size":
 			// The "size" selector returns an array of IfAddrs
 			// ordered by the size of the network mask, largest mask
 			// (larger number of hosts per network) to smallest
 			// (e.g. a /24 sorts before a /32).
 			sortFuncs[i] = AscIfNetworkSize
-		case "type":
+		case "-size":
+			sortFuncs[i] = DescIfNetworkSize
+		case "type", "+type":
 			// The "type" selector returns an array of IfAddrs
 			// ordered by the type of the IfAddr.  The sort order is
 			// Unix, IPv4, then IPv6.
 			sortFuncs[i] = AscIfType
+		case "-type":
+			sortFuncs[i] = DescIfType
 		default:
 			// Return an empty list for invalid sort types.
-			return IfAddrs{}
+			return IfAddrs{}, fmt.Errorf("unknown sort type: %q", clause)
 		}
 	}
 
 	OrderedIfAddrBy(sortFuncs...).Sort(sortedIfs)
 
-	return sortedIfs
+	return sortedIfs, nil
 }
 
 // UniqueIfAddrsBy creates a unique set of IfAddrs based on the matching
