@@ -24,7 +24,7 @@ func (ifAddr IfAddr) Attr(attrName AttrName) string {
 
 		if sa.Type() == TypeIPv4 {
 			ipv4 := *ToIPv4Addr(sa)
-			attrVal := IPAddrAttr(ipv4, attrName)
+			attrVal := IPv4AddrAttr(ipv4, attrName)
 			if attrVal != "" {
 				return attrVal
 			}
@@ -32,7 +32,7 @@ func (ifAddr IfAddr) Attr(attrName AttrName) string {
 
 		if sa.Type() == TypeIPv6 {
 			ipv6 := *ToIPv6Addr(sa)
-			attrVal := IPAddrAttr(ipv6, attrName)
+			attrVal := IPv6AddrAttr(ipv6, attrName)
 			if attrVal != "" {
 				return attrVal
 			}
