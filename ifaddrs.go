@@ -233,7 +233,7 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 // This function is the `eval` equivilant of:
 //
 // ```
-// $ sockaddr eval -raw '{{GetPrivateInterfaces | limit 1 | join "address" " "}}'
+// $ sockaddr eval -r '{{GetPrivateInterfaces | limit 1 | join "address" " "}}'
 /// ```
 func GetPrivateIP() (string, error) {
 	privateIfs, err := GetPrivateInterfaces()
@@ -255,7 +255,7 @@ func GetPrivateIP() (string, error) {
 // the `eval` equivilant of:
 //
 // ```
-// $ sockaddr eval -raw '{{GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | limit 1 | join "address" " "}}'
+// $ sockaddr eval -r '{{GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | limit 1 | join "address" " "}}'
 /// ```
 func GetPrivateInterfaces() (IfAddrs, error) {
 	privateIfs, err := GetDefaultInterfaces()
@@ -289,7 +289,7 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 // function is the `eval` equivilant of:
 //
 // ```
-// $ sockaddr eval -raw '{{GetDefaultInterfaces | sort "type,size" | exclude "RFC" "6890" }}'
+// $ sockaddr eval -r '{{GetDefaultInterfaces | sort "type,size" | exclude "RFC" "6890" }}'
 /// ```
 func GetPublicInterfaces() (IfAddrs, error) {
 	publicIfs, err := GetDefaultInterfaces()
@@ -323,7 +323,7 @@ func GetPublicInterfaces() (IfAddrs, error) {
 // This function is the `eval` equivilant of:
 //
 // ```
-// $ sockaddr eval -raw '{{GetPublicInterfaces | limit 1 | join "address" " "}}'
+// $ sockaddr eval -r '{{GetPublicInterfaces | limit 1 | join "address" " "}}'
 /// ```
 func GetPublicIP() (string, error) {
 	publicIfs, err := GetPublicInterfaces()
@@ -768,7 +768,7 @@ func UniqueIfAddrsBy(selectorName string, inputIfAddrs IfAddrs) (IfAddrs, error)
 		case "name":
 			out = ifAddr.Name
 		default:
-			out = fmt.Sprintf("<unsupported method %+q>", selectorName)
+			return nil, fmt.Errorf("unsupported unique constraint %+q", selectorName)
 		}
 
 		switch {
@@ -824,41 +824,6 @@ func OffsetIfAddrs(off int, in IfAddrs) (IfAddrs, error) {
 
 func (ifAddr IfAddr) String() string {
 	return fmt.Sprintf("%s %v", ifAddr.SockAddr, ifAddr.Interface)
-}
-
-// SortIfByAddr returns an IfAddrs ordered by address.  IfAddr that are not
-// comparable will be at the end of the list, however their order is
-// non-deterministic.
-func SortIfByAddr(inputIfAddrs IfAddrs) (IfAddrs, error) {
-	sortedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
-	OrderedIfAddrBy(AscIfAddress).Sort(sortedIfAddrs)
-	return sortedIfAddrs, nil
-}
-
-// SortIfByName returns an IfAddrs ordered by interface name.  IfAddr that are
-// not comparable will be at the end of the list, however their order is
-// non-deterministic.
-func SortIfByName(inputIfAddrs IfAddrs) (IfAddrs, error) {
-	sortedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
-	OrderedIfAddrBy(AscIfName).Sort(sortedIfAddrs)
-	return sortedIfAddrs, nil
-}
-
-// SortIfByPort returns an IfAddrs ordered by their port number, if set.
-// IfAddrs that don't have a port set and are therefore not comparable will be
-// at the end of the list (note: the sort order is non-deterministic).
-func SortIfByPort(inputIfAddrs IfAddrs) (IfAddrs, error) {
-	sortedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
-	OrderedIfAddrBy(AscIfPort).Sort(sortedIfAddrs)
-	return sortedIfAddrs, nil
-}
-
-// SortIfByType returns an IfAddrs ordered by their type.  IfAddr that share a
-// type are non-deterministic re: their sort order.
-func SortIfByType(inputIfAddrs IfAddrs) (IfAddrs, error) {
-	sortedIfAddrs := append(IfAddrs(nil), inputIfAddrs...)
-	OrderedIfAddrBy(AscIfType).Sort(sortedIfAddrs)
-	return sortedIfAddrs, nil
 }
 
 // parseDefaultIfNameFromRoute parses standard route(8)'s output for the *BSDs
