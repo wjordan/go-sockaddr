@@ -78,12 +78,16 @@ func (ms *multiAddrSorter) Swap(i, j int) {
 	ms.addrs[i], ms.addrs[j] = ms.addrs[j], ms.addrs[i]
 }
 
-// sortOrderDifferentTypes provides a constant to describe the strategy taken
-// when two different types are compared.  The strategy is always to defer
-// comparison and allow the next sort function attempt to sort.
-//
-// NOTE: This constant is here only for code readability.
-const sortOrderDifferentTypes = 0
+const (
+	// NOTE (sean@): These constants are here for code readability only and
+	// are sprucing up the code for readability purposes.  Some of the
+	// Cmp*() variants have confusing logic (especially when dealing with
+	// mixed-type comparisons) and this, I think, has made it easier to grok
+	// the code faster.
+	sortReceiverBeforeArg = -1
+	sortDeferDecision     = 0
+	sortArgBeforeReceiver = 1
+)
 
 // AscAddress is a sorting function to sort SockAddrs by their respective
 // address type.  Non-equal types are deferred in the sort.
@@ -97,7 +101,7 @@ func AscAddress(p1Ptr, p2Ptr *SockAddr) int {
 	case IPv6Addr:
 		return v.CmpAddress(p2)
 	}
-	return sortOrderDifferentTypes
+	return sortDeferDecision
 }
 
 // AscPort is a sorting function to sort SockAddrs by their respective address
@@ -112,7 +116,7 @@ func AscPort(p1Ptr, p2Ptr *SockAddr) int {
 	case IPv6Addr:
 		return v.CmpPort(p2)
 	}
-	return sortOrderDifferentTypes
+	return sortDeferDecision
 }
 
 // AscPrivate is a sorting function to sort "more secure" private values before
@@ -127,7 +131,7 @@ func AscPrivate(p1Ptr, p2Ptr *SockAddr) int {
 	case IPv4Addr, IPv6Addr:
 		return v.CmpRFC(6890, p2)
 	}
-	return sortOrderDifferentTypes
+	return sortDeferDecision
 }
 
 // AscNetworkSize is a sorting function to sort SockAddrs based on their network
@@ -140,7 +144,7 @@ func AscNetworkSize(p1Ptr, p2Ptr *SockAddr) int {
 
 	// Network size operations on non-IP types make no sense
 	if p1Type != p2Type && p1Type != TypeIP {
-		return sortOrderDifferentTypes
+		return sortDeferDecision
 	}
 
 	ipA := p1.(IPAddr)

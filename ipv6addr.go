@@ -176,7 +176,7 @@ func (ipv6 IPv6Addr) AddressHexString() string {
 func (ipv6 IPv6Addr) CmpAddress(sa SockAddr) int {
 	ipv6b, ok := sa.(IPv6Addr)
 	if !ok {
-		return sortOrderDifferentTypes
+		return sortDeferDecision
 	}
 
 	ipv6aBigInt := new(big.Int)
@@ -197,42 +197,46 @@ func (ipv6 IPv6Addr) CmpPort(sa SockAddr) int {
 	case IPv6Addr:
 		saPort = v.Port
 	default:
-		return sortOrderDifferentTypes
+		return sortDeferDecision
 	}
 
 	switch {
 	case ipv6.Port == saPort:
-		return 0
+		return sortDeferDecision
 	case ipv6.Port < saPort:
-		return -1
+		return sortReceiverBeforeArg
 	default:
-		return 1
+		return sortArgBeforeReceiver
 	}
 }
 
 // CmpRFC returns 0 if SockAddr is one of the RFC networks, -1 if it is
 // contained within an RFC network, or 1 if not.
 func (ipv6 IPv6Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
-	a := IsRFC(rfcNum, ipv6)
+	recvInRFC := IsRFC(rfcNum, ipv6)
 	ipv6b, ok := sa.(IPv6Addr)
 	if !ok {
-		if a {
-			return -1
+		// If the receiver is part of the desired RFC and the SockAddr
+		// argument is not, sort receiver before the non-IPv6 SockAddr.
+		// Conversely, if the receiver is not part of the RFC, punt on
+		// sorting and leave it for the next sorter.
+		if recvInRFC {
+			return sortReceiverBeforeArg
 		} else {
-			return 0
+			return sortDeferDecision
 		}
 	}
 
-	b := IsRFC(rfcNum, ipv6b)
+	argInRFC := IsRFC(rfcNum, ipv6b)
 	switch {
-	case (a && b), (!a && !b):
+	case (recvInRFC && argInRFC), (!recvInRFC && !argInRFC):
 		// If a and b both belong to the RFC, or neither belong to
 		// rfcNum, defer sorting to the next sorter.
-		return 0
-	case a && !b:
-		return -1
+		return sortDeferDecision
+	case recvInRFC && !argInRFC:
+		return sortReceiverBeforeArg
 	default:
-		return 1
+		return sortArgBeforeReceiver
 	}
 }
 

@@ -152,50 +152,21 @@ func (ipv4 IPv4Addr) BroadcastAddress() IPv4Network {
 	return IPv4Network(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
 }
 
-func (ipv4 IPv4Addr) Cmp(sa SockAddr) int {
-	switch sa.(type) {
-	case UnixSock:
-		return -1
-	case IPv4Addr:
-		break
-	case IPv6Addr:
-		return 1
-	default:
-		panic("unsupported type")
-	}
-
-	ipv4b, ok := sa.(IPv4Addr)
-	if !ok {
-		panic("type conversion failed")
-	}
-
-	// TODO: Not comparing the NetIPs, NetIPMasks, or NetIPNets.
-	if ipv4.Address == ipv4b.Address {
-		return 0
-	}
-
-	if ipv4.Address < ipv4b.Address {
-		return -1
-	} else {
-		return 1
-	}
-}
-
 // CmpAddress returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1
 // if it should sort first, or 1 if it should sort after.
 func (ipv4 IPv4Addr) CmpAddress(sa SockAddr) int {
 	ipv4b, ok := sa.(IPv4Addr)
 	if !ok {
-		return sortOrderDifferentTypes
+		return sortDeferDecision
 	}
 
 	switch {
 	case ipv4.Address == ipv4b.Address:
-		return 0
+		return sortDeferDecision
 	case ipv4.Address < ipv4b.Address:
-		return -1
+		return sortReceiverBeforeArg
 	default:
-		return 1
+		return sortArgBeforeReceiver
 	}
 }
 
@@ -209,42 +180,47 @@ func (ipv4 IPv4Addr) CmpPort(sa SockAddr) int {
 	case IPv6Addr:
 		saPort = v.Port
 	default:
-		return sortOrderDifferentTypes
+		return sortDeferDecision
 	}
 
 	switch {
 	case ipv4.Port == saPort:
-		return 0
+		return sortDeferDecision
 	case ipv4.Port < saPort:
-		return -1
+		return sortReceiverBeforeArg
 	default:
-		return 1
+		return sortArgBeforeReceiver
 	}
 }
 
 // CmpRFC returns 0 if SockAddr is one of the RFC networks, -1 if it is
 // contained within an RFC network, or 1 if not.
 func (ipv4 IPv4Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
-	a := IsRFC(rfcNum, ipv4)
+	recvInRFC := IsRFC(rfcNum, ipv4)
 	ipv4b, ok := sa.(IPv4Addr)
 	if !ok {
-		if a {
-			return -1
+		// If the receiver is part of the desired RFC and the SockAddr
+		// argument is not, return -1 so that the receiver sorts before
+		// the non-IPv4 SockAddr.  Conversely, if the receiver is not
+		// part of the RFC, punt on sorting and leave it for the next
+		// sorter.
+		if recvInRFC {
+			return sortReceiverBeforeArg
 		} else {
-			return 0
+			return sortDeferDecision
 		}
 	}
 
-	b := IsRFC(rfcNum, ipv4b)
+	argInRFC := IsRFC(rfcNum, ipv4b)
 	switch {
-	case (a && b), (!a && !b):
+	case (recvInRFC && argInRFC), (!recvInRFC && !argInRFC):
 		// If a and b both belong to the RFC, or neither belong to
 		// rfcNum, defer sorting to the next sorter.
-		return 0
-	case a && !b:
-		return -1
+		return sortDeferDecision
+	case recvInRFC && !argInRFC:
+		return sortReceiverBeforeArg
 	default:
-		return 1
+		return sortArgBeforeReceiver
 	}
 }
 
