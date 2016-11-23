@@ -4,6 +4,24 @@ package sockaddr
 // blocks.
 const ForwardingBlacklist = 4294967295
 
+// IsRFC tests to see if an SockAddr matches the specified RFC
+func IsRFC(rfcNum uint, sa SockAddr) bool {
+	rfcNetMap := KnownRFCs()
+	rfcNets, ok := rfcNetMap[rfcNum]
+	if !ok {
+		return false
+	}
+
+	var contained bool
+	for _, rfcNet := range rfcNets {
+		if rfcNet.Contains(sa) {
+			contained = true
+			break
+		}
+	}
+	return contained
+}
+
 // KnownRFCs returns an initial set of known RFCs.
 //
 // NOTE (sean@): As this list evolves over time, please submit patches to keep

@@ -87,24 +87,6 @@ func NewSockAddr(s string) (SockAddr, error) {
 	return nil, fmt.Errorf("Unable to convert %q to an IPv4 or IPv6 address, or a UNIX Socket", s)
 }
 
-// IsRFC tests to see if an SockAddr matches the specified RFC
-func IsRFC(rfcNum uint, sa SockAddr) bool {
-	rfcNetMap := KnownRFCs()
-	rfcNets, ok := rfcNetMap[rfcNum]
-	if !ok {
-		return false
-	}
-
-	var contained bool
-	for _, rfcNet := range rfcNets {
-		if rfcNet.Contains(sa) {
-			contained = true
-			break
-		}
-	}
-	return contained
-}
-
 // ToIPAddr returns an IPAddr type, if possible, otherwise returns nil if the
 // type conversion fails.
 func ToIPAddr(sa SockAddr) *IPAddr {
