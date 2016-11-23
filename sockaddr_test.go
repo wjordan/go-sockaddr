@@ -266,3 +266,108 @@ func TestSockAddr_New(t *testing.T) {
 	}
 
 }
+
+func TestSockAddrAttrs(t *testing.T) {
+	const expectedNumAttrs = 2
+	saa := sockaddr.SockAddrAttrs()
+	if len(saa) != expectedNumAttrs {
+		t.Fatalf("wrong number of SockAddrAttrs: %d vs %d", len(saa), expectedNumAttrs)
+	}
+
+	tests := []struct {
+		name string
+		sa   sockaddr.SockAddr
+		attr sockaddr.AttrName
+		want string
+	}{
+		{
+			name: "type",
+			sa:   sockaddr.MustIPv4Addr("1.2.3.4"),
+			attr: "type",
+			want: "IPv4",
+		},
+		{
+			name: "string",
+			sa:   sockaddr.MustIPv4Addr("1.2.3.4"),
+			attr: "string",
+			want: "1.2.3.4",
+		},
+		{
+			name: "invalid",
+			sa:   sockaddr.MustIPv4Addr("1.2.3.4"),
+			attr: "ENOENT",
+			want: "",
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d needs a name", i)
+		}
+
+		result := sockaddr.SockAddrAttr(test.sa, test.attr)
+		if result != test.want {
+			t.Fatalf("%s: expected %s got %s", test.name, test.want, result)
+		}
+	}
+}
+
+func TestToFoo(t *testing.T) {
+	tests := []struct {
+		name     string
+		sa       sockaddr.SockAddr
+		passIP   bool
+		passIPv4 bool
+		passIPv6 bool
+		passUnix bool
+	}{
+		{
+			name:     "ipv4",
+			sa:       sockaddr.MustIPv4Addr("1.2.3.4"),
+			passIP:   true,
+			passIPv4: true,
+		},
+		{
+			name:     "ipv6",
+			sa:       sockaddr.MustIPv6Addr("::1"),
+			passIP:   true,
+			passIPv6: true,
+		},
+		{
+			name:     "unix",
+			sa:       sockaddr.MustUnixSock("/tmp/foo"),
+			passUnix: true,
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d must have a name", i)
+		}
+
+		switch us := sockaddr.ToUnixSock(test.sa); {
+		case us == nil && test.passUnix,
+			us != nil && !test.passUnix:
+			t.Fatalf("bad")
+		}
+
+		switch ip := sockaddr.ToIPAddr(test.sa); {
+		case ip == nil && test.passIP,
+			ip != nil && !test.passIP:
+			t.Fatalf("bad")
+		}
+
+		switch ipv4 := sockaddr.ToIPv4Addr(test.sa); {
+		case ipv4 == nil && test.passIPv4,
+			ipv4 != nil && !test.passIPv4:
+			t.Fatalf("bad")
+		}
+
+		switch ipv6 := sockaddr.ToIPv6Addr(test.sa); {
+		case ipv6 == nil && test.passIPv6,
+			ipv6 != nil && !test.passIPv6:
+			t.Fatalf("bad")
+		}
+	}
+
+}
