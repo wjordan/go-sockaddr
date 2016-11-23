@@ -194,7 +194,8 @@ func GetAllInterfaces() (IfAddrs, error) {
 		}
 
 		for _, addr := range addrs {
-			ipAddr, err := NewIPAddr(addr.String())
+			var ipAddr IPAddr
+			ipAddr, err = NewIPAddr(addr.String())
 			if err != nil {
 				return IfAddrs{}, fmt.Errorf("unable to create an IP address from %q", addr.String())
 			}
@@ -218,15 +219,15 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 		return nil, err
 	}
 
-	var ifs IfAddrs
-	ifAddrs, err := GetAllInterfaces()
+	var defaultIfs, ifAddrs IfAddrs
+	ifAddrs, err = GetAllInterfaces()
 	for _, ifAddr := range ifAddrs {
 		if ifAddr.Name == defaultIfName {
-			ifs = append(ifs, ifAddr)
+			defaultIfs = append(defaultIfs, ifAddr)
 		}
 	}
 
-	return ifs, nil
+	return defaultIfs, nil
 }
 
 // GetPrivateInterfaces returns an IfAddrs that is part of RFC 6890 and has a
@@ -406,7 +407,14 @@ func IfByMaskSize(maskSize uint, ifAddrs IfAddrs) (matchedIfs, excludedIfs IfAdd
 	for _, addr := range ipIfs {
 		ipAddr := ToIPAddr(addr.SockAddr)
 		if ipAddr == nil {
-			continue
+			return IfAddrs{}, IfAddrs{}, fmt.Errorf("unable to filter mask sizes on non-IP type %s: %v", addr.SockAddr.Type().String(), addr.SockAddr.String())
+		}
+
+		switch {
+		case (*ipAddr).Type()&TypeIPv4 != 0 && maskSize > 32:
+			return IfAddrs{}, IfAddrs{}, fmt.Errorf("mask size out of bounds for IPv4 address: %d", maskSize)
+		case (*ipAddr).Type()&TypeIPv6 != 0 && maskSize > 128:
+			return IfAddrs{}, IfAddrs{}, fmt.Errorf("mask size out of bounds for IPv6 address: %d", maskSize)
 		}
 
 		if (*ipAddr).Maskbits() == int(maskSize) {
@@ -483,13 +491,13 @@ func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 		wantLoopback,
 		wantMulticast,
 		wantUnspecified bool
-	var ifFlag, ifWant net.Flags
+	var ifFlags net.Flags
 	for _, flagName := range strings.Split(strings.ToLower(inputFlags), "|") {
 		switch flagName {
 		case "broadcast":
-			ifFlag, ifWant = ifFlag|net.FlagBroadcast, ifWant|net.FlagBroadcast
+			ifFlags = ifFlags | net.FlagBroadcast
 		case "down":
-			ifFlag, ifWant = ifFlag|net.FlagUp, ifWant|0
+			ifFlags = (ifFlags &^ net.FlagUp)
 		case "forwardable":
 			wantForwardable = true
 		case "global unicast":
@@ -501,17 +509,17 @@ func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 		case "link-local unicast":
 			wantLinkLocalUnicast = true
 		case "loopback":
-			ifFlag, ifWant = ifFlag|net.FlagLoopback, ifWant|net.FlagLoopback
+			ifFlags = ifFlags | net.FlagLoopback
 			wantLoopback = true
 		case "multicast":
-			ifFlag, ifWant = ifFlag|net.FlagMulticast, ifWant|net.FlagMulticast
+			ifFlags = ifFlags | net.FlagMulticast
 			wantMulticast = true
 		case "point-to-point":
-			ifFlag, ifWant = ifFlag|net.FlagPointToPoint, ifWant|net.FlagPointToPoint
+			ifFlags = ifFlags | net.FlagPointToPoint
 		case "unspecified":
 			wantUnspecified = true
 		case "up":
-			ifFlag, ifWant = ifFlag|net.FlagUp, ifWant|net.FlagUp
+			ifFlags = ifFlags | net.FlagUp
 		default:
 			return nil, nil, fmt.Errorf("Unknown interface flag: %+q", flagName)
 		}
@@ -519,13 +527,11 @@ func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 
 	for _, ifAddr := range ifAddrs {
 		var matched bool
-		if ifFlag != 0 && ifWant != 0 && ifAddr.Interface.Flags&ifFlag == ifWant {
+		if ifAddr.Interface.Flags&ifFlags == ifFlags {
 			matched = true
 		} else if ip := ToIPAddr(ifAddr.SockAddr); ip != nil {
 			netIP := (*ip).NetIP()
 			switch {
-			case wantForwardable && !IsRFC(ForwardingBlacklist, ifAddr.SockAddr):
-				matched = true
 			case wantGlobalUnicast && netIP.IsGlobalUnicast():
 				matched = true
 			case wantInterfaceLocalMulticast && netIP.IsInterfaceLocalMulticast():
@@ -539,6 +545,8 @@ func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 			case wantMulticast && netIP.IsMulticast():
 				matched = true
 			case wantUnspecified && netIP.IsUnspecified():
+				matched = true
+			case wantForwardable && !IsRFC(ForwardingBlacklist, ifAddr.SockAddr):
 				matched = true
 			}
 		}
@@ -564,24 +572,27 @@ func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 		includedIfs, _, err = IfByFlag(selectorParam, inputIfAddrs)
 	case "name":
 		includedIfs, _, err = IfByName(selectorParam, inputIfAddrs)
-	case "port":
+	case "port", "ports":
 		includedIfs, _, err = IfByPort(selectorParam, inputIfAddrs)
 	case "rfc", "rfcs":
 		rfcs := strings.Split(selectorParam, "|")
 		for _, rfcStr := range rfcs {
-			rfc, err := strconv.ParseUint(rfcStr, 10, 64)
+			var rfc uint64
+			rfc, err = strconv.ParseUint(rfcStr, 10, 64)
 			if err != nil {
-				continue
+				return IfAddrs{}, fmt.Errorf("unable to parse RFC number %q: %v", rfcStr, err)
 			}
 
-			includedRFCIfs, _, err := IfByRFC(uint(rfc), inputIfAddrs)
+			var includedRFCIfs IfAddrs
+			includedRFCIfs, _, err = IfByRFC(uint(rfc), inputIfAddrs)
 			if err != nil {
-				continue
+				return IfAddrs{}, fmt.Errorf("unable to lookup RFC number %q: %v", rfcStr, err)
 			}
 			includedIfs = append(includedIfs, includedRFCIfs...)
 		}
 	case "size":
-		maskSize, err := strconv.ParseUint(selectorParam, 10, 64)
+		var maskSize uint64
+		maskSize, err = strconv.ParseUint(selectorParam, 10, 64)
 		if err != nil {
 			return IfAddrs{}, fmt.Errorf("invalid include size argument (%q): %v", selectorParam, err)
 		}
@@ -611,24 +622,27 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 		_, excludedIfs, err = IfByFlag(selectorParam, inputIfAddrs)
 	case "name":
 		_, excludedIfs, err = IfByName(selectorParam, inputIfAddrs)
-	case "port":
+	case "port", "ports":
 		_, excludedIfs, err = IfByPort(selectorParam, inputIfAddrs)
 	case "rfc", "rfcs":
 		rfcs := strings.Split(selectorParam, "|")
 		for _, rfcStr := range rfcs {
-			rfc, err := strconv.ParseUint(rfcStr, 10, 64)
+			var rfc uint64
+			rfc, err = strconv.ParseUint(rfcStr, 10, 64)
 			if err != nil {
-				continue
+				return IfAddrs{}, fmt.Errorf("unable to parse RFC number %q: %v", rfcStr, err)
 			}
 
-			_, excludedRFCIfs, err := IfByRFC(uint(rfc), inputIfAddrs)
+			var excludedRFCIfs IfAddrs
+			_, excludedRFCIfs, err = IfByRFC(uint(rfc), inputIfAddrs)
 			if err != nil {
-				continue
+				return IfAddrs{}, fmt.Errorf("unable to lookup RFC number %q: %v", rfcStr, err)
 			}
 			excludedIfs = append(excludedIfs, excludedRFCIfs...)
 		}
 	case "size":
-		maskSize, err := strconv.ParseUint(selectorParam, 10, 64)
+		var maskSize uint64
+		maskSize, err = strconv.ParseUint(selectorParam, 10, 64)
 		if err != nil {
 			return IfAddrs{}, fmt.Errorf("invalid exclude size argument (%q): %v", selectorParam, err)
 		}
@@ -748,7 +762,9 @@ func JoinIfAddrs(selectorName string, joinStr string, inputIfAddrs IfAddrs) (str
 	attrName := AttrName(strings.ToLower(selectorName))
 
 	for _, ifAddr := range inputIfAddrs {
-		attrVal, err := ifAddr.Attr(attrName)
+		var attrVal string
+		var err error
+		attrVal, err = ifAddr.Attr(attrName)
 		if err != nil {
 			return "", err
 		}
