@@ -20,6 +20,12 @@ func TestSockAddr_Parse(t *testing.T) {
 			output: `[127.0.0.1/8 {1 16384 lo0  up|loopback|multicast} ::1 {1 16384 lo0  up|loopback|multicast} fe80::1/64 {1 16384 lo0  up|loopback|multicast}]`,
 		},
 		{
+			name:   "invalid input",
+			input:  `{{`,
+			output: ``,
+			fail:   true,
+		},
+		{
 			name:   "GetDefaultInterface",
 			input:  `{{GetDefaultInterfaces | include "type" "IPv4" | attr "name" }}`,
 			output: `en0`,
