@@ -336,8 +336,9 @@ func TestGetPrivateIP(t *testing.T) {
 }
 
 func TestIfAddrAttrs(t *testing.T) {
+	const expectedNumAttrs = 2
 	attrs := sockaddr.IfAddrAttrs()
-	if len(attrs) != 2 {
+	if len(attrs) != expectedNumAttrs {
 		t.Fatalf("wrong number of attrs")
 	}
 }

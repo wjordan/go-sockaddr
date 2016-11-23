@@ -87,55 +87,40 @@ func NewSockAddr(s string) (SockAddr, error) {
 	return nil, fmt.Errorf("Unable to convert %q to an IPv4 or IPv6 address, or a UNIX Socket", s)
 }
 
-// ToIPAddr returns an IPAddr type, if possible, otherwise returns nil if the
-// type conversion fails.
+// ToIPAddr returns an IPAddr type or nil if the type conversion fails.
 func ToIPAddr(sa SockAddr) *IPAddr {
-	switch sa.(type) {
-	case IPv4Addr, IPv6Addr:
-		ipa, ok := sa.(IPAddr)
-		if !ok {
-			return nil
-		}
-		return &ipa
-	default:
+	ipa, ok := sa.(IPAddr)
+	if !ok {
 		return nil
 	}
+	return &ipa
 }
 
+// ToIPv4Addr returns an IPv4Addr type or nil if the type conversion fails.
 func ToIPv4Addr(sa SockAddr) *IPv4Addr {
-	switch sa.(type) {
+	switch v := sa.(type) {
 	case IPv4Addr:
-		ipv4, ok := sa.(IPv4Addr)
-		if !ok {
-			return nil
-		}
-		return &ipv4
+		return &v
 	default:
 		return nil
 	}
 }
 
+// ToIPv6Addr returns an IPv6Addr type or nil if the type conversion fails.
 func ToIPv6Addr(sa SockAddr) *IPv6Addr {
-	switch sa.(type) {
+	switch v := sa.(type) {
 	case IPv6Addr:
-		ipv6, ok := sa.(IPv6Addr)
-		if !ok {
-			return nil
-		}
-		return &ipv6
+		return &v
 	default:
 		return nil
 	}
 }
 
+// ToUnixSock returns a UnixSock type or nil if the type conversion fails.
 func ToUnixSock(sa SockAddr) *UnixSock {
-	switch sa.(type) {
+	switch v := sa.(type) {
 	case UnixSock:
-		ua, ok := sa.(UnixSock)
-		if !ok {
-			return nil
-		}
-		return &ua
+		return &v
 	default:
 		return nil
 	}
