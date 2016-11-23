@@ -39,6 +39,10 @@ audit::
 clean::
 	rm -f $(GOCOVER_FILE) $(GOCOVERHTML)
 
+dev::
+	@go build
+	@make -B -C cmd/sockaddr sockaddr
+
 install::
 	@go install
 	@make -C cmd/sockaddr install
