@@ -14,6 +14,234 @@ import (
 // TODO(sean@): Add better coverage for filtering functions (e.g. ExcludeBy*,
 // IncludeBy*).
 
+func TestCmpIfAddrFunc(t *testing.T) {
+	tests := []struct {
+		name       string
+		t1         sockaddr.IfAddr // must come before t2 according to the ascOp
+		t2         sockaddr.IfAddr
+		ascOp      sockaddr.CmpIfAddrFunc
+		ascResult  int
+		descOp     sockaddr.CmpIfAddrFunc
+		descResult int
+	}{
+		{
+			name:       "empty test",
+			t1:         sockaddr.IfAddr{},
+			t2:         sockaddr.IfAddr{},
+			ascOp:      sockaddr.AscIfAddress,
+			descOp:     sockaddr.DescIfAddress,
+			ascResult:  0,
+			descResult: 0,
+		},
+		{
+			name: "ipv4 address less",
+			t1: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("1.2.3.3"),
+			},
+			t2: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+			},
+			ascOp:      sockaddr.AscIfAddress,
+			descOp:     sockaddr.DescIfAddress,
+			ascResult:  -1,
+			descResult: -1,
+		},
+		{
+			name: "ipv4 private",
+			t1: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("10.1.2.3"),
+			},
+			t2: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("203.0.113.3"),
+			},
+			ascOp:      sockaddr.AscIfPrivate,
+			descOp:     sockaddr.DescIfPrivate,
+			ascResult:  0, // not both private, can't complete the test
+			descResult: 0,
+		},
+		{
+			name: "IfAddr name",
+			t1: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("10.1.2.3"),
+				Interface: net.Interface{
+					Name: "abc0",
+				},
+			},
+			t2: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("203.0.113.3"),
+				Interface: net.Interface{
+					Name: "xyz0",
+				},
+			},
+			ascOp:      sockaddr.AscIfName,
+			descOp:     sockaddr.DescIfName,
+			ascResult:  -1,
+			descResult: -1,
+		},
+		{
+			name: "IfAddr network size",
+			t1: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("10.0.0.0/8"),
+			},
+			t2: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("127.0.0.0/24"),
+			},
+			ascOp:      sockaddr.AscIfNetworkSize,
+			descOp:     sockaddr.DescIfNetworkSize,
+			ascResult:  -1,
+			descResult: -1,
+		},
+		{
+			name: "IfAddr port",
+			t1: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("10.0.0.0:80"),
+			},
+			t2: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("127.0.0.0:8600"),
+			},
+			ascOp:      sockaddr.AscIfPort,
+			descOp:     sockaddr.DescIfPort,
+			ascResult:  -1,
+			descResult: -1,
+		},
+		{
+			name: "IfAddr type",
+			t1: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("10.0.0.0:80"),
+			},
+			t2: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv6Addr("[::1]:80"),
+			},
+			ascOp:      sockaddr.AscIfType,
+			descOp:     sockaddr.DescIfType,
+			ascResult:  -1,
+			descResult: -1,
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d must have a name", i)
+		}
+
+		// Test ascending operation
+		ascExpected := test.ascResult
+		ascResult := test.ascOp(&test.t1, &test.t2)
+		if ascResult != ascExpected {
+			t.Errorf("%s: Unexpected result %d, expected %d when comparing %v and %v using %v", test.name, ascResult, ascExpected, test.t1, test.t2, test.ascOp)
+		}
+
+		// Test descending operation
+		descExpected := test.descResult
+		descResult := test.descOp(&test.t2, &test.t1)
+		if descResult != descExpected {
+			t.Errorf("%s: Unexpected result %d, expected %d when comparing %v and %v using %v", test.name, descResult, descExpected, test.t1, test.t2, test.descOp)
+		}
+
+		if ascResult != descResult {
+			t.Fatalf("bad")
+		}
+
+		// Reverse the args
+		ascExpected = -1 * test.ascResult
+		ascResult = test.ascOp(&test.t2, &test.t1)
+		if ascResult != ascExpected {
+			t.Errorf("%s: Unexpected result %d, expected %d when comparing %v and %v using %v", test.name, ascResult, ascExpected, test.t1, test.t2, test.ascOp)
+		}
+
+		descExpected = -1 * test.descResult
+		descResult = test.descOp(&test.t1, &test.t2)
+		if descResult != descExpected {
+			t.Errorf("%s: Unexpected result %d, expected %d when comparing %v and %v using %v", test.name, descResult, descExpected, test.t1, test.t2, test.descOp)
+		}
+
+		if ascResult != descResult {
+			t.Fatalf("bad")
+		}
+
+		// Test equality
+		ascExpected = 0
+		ascResult = test.ascOp(&test.t1, &test.t1)
+		if ascResult != ascExpected {
+			t.Errorf("%s: Unexpected result %d, expected %d when comparing %v and %v using %v", test.name, ascResult, ascExpected, test.t1, test.t2, test.ascOp)
+		}
+
+		descExpected = 0
+		descResult = test.descOp(&test.t1, &test.t1)
+		if descResult != descExpected {
+			t.Errorf("%s: Unexpected result %d, expected %d when comparing %v and %v using %v", test.name, descResult, descExpected, test.t1, test.t2, test.descOp)
+		}
+	}
+}
+
+func TestFilterIfByType(t *testing.T) {
+	tests := []struct {
+		name         string
+		ifAddrs      sockaddr.IfAddrs
+		ifAddrType   sockaddr.SockAddrType
+		matchedLen   int
+		remainingLen int
+	}{
+		{
+			name: "include all",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("2.3.4.5"),
+				},
+			},
+			ifAddrType:   sockaddr.TypeIPv4,
+			matchedLen:   2,
+			remainingLen: 0,
+		},
+		{
+			name: "include some",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv6Addr("::1"),
+				},
+			},
+			ifAddrType:   sockaddr.TypeIPv4,
+			matchedLen:   1,
+			remainingLen: 1,
+		},
+		{
+			name: "exclude all",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.5"),
+				},
+			},
+			ifAddrType:   sockaddr.TypeIPv6,
+			matchedLen:   0,
+			remainingLen: 2,
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d needs a name", i)
+		}
+
+		in, out := sockaddr.FilterIfByType(test.ifAddrs, test.ifAddrType)
+		if len(in) != test.matchedLen {
+			t.Fatalf("%s: wrong length %d, expected %d", test.name, len(in), test.matchedLen)
+		}
+
+		if len(out) != test.remainingLen {
+			t.Fatalf("%s: wrong length %d, expected %d", test.name, len(out), test.remainingLen)
+		}
+	}
+}
+
 // TestGetIfAddrs runs through the motions of calling sockaddr.GetIfAddrs(), but
 // doesn't do much in the way of testing beyond verifying that `lo0` has a
 // loopback address present.

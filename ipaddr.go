@@ -81,6 +81,16 @@ func IPAttrs() []AttrName {
 	return ipAddrAttrs
 }
 
+// MustIPAddr is a helper method that must return an IPAddr or panic on invalid
+// input.
+func MustIPAddr(addr string) IPAddr {
+	ip, err := NewIPAddr(addr)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to create an IPAddr from %+q: %v", addr, err))
+	}
+	return ip
+}
+
 // ipAddrInit is called once at init()
 func ipAddrInit() {
 	// Sorted for human readability

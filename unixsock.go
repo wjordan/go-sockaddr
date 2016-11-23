@@ -48,6 +48,16 @@ func (us UnixSock) ListenStreamArgs() (network, dialArgs string) {
 	return "unix", us.path
 }
 
+// MustUnixSock is a helper method that must return an UnixSock or panic on
+// invalid input.
+func MustUnixSock(addr string) UnixSock {
+	us, err := NewUnixSock(addr)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to create a UnixSock from %+q: %v", addr, err))
+	}
+	return us
+}
+
 // Path returns the given path of the UnixSock
 func (us UnixSock) Path() string {
 	return us.path

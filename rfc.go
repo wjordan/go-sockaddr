@@ -1,7 +1,5 @@
 package sockaddr
 
-import "log"
-
 // ForwardingBlacklist is a faux RFC that includes a list of non-forwardable IP
 // blocks.
 const ForwardingBlacklist = 4294967295
@@ -24,27 +22,27 @@ func KnownRFCs() map[uint]SockAddrs {
 	return map[uint]SockAddrs{
 		919: SockAddrs{
 			// [RFC919] Broadcasting Internet Datagrams
-			mustIPv4Addr("255.255.255.255/32"), // [RFC1122], §7 Broadcast IP Addressing - Proposed Standards
+			MustIPv4Addr("255.255.255.255/32"), // [RFC1122], §7 Broadcast IP Addressing - Proposed Standards
 		},
 		1122: SockAddrs{
 			// [RFC1122] Requirements for Internet Hosts -- Communication Layers
-			mustIPv4Addr("0.0.0.0/8"),   // [RFC1122], §3.2.1.3
-			mustIPv4Addr("127.0.0.0/8"), // [RFC1122], §3.2.1.3
+			MustIPv4Addr("0.0.0.0/8"),   // [RFC1122], §3.2.1.3
+			MustIPv4Addr("127.0.0.0/8"), // [RFC1122], §3.2.1.3
 		},
 		1112: SockAddrs{
 			// [RFC1112] Host Extensions for IP Multicasting
-			mustIPv4Addr("224.0.0.0/4"), // [RFC1112], §4 Host Group Addresses
+			MustIPv4Addr("224.0.0.0/4"), // [RFC1112], §4 Host Group Addresses
 		},
 		1918: SockAddrs{
 			// [RFC1918] Address Allocation for Private Internets
-			mustIPv4Addr("10.0.0.0/8"),
-			mustIPv4Addr("172.16.0.0/12"),
-			mustIPv4Addr("192.168.0.0/16"),
+			MustIPv4Addr("10.0.0.0/8"),
+			MustIPv4Addr("172.16.0.0/12"),
+			MustIPv4Addr("192.168.0.0/16"),
 		},
 		2544: SockAddrs{
 			// [RFC2544] Benchmarking Methodology for Network
 			// Interconnect Devices
-			mustIPv4Addr("198.18.0.0/15"),
+			MustIPv4Addr("198.18.0.0/15"),
 		},
 		2765: SockAddrs{
 			// [RFC2765] Stateless IP/ICMP Translation Algorithm
@@ -52,40 +50,40 @@ func KnownRFCs() map[uint]SockAddrs {
 			// later obsoleted by 7915).
 
 			// [RFC2765], §2.1 Addresses
-			mustIPv6Addr("0:0:0:0:0:ffff:0:0/96"),
+			MustIPv6Addr("0:0:0:0:0:ffff:0:0/96"),
 		},
 		2928: SockAddrs{
 			// [RFC2928] Initial IPv6 Sub-TLA ID Assignments
-			mustIPv6Addr("2001::/16"), // Superblock
-			//mustIPv6Addr("2001:0000::/23"), // IANA
-			//mustIPv6Addr("2001:0200::/23"), // APNIC
-			//mustIPv6Addr("2001:0400::/23"), // ARIN
-			//mustIPv6Addr("2001:0600::/23"), // RIPE NCC
-			//mustIPv6Addr("2001:0800::/23"), // (future assignment)
+			MustIPv6Addr("2001::/16"), // Superblock
+			//MustIPv6Addr("2001:0000::/23"), // IANA
+			//MustIPv6Addr("2001:0200::/23"), // APNIC
+			//MustIPv6Addr("2001:0400::/23"), // ARIN
+			//MustIPv6Addr("2001:0600::/23"), // RIPE NCC
+			//MustIPv6Addr("2001:0800::/23"), // (future assignment)
 			// ...
-			//mustIPv6Addr("2001:FE00::/23"), // (future assignment)
+			//MustIPv6Addr("2001:FE00::/23"), // (future assignment)
 		},
 		3056: SockAddrs{ // 6to4 address
 			// [RFC3056] Connection of IPv6 Domains via IPv4 Clouds
 
 			// [RFC3056], §2 IPv6 Prefix Allocation
-			mustIPv6Addr("2002::/16"),
+			MustIPv6Addr("2002::/16"),
 		},
 		3068: SockAddrs{
 			// [RFC3068] An Anycast Prefix for 6to4 Relay Routers
 			// (obsolete by RFC7526)
 
 			// [RFC3068], § 6to4 Relay anycast address
-			mustIPv4Addr("192.88.99.0/24"),
+			MustIPv4Addr("192.88.99.0/24"),
 
 			// [RFC3068], §2.5 6to4 IPv6 relay anycast address
 			//
 			// NOTE: /120 == 128-(32-24)
-			mustIPv6Addr("2002:c058:6301::/120"),
+			MustIPv6Addr("2002:c058:6301::/120"),
 		},
 		3171: SockAddrs{
 			// [RFC3171] IANA Guidelines for IPv4 Multicast Address Assignments
-			mustIPv4Addr("224.0.0.0/4"),
+			MustIPv4Addr("224.0.0.0/4"),
 		},
 		3330: SockAddrs{
 			// [RFC3330] Special-Use IPv4 Addresses
@@ -95,13 +93,13 @@ func KnownRFCs() map[uint]SockAddrs {
 			// source address for this host on this network; other
 			// addresses within 0.0.0.0/8 may be used to refer to
 			// specified hosts on this network [RFC1700, page 4].
-			mustIPv4Addr("0.0.0.0/8"),
+			MustIPv4Addr("0.0.0.0/8"),
 
 			// 10.0.0.0/8 - This block is set aside for use in
 			// private networks.  Its intended use is documented in
 			// [RFC1918].  Addresses within this block should not
 			// appear on the public Internet.
-			mustIPv4Addr("10.0.0.0/8"),
+			MustIPv4Addr("10.0.0.0/8"),
 
 			// 14.0.0.0/8 - This block is set aside for assignments
 			// to the international system of Public Data Networks
@@ -137,7 +135,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			// This is ordinarily implemented using only 127.0.0.1/32 for loopback,
 			// but no addresses within this block should ever appear on any network
 			// anywhere [RFC1700, page 5].
-			mustIPv4Addr("127.0.0.0/8"),
+			MustIPv4Addr("127.0.0.0/8"),
 
 			// 128.0.0.0/16 - This block, corresponding to the
 			// numerically lowest of the former Class B addresses,
@@ -153,13 +151,13 @@ func KnownRFCs() map[uint]SockAddrs {
 			// single link.  Hosts obtain these addresses by
 			// auto-configuration, such as when a DHCP server may
 			// not be found.
-			mustIPv4Addr("169.254.0.0/16"),
+			MustIPv4Addr("169.254.0.0/16"),
 
 			// 172.16.0.0/12 - This block is set aside for use in
 			// private networks.  Its intended use is documented in
 			// [RFC1918].  Addresses within this block should not
 			// appear on the public Internet.
-			mustIPv4Addr("172.16.0.0/12"),
+			MustIPv4Addr("172.16.0.0/12"),
 
 			// 191.255.0.0/16 - This block, corresponding to the numerically highest
 			// to the former Class B addresses, was initially and is still reserved
@@ -182,21 +180,21 @@ func KnownRFCs() map[uint]SockAddrs {
 			// domain names example.com or example.net in vendor and protocol
 			// documentation.  Addresses within this block should not appear on the
 			// public Internet.
-			mustIPv4Addr("192.0.2.0/24"),
+			MustIPv4Addr("192.0.2.0/24"),
 
 			// 192.88.99.0/24 - This block is allocated for use as 6to4 relay
 			// anycast addresses, according to [RFC3068].
-			mustIPv4Addr("192.88.99.0/24"),
+			MustIPv4Addr("192.88.99.0/24"),
 
 			// 192.168.0.0/16 - This block is set aside for use in private networks.
 			// Its intended use is documented in [RFC1918].  Addresses within this
 			// block should not appear on the public Internet.
-			mustIPv4Addr("192.168.0.0/16"),
+			MustIPv4Addr("192.168.0.0/16"),
 
 			// 198.18.0.0/15 - This block has been allocated for use
 			// in benchmark tests of network interconnect devices.
 			// Its use is documented in [RFC2544].
-			mustIPv4Addr("198.18.0.0/15"),
+			MustIPv4Addr("198.18.0.0/15"),
 
 			// 223.255.255.0/24 - This block, corresponding to the
 			// numerically highest of the former Class C addresses,
@@ -212,57 +210,57 @@ func KnownRFCs() map[uint]SockAddrs {
 			// multicast address assignments.  The IANA guidelines
 			// for assignments from this space are described in
 			// [RFC3171].
-			mustIPv4Addr("224.0.0.0/4"),
+			MustIPv4Addr("224.0.0.0/4"),
 
 			// 240.0.0.0/4 - This block, formerly known as the Class E address
 			// space, is reserved.  The "limited broadcast" destination address
 			// 255.255.255.255 should never be forwarded outside the (sub-)net of
 			// the source.  The remainder of this space is reserved
 			// for future use.  [RFC1700, page 4]
-			mustIPv4Addr("240.0.0.0/4"),
+			MustIPv4Addr("240.0.0.0/4"),
 		},
 		3849: SockAddrs{
 			// [RFC3849] IPv6 Address Prefix Reserved for Documentation
-			mustIPv6Addr("2001:db8::/32"), // [RFC3849], §4 IANA Considerations
+			MustIPv6Addr("2001:db8::/32"), // [RFC3849], §4 IANA Considerations
 		},
 		3927: SockAddrs{
 			// [RFC3927] Dynamic Configuration of IPv4 Link-Local Addresses
-			mustIPv4Addr("169.254.0.0/16"), // [RFC3927], §2.1 Link-Local Address Selection
+			MustIPv4Addr("169.254.0.0/16"), // [RFC3927], §2.1 Link-Local Address Selection
 		},
 		4038: SockAddrs{
 			// [RFC4038] Application Aspects of IPv6 Transition
 
 			// [RFC4038], §4.2. IPv6 Applications in a Dual-Stack Node
-			mustIPv6Addr("0:0:0:0:0:ffff::/96"),
+			MustIPv6Addr("0:0:0:0:0:ffff::/96"),
 		},
 		4193: SockAddrs{
 			// [RFC4193] Unique Local IPv6 Unicast Addresses
-			mustIPv6Addr("fc00::/7"),
+			MustIPv6Addr("fc00::/7"),
 		},
 		4291: SockAddrs{
 			// [RFC4291] IP Version 6 Addressing Architecture
 
 			// [RFC4291], §2.5.2 The Unspecified Address
-			mustIPv6Addr("::/128"),
+			MustIPv6Addr("::/128"),
 
 			// [RFC4291], §2.5.3 The Loopback Address
-			mustIPv6Addr("::1/128"),
+			MustIPv6Addr("::1/128"),
 
 			// [RFC4291], §2.5.5.1.  IPv4-Compatible IPv6 Address
-			mustIPv6Addr("::/96"),
+			MustIPv6Addr("::/96"),
 
 			// [RFC4291], §2.5.5.2.  IPv4-Mapped IPv6 Address
-			mustIPv6Addr("::ffff:0:0/96"),
+			MustIPv6Addr("::ffff:0:0/96"),
 
 			// [RFC4291], §2.5.6 Link-Local IPv6 Unicast Addresses
-			mustIPv6Addr("fe80::/10"),
+			MustIPv6Addr("fe80::/10"),
 
 			// [RFC4291], §2.5.7 Site-Local IPv6 Unicast Addresses
 			// (depreciated)
-			mustIPv6Addr("fec0::/10"),
+			MustIPv6Addr("fec0::/10"),
 
 			// [RFC4291], §2.7 Multicast Addresses
-			mustIPv6Addr("ff00::/8"),
+			MustIPv6Addr("ff00::/8"),
 
 			// IPv6 Multicast Information.
 			//
@@ -303,48 +301,48 @@ func KnownRFCs() map[uint]SockAddrs {
 			// Network Address Translations (NATs)
 
 			// [RFC4380], §2.6 Global Teredo IPv6 Service Prefix
-			mustIPv6Addr("2001:0000::/32"),
+			MustIPv6Addr("2001:0000::/32"),
 		},
 		4773: SockAddrs{
 			// [RFC4773] Administration of the IANA Special Purpose IPv6 Address Block
-			mustIPv6Addr("2001:0000::/23"), // IANA
+			MustIPv6Addr("2001:0000::/23"), // IANA
 		},
 		4843: SockAddrs{
 			// [RFC4843] An IPv6 Prefix for Overlay Routable Cryptographic Hash Identifiers (ORCHID)
-			mustIPv6Addr("2001:10::/28"), // [RFC4843], §7 IANA Considerations
+			MustIPv6Addr("2001:10::/28"), // [RFC4843], §7 IANA Considerations
 		},
 		5180: SockAddrs{
 			// [RFC5180] IPv6 Benchmarking Methodology for Network Interconnect Devices
-			mustIPv6Addr("2001:0200::/48"), // [RFC5180], §8 IANA Considerations
+			MustIPv6Addr("2001:0200::/48"), // [RFC5180], §8 IANA Considerations
 		},
 		5735: SockAddrs{
 			// [RFC5735] Special Use IPv4 Addresses
-			mustIPv4Addr("192.0.2.0/24"),    // TEST-NET-1
-			mustIPv4Addr("198.51.100.0/24"), // TEST-NET-2
-			mustIPv4Addr("203.0.113.0/24"),  // TEST-NET-3
-			mustIPv4Addr("198.18.0.0/15"),   // Benchmarks
+			MustIPv4Addr("192.0.2.0/24"),    // TEST-NET-1
+			MustIPv4Addr("198.51.100.0/24"), // TEST-NET-2
+			MustIPv4Addr("203.0.113.0/24"),  // TEST-NET-3
+			MustIPv4Addr("198.18.0.0/15"),   // Benchmarks
 		},
 		5737: SockAddrs{
 			// [RFC5737] IPv4 Address Blocks Reserved for Documentation
-			mustIPv4Addr("192.0.2.0/24"),    // TEST-NET-1
-			mustIPv4Addr("198.51.100.0/24"), // TEST-NET-2
-			mustIPv4Addr("203.0.113.0/24"),  // TEST-NET-3
+			MustIPv4Addr("192.0.2.0/24"),    // TEST-NET-1
+			MustIPv4Addr("198.51.100.0/24"), // TEST-NET-2
+			MustIPv4Addr("203.0.113.0/24"),  // TEST-NET-3
 		},
 		6052: SockAddrs{
 			// [RFC6052] IPv6 Addressing of IPv4/IPv6 Translators
-			mustIPv6Addr("64:ff9b::/96"), // [RFC6052], §2.1. Well-Known Prefix
+			MustIPv6Addr("64:ff9b::/96"), // [RFC6052], §2.1. Well-Known Prefix
 		},
 		6333: SockAddrs{
 			// [RFC6333] Dual-Stack Lite Broadband Deployments Following IPv4 Exhaustion
-			mustIPv4Addr("192.0.0.0/29"), // [RFC6333], §5.7 Well-Known IPv4 Address
+			MustIPv4Addr("192.0.0.0/29"), // [RFC6333], §5.7 Well-Known IPv4 Address
 		},
 		6598: SockAddrs{
 			// [RFC6598] IANA-Reserved IPv4 Prefix for Shared Address Space
-			mustIPv4Addr("100.64.0.0/10"),
+			MustIPv4Addr("100.64.0.0/10"),
 		},
 		6666: SockAddrs{
 			// [RFC6666] A Discard Prefix for IPv6
-			mustIPv6Addr("0100::/64"),
+			MustIPv6Addr("0100::/64"),
 		},
 		6890: SockAddrs{
 			// [RFC6890] Special-Purpose IP Address Registries
@@ -413,7 +411,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			* | Global               | False                      |
 			* | Reserved-by-Protocol | True                       |
 			* +----------------------+----------------------------+*/
-			mustIPv4Addr("0.0.0.0/8"),
+			MustIPv4Addr("0.0.0.0/8"),
 
 			/*+----------------------+---------------+
 			* | Attribute            | Value         |
@@ -429,7 +427,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			* | Global               | False         |
 			* | Reserved-by-Protocol | False         |
 			* +----------------------+---------------+ */
-			mustIPv4Addr("10.0.0.0/8"),
+			MustIPv4Addr("10.0.0.0/8"),
 
 			/*+----------------------+----------------------+
 			  | Attribute            | Value                |
@@ -445,7 +443,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                |
 			  | Reserved-by-Protocol | False                |
 			  +----------------------+----------------------+*/
-			mustIPv4Addr("100.64.0.0/10"),
+			MustIPv4Addr("100.64.0.0/10"),
 
 			/*+----------------------+----------------------------+
 			  | Attribute            | Value                      |
@@ -464,7 +462,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			// [1] Several protocols have been granted exceptions to
 			// this rule.  For examples, see [RFC4379] and
 			// [RFC5884].
-			mustIPv4Addr("127.0.0.0/8"),
+			MustIPv4Addr("127.0.0.0/8"),
 
 			/*+----------------------+----------------+
 			  | Attribute            | Value          |
@@ -480,7 +478,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False          |
 			  | Reserved-by-Protocol | True           |
 			  +----------------------+----------------+*/
-			mustIPv4Addr("169.254.0.0/16"),
+			MustIPv4Addr("169.254.0.0/16"),
 
 			/*+----------------------+---------------+
 			  | Attribute            | Value         |
@@ -496,7 +494,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False         |
 			  | Reserved-by-Protocol | False         |
 			  +----------------------+---------------+*/
-			mustIPv4Addr("172.16.0.0/12"),
+			MustIPv4Addr("172.16.0.0/12"),
 
 			/*+----------------------+---------------------------------+
 			  | Attribute            | Value                           |
@@ -514,7 +512,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  +----------------------+---------------------------------+*/
 			// [2] Not usable unless by virtue of a more specific
 			// reservation.
-			mustIPv4Addr("192.0.0.0/24"),
+			MustIPv4Addr("192.0.0.0/24"),
 
 			/*+----------------------+--------------------------------+
 			  | Attribute            | Value                          |
@@ -530,7 +528,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                          |
 			  | Reserved-by-Protocol | False                          |
 			  +----------------------+--------------------------------+*/
-			mustIPv4Addr("192.0.0.0/29"),
+			MustIPv4Addr("192.0.0.0/29"),
 
 			/*+----------------------+----------------------------+
 			  | Attribute            | Value                      |
@@ -546,7 +544,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                      |
 			  | Reserved-by-Protocol | False                      |
 			  +----------------------+----------------------------+*/
-			mustIPv4Addr("192.0.2.0/24"),
+			MustIPv4Addr("192.0.2.0/24"),
 
 			/*+----------------------+--------------------+
 			  | Attribute            | Value              |
@@ -562,7 +560,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | True               |
 			  | Reserved-by-Protocol | False              |
 			  +----------------------+--------------------+*/
-			mustIPv4Addr("192.88.99.0/24"),
+			MustIPv4Addr("192.88.99.0/24"),
 
 			/*+----------------------+----------------+
 			  | Attribute            | Value          |
@@ -578,7 +576,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False          |
 			  | Reserved-by-Protocol | False          |
 			  +----------------------+----------------+*/
-			mustIPv4Addr("192.168.0.0/16"),
+			MustIPv4Addr("192.168.0.0/16"),
 
 			/*+----------------------+---------------+
 			  | Attribute            | Value         |
@@ -594,7 +592,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False         |
 			  | Reserved-by-Protocol | False         |
 			  +----------------------+---------------+*/
-			mustIPv4Addr("198.18.0.0/15"),
+			MustIPv4Addr("198.18.0.0/15"),
 
 			/*+----------------------+----------------------------+
 			  | Attribute            | Value                      |
@@ -610,7 +608,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                      |
 			  | Reserved-by-Protocol | False                      |
 			  +----------------------+----------------------------+*/
-			mustIPv4Addr("198.51.100.0/24"),
+			MustIPv4Addr("198.51.100.0/24"),
 
 			/*+----------------------+----------------------------+
 			  | Attribute            | Value                      |
@@ -626,7 +624,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                      |
 			  | Reserved-by-Protocol | False                      |
 			  +----------------------+----------------------------+*/
-			mustIPv4Addr("203.0.113.0/24"),
+			MustIPv4Addr("203.0.113.0/24"),
 
 			/*+----------------------+----------------------+
 			  | Attribute            | Value                |
@@ -642,7 +640,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                |
 			  | Reserved-by-Protocol | True                 |
 			  +----------------------+----------------------+*/
-			mustIPv4Addr("240.0.0.0/4"),
+			MustIPv4Addr("240.0.0.0/4"),
 
 			/*+----------------------+----------------------+
 			  | Attribute            | Value                |
@@ -658,7 +656,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                |
 			  | Reserved-by-Protocol | False                |
 			  +----------------------+----------------------+*/
-			mustIPv4Addr("255.255.255.255/32"),
+			MustIPv4Addr("255.255.255.255/32"),
 
 			/*+----------------------+------------------+
 			  | Attribute            | Value            |
@@ -674,7 +672,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False            |
 			  | Reserved-by-Protocol | True             |
 			  +----------------------+------------------+*/
-			mustIPv6Addr("::1/128"),
+			MustIPv6Addr("::1/128"),
 
 			/*+----------------------+---------------------+
 			  | Attribute            | Value               |
@@ -690,7 +688,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False               |
 			  | Reserved-by-Protocol | True                |
 			  +----------------------+---------------------+*/
-			mustIPv6Addr("::/128"),
+			MustIPv6Addr("::/128"),
 
 			/*+----------------------+---------------------+
 			  | Attribute            | Value               |
@@ -706,7 +704,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | True                |
 			  | Reserved-by-Protocol | False               |
 			  +----------------------+---------------------+*/
-			mustIPv6Addr("64:ff9b::/96"),
+			MustIPv6Addr("64:ff9b::/96"),
 
 			/*+----------------------+---------------------+
 			  | Attribute            | Value               |
@@ -722,7 +720,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False               |
 			  | Reserved-by-Protocol | True                |
 			  +----------------------+---------------------+*/
-			mustIPv6Addr("::ffff:0:0/96"),
+			MustIPv6Addr("::ffff:0:0/96"),
 
 			/*+----------------------+----------------------------+
 			  | Attribute            | Value                      |
@@ -738,7 +736,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                      |
 			  | Reserved-by-Protocol | False                      |
 			  +----------------------+----------------------------+*/
-			mustIPv6Addr("100::/64"),
+			MustIPv6Addr("100::/64"),
 
 			/*+----------------------+---------------------------+
 			  | Attribute            | Value                     |
@@ -755,7 +753,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Reserved-by-Protocol | False                     |
 			  +----------------------+---------------------------+*/
 			// [1] Unless allowed by a more specific allocation.
-			mustIPv6Addr("2001::/16"),
+			MustIPv6Addr("2001::/16"),
 
 			/*+----------------------+----------------+
 			  | Attribute            | Value          |
@@ -773,7 +771,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  +----------------------+----------------+*/
 			// Covered by previous entry, included for completeness.
 			//
-			// mustIPv6Addr("2001::/16"),
+			// MustIPv6Addr("2001::/16"),
 
 			/*+----------------------+----------------+
 			  | Attribute            | Value          |
@@ -791,7 +789,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  +----------------------+----------------+*/
 			// Covered by previous entry, included for completeness.
 			//
-			// mustIPv6Addr("2001:2::/48"),
+			// MustIPv6Addr("2001:2::/48"),
 
 			/*+----------------------+---------------+
 			  | Attribute            | Value         |
@@ -809,7 +807,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  +----------------------+---------------+*/
 			// Covered by previous entry, included for completeness.
 			//
-			// mustIPv6Addr("2001:db8::/32"),
+			// MustIPv6Addr("2001:db8::/32"),
 
 			/*+----------------------+--------------+
 			  | Attribute            | Value        |
@@ -827,7 +825,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  +----------------------+--------------+*/
 			// Covered by previous entry, included for completeness.
 			//
-			// mustIPv6Addr("2001:10::/28"),
+			// MustIPv6Addr("2001:10::/28"),
 
 			/*+----------------------+---------------+
 			  | Attribute            | Value         |
@@ -844,7 +842,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Reserved-by-Protocol | False         |
 			  +----------------------+---------------+*/
 			// [2] See [RFC3056] for details.
-			mustIPv6Addr("2002::/16"),
+			MustIPv6Addr("2002::/16"),
 
 			/*+----------------------+--------------+
 			  | Attribute            | Value        |
@@ -860,7 +858,7 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False        |
 			  | Reserved-by-Protocol | False        |
 			  +----------------------+--------------+*/
-			mustIPv6Addr("fc00::/7"),
+			MustIPv6Addr("fc00::/7"),
 
 			/*+----------------------+-----------------------+
 			  | Attribute            | Value                 |
@@ -876,11 +874,11 @@ func KnownRFCs() map[uint]SockAddrs {
 			  | Global               | False                 |
 			  | Reserved-by-Protocol | True                  |
 			  +----------------------+-----------------------+*/
-			mustIPv6Addr("fe80::/10"),
+			MustIPv6Addr("fe80::/10"),
 		},
 		7335: SockAddrs{
 			// [RFC7335] IPv4 Service Continuity Prefix
-			mustIPv4Addr("192.0.0.0/29"), // [RFC7335], §6 IANA Considerations
+			MustIPv4Addr("192.0.0.0/29"), // [RFC7335], §6 IANA Considerations
 		},
 		ForwardingBlacklist: SockAddrs{ // Pseudo-RFC
 			// Blacklist of non-forwardable IP blocks taken from RFC6890
@@ -888,27 +886,27 @@ func KnownRFCs() map[uint]SockAddrs {
 			// TODO: the attributes for forwardable should be
 			// searcahble and embedded in the main list of RFCs
 			// above.
-			mustIPv4Addr("0.0.0.0/8"),
-			mustIPv4Addr("127.0.0.0/8"),
-			mustIPv4Addr("169.254.0.0/16"),
-			mustIPv4Addr("192.0.0.0/24"),
-			mustIPv4Addr("192.0.2.0/24"),
-			mustIPv4Addr("198.51.100.0/24"),
-			mustIPv4Addr("203.0.113.0/24"),
-			mustIPv4Addr("240.0.0.0/4"),
-			mustIPv4Addr("255.255.255.255/32"),
-			mustIPv6Addr("::1/128"),
-			mustIPv6Addr("::/128"),
-			mustIPv6Addr("::ffff:0:0/96"),
+			MustIPv4Addr("0.0.0.0/8"),
+			MustIPv4Addr("127.0.0.0/8"),
+			MustIPv4Addr("169.254.0.0/16"),
+			MustIPv4Addr("192.0.0.0/24"),
+			MustIPv4Addr("192.0.2.0/24"),
+			MustIPv4Addr("198.51.100.0/24"),
+			MustIPv4Addr("203.0.113.0/24"),
+			MustIPv4Addr("240.0.0.0/4"),
+			MustIPv4Addr("255.255.255.255/32"),
+			MustIPv6Addr("::1/128"),
+			MustIPv6Addr("::/128"),
+			MustIPv6Addr("::ffff:0:0/96"),
 
 			// There is no way of expressing a whitelist per RFC2928
 			// atm without creating a negative mask, which I don't
 			// want to do atm.
-			//mustIPv6Addr("2001::/23"),
+			//MustIPv6Addr("2001::/23"),
 
-			mustIPv6Addr("2001:db8::/32"),
-			mustIPv6Addr("2001:10::/28"),
-			mustIPv6Addr("fe80::/10"),
+			MustIPv6Addr("2001:db8::/32"),
+			MustIPv6Addr("2001:10::/28"),
+			MustIPv6Addr("fe80::/10"),
 		},
 	}
 }
@@ -928,24 +926,4 @@ func VisitAllRFCs(fn func(rfcNum uint, sockaddrs SockAddrs)) {
 			fn(rfcNum, sas)
 		}
 	}
-}
-
-// mustIPv4Addr is a helper method that must return an IPv4Addr or panic on
-// invalid input.
-func mustIPv4Addr(addr string) IPv4Addr {
-	ipv4, err := NewIPv4Addr(addr)
-	if err != nil {
-		log.Fatalf("Unable to create an IPv4Addr from %+q: %v", addr, err)
-	}
-	return ipv4
-}
-
-// mustIPv6Addr is a helper method that must return an IPv6Addr or panic on invalid
-// input.
-func mustIPv6Addr(addr string) IPv6Addr {
-	ipv6, err := NewIPv6Addr(addr)
-	if err != nil {
-		log.Fatalf("Unable to create an IPv6Addr from %+q: %v", addr, err)
-	}
-	return ipv6
 }

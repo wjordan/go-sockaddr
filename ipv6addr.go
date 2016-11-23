@@ -423,6 +423,16 @@ func (ipv6 IPv6Addr) Maskbits() int {
 	return maskOnes
 }
 
+// MustIPv6Addr is a helper method that must return an IPv6Addr or panic on
+// invalid input.
+func MustIPv6Addr(addr string) IPv6Addr {
+	ipv6, err := NewIPv6Addr(addr)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to create an IPv6Addr from %+q: %v", addr, err))
+	}
+	return ipv6
+}
+
 // NetIP returns the address as a net.IP.
 func (ipv6 IPv6Addr) NetIP() *net.IP {
 	return bigIntToNetIPv6(ipv6.Address)

@@ -403,6 +403,16 @@ func (ipv4 IPv4Addr) Maskbits() int {
 	return maskOnes
 }
 
+// MustIPv4Addr is a helper method that must return an IPv4Addr or panic on
+// invalid input.
+func MustIPv4Addr(addr string) IPv4Addr {
+	ipv4, err := NewIPv4Addr(addr)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to create an IPv4Addr from %+q: %v", addr, err))
+	}
+	return ipv4
+}
+
 // NetIP returns the address as a net.IP (address is always presized to
 // IPv4).
 func (ipv4 IPv4Addr) NetIP() *net.IP {
