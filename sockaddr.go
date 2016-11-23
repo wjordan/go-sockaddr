@@ -145,12 +145,13 @@ func (sat SockAddrType) String() string {
 		return "IPv4"
 	case TypeIPv6:
 		return "IPv6"
-	case TypeIP:
-		return "IP"
+	// There is no concrete "IP" type.  Leaving here as a reminder.
+	// case TypeIP:
+	// 	return "IP"
 	case TypeUnix:
 		return "UNIX"
 	default:
-		return "unknown"
+		panic("unsupported type")
 	}
 }
 
