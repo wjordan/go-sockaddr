@@ -50,6 +50,13 @@ func Test_parseLinuxDefaultIfName(t *testing.T) {
 `,
 			want: "eth0",
 		},
+		{
+			name: "Chromebook - 8743.85.0 (Official Build) stable-channel gandof, Milestone 54",
+			routeOut: `default via 192.168.1.1 dev wlan0  metric 1 
+192.168.1.0/24 dev wlan0  proto kernel  scope link  src 192.168.1.174 
+`,
+			want: "wlan0",
+		},
 	}
 
 	for _, tc := range testCases {

@@ -862,9 +862,10 @@ func parseDefaultIfNameFromRoute(routeOut string) (string, error) {
 // Linux.
 func parseDefaultIfNameFromIPCmd(routeOut string) (string, error) {
 	lines := strings.Split(routeOut, "\n")
+	re := regexp.MustCompile(`[\s]+`)
 	for _, line := range lines {
-		kvs := strings.SplitN(line, " ", 5)
-		if len(kvs) != 5 {
+		kvs := re.Split(line, -1)
+		if len(kvs) < 5 {
 			continue
 		}
 
