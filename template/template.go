@@ -110,12 +110,3 @@ func ParseIfAddrsTemplate(input string, ifAddrs sockaddr.IfAddrs, tmplIn *templa
 
 	return outWriter.String(), nil
 }
-
-// SortByAddrs takes an array of SockAddrs and orders them by address.
-// SockAddrs that are not comparable will be at the end of the list, however
-// their order is non-deterministic.
-func SortByAddrs(inputIfAddrs sockaddr.IfAddrs) sockaddr.IfAddrs {
-	sortedIfAddrs := append(sockaddr.IfAddrs(nil), inputIfAddrs...)
-	sockaddr.OrderedIfAddrBy(sockaddr.AscIfAddress).Sort(sortedIfAddrs)
-	return sortedIfAddrs
-}
