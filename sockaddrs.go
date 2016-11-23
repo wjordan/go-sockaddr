@@ -166,49 +166,17 @@ func AscType(p1Ptr, p2Ptr *SockAddr) int {
 	return 0
 }
 
-// FilterByType filters SockAddrs and returns a list of the matching type
-func (sas SockAddrs) FilterByType(type_ SockAddrType) SockAddrs {
-	x := make(SockAddrs, 0, sas.Len())
+// FilterByType returns two lists: a list of matched and unmatched SockAddrs
+func (sas SockAddrs) FilterByType(type_ SockAddrType) (matched, excluded SockAddrs) {
+	matched = make(SockAddrs, 0, len(sas))
+	excluded = make(SockAddrs, 0, len(sas))
+
 	for _, sa := range sas {
 		if sa.Type()&type_ != 0 {
-			x = append(x, sa)
+			matched = append(matched, sa)
+		} else {
+			excluded = append(excluded, sa)
 		}
 	}
-	return x
-}
-
-// OnlyIPv4 filters an array of SockAddrs and returns two slices: one of the
-// IPv4Addr members of SockAddrs, and the list of non-IPv4Addrs.
-func (sas SockAddrs) OnlyIPv4() (IPv4Addrs, SockAddrs) {
-	ipv4Addrs := make(IPv4Addrs, 0, len(sas))
-	nonIPv4Addrs := make(SockAddrs, 0, len(sas))
-
-	for _, sa := range sas {
-		switch v := sa.(type) {
-		case IPv4Addr:
-			ipv4Addrs = append(ipv4Addrs, v)
-		default:
-			nonIPv4Addrs = append(nonIPv4Addrs, sa)
-		}
-	}
-
-	return ipv4Addrs, nonIPv4Addrs
-}
-
-// OnlyIPv6 filters an array of SockAddrs and returns two slices: one of the
-// IPv6Addr members of SockAddrs, and the list of non-IPv6Addrs.
-func (sas SockAddrs) OnlyIPv6() (IPv6Addrs, SockAddrs) {
-	ipv6Addrs := make(IPv6Addrs, 0, len(sas))
-	nonIPv6Addrs := make(SockAddrs, 0, len(sas))
-
-	for _, sa := range sas {
-		switch v := sa.(type) {
-		case IPv6Addr:
-			ipv6Addrs = append(ipv6Addrs, v)
-		default:
-			nonIPv6Addrs = append(nonIPv6Addrs, sa)
-		}
-	}
-
-	return ipv6Addrs, nonIPv6Addrs
+	return matched, excluded
 }

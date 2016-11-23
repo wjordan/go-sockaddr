@@ -141,7 +141,7 @@ func TestSockAddr_IPAddrs_BySpecificMaskLen(t *testing.T) {
 			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
 			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 			sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
-			filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIPv4)
+			filteredAddrs, _ := sockaddrs.FilterByType(sockaddr.TypeIPv4)
 			ipv4Addrs := make([]sockaddr.IPv4Addr, 0, len(filteredAddrs))
 			for _, x := range filteredAddrs {
 				switch v := x.(type) {
@@ -204,7 +204,7 @@ func TestSockAddr_IPAddrs_ByBroadMaskLen(t *testing.T) {
 			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
 			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 			sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
-			filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIP)
+			filteredAddrs, _ := sockaddrs.FilterByType(sockaddr.TypeIP)
 			ipAddrs := make([]sockaddr.IPAddr, 0, len(filteredAddrs))
 			for _, x := range filteredAddrs {
 				ipAddr, ok := x.(sockaddr.IPAddr)
@@ -310,7 +310,7 @@ func TestSockAddr_IPAddrs_IPAddrsByNetworkSize(t *testing.T) {
 			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 
 			sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
-			filteredAddrs := sockaddrs.FilterByType(sockaddr.TypeIP)
+			filteredAddrs, _ := sockaddrs.FilterByType(sockaddr.TypeIP)
 			ipAddrs := make([]sockaddr.IPAddr, 0, len(filteredAddrs))
 			for _, x := range filteredAddrs {
 				ipAddr, ok := x.(sockaddr.IPAddr)
