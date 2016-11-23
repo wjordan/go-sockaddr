@@ -493,13 +493,6 @@ func (ipv6 IPv6Addr) Octets() []int {
 	return x
 }
 
-// SetPort is a setter method to set an IPv6Addr's port number
-func (ipv6 IPv6Addr) SetPort(p uint16) IPAddr {
-	// Operating on a copy of ipv6, return the mutated struct
-	ipv6.Port = IPPort(p)
-	return ipv6
-}
-
 // String returns a string representation of the IPv6Addr
 func (ipv6 IPv6Addr) String() string {
 	if ipv6.Port != 0 {
