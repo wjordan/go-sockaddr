@@ -503,48 +503,48 @@ func TestSockAddr_IPv6Addr_CmpAddress(t *testing.T) {
 
 func TestSockAddr_IPv6Addr_ContainsAddress(t *testing.T) {
 	tests := []struct {
-		input string
-		pass  []string
-		fail  []string
+		name  string
+		input sockaddr.IPv6Addr
+		cases []sockaddr.IPv6Addr
+		fail  bool
 	}{
-		{ // 0
-			input: "::1/128",
-			pass: []string{
-				"::1",
-				"[::1/128]",
+		{
+			name:  "basic",
+			input: sockaddr.MustIPv6Addr("::1/128"),
+			cases: []sockaddr.IPv6Addr{
+				sockaddr.MustIPv6Addr("::1"),
+				sockaddr.MustIPv6Addr("[::1/128]"),
 			},
-			fail: []string{
-				"100::",
+		},
+		{
+			name:  "fail",
+			input: sockaddr.MustIPv6Addr("::1/128"),
+			cases: []sockaddr.IPv6Addr{
+				sockaddr.MustIPv6Addr("100::"),
 			},
+			fail: true,
+		},
+		{
+			name:  "fail2",
+			input: sockaddr.MustIPv6Addr("100::/128"),
+			cases: []sockaddr.IPv6Addr{
+				sockaddr.MustIPv6Addr("::1"),
+			},
+			fail: true,
 		},
 	}
 
 	for idx, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d needs a name", idx)
+		}
+
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-			ipv6, err := sockaddr.NewIPv6Addr(test.input)
-			if err != nil {
-				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
-			}
+			ipv6 := test.input
 
-			for passIdx, passInput := range test.pass {
-				passAddr, err := sockaddr.NewIPv6Addr(passInput)
-				if err != nil {
-					t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, passIdx, passInput, err)
-				}
-
-				if !passAddr.ContainsAddress(ipv6.Address) {
-					t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, passIdx, test.input, passInput)
-				}
-			}
-
-			for failIdx, failInput := range test.fail {
-				failAddr, err := sockaddr.NewIPv6Addr(failInput)
-				if err != nil {
-					t.Fatalf("[%d/%d] Unable to create an IPv6Addr from %+q: %v", idx, failIdx, failInput, err)
-				}
-
-				if failAddr.ContainsAddress(ipv6.Address) {
-					t.Errorf("[%d/%d] Expected %+q to contain %+q", idx, failIdx, test.input, failInput)
+			for _, tc := range test.cases {
+				if ipv6.ContainsAddress(tc.Address) == test.fail {
+					t.Errorf("%s: Expected %q.ContainsAddress(%q)==%t", test.name, ipv6, tc, test.fail)
 				}
 			}
 		})
@@ -603,50 +603,117 @@ func TestSockAddr_IPv6Addr_ContainsNetwork(t *testing.T) {
 
 func TestSockAddr_IPv6Addr_Equal(t *testing.T) {
 	tests := []struct {
-		input string
-		pass  []string
-		fail  []string
+		name  string
+		input sockaddr.IPv6Addr
+		cases sockaddr.SockAddrs
+		fail  bool
 	}{
-		{ // 0
-			input: "2001:4860:0:2001::68/128",
-			pass:  []string{"2001:4860:0:2001::68", "2001:4860:0:2001::68/128", "[2001:4860:0:2001::68]:0"},
-			fail:  []string{"2001:DB8::/48", "2001:4860:0:2001::67/128", "2001:4860:0:2001::67", "[2001:4860:0:2001::68]:80"},
+		{
+			name:  "addr equal",
+			input: sockaddr.MustIPv6Addr("2001:4860:0:2001::68/128"),
+			cases: sockaddr.SockAddrs{
+				sockaddr.MustIPv6Addr("2001:4860:0:2001::68"),
+				sockaddr.MustIPv6Addr("2001:4860:0:2001::68/128"),
+				sockaddr.MustIPv6Addr("[2001:4860:0:2001::68]:0"),
+			},
 		},
-		{ // 1
-			input: "2001:4860:0:2001::68/64",
-			pass:  []string{"2001:4860:0:2001::68/64"},
-			fail:  []string{"2001:DB8::/48", "2001:4860:0:2001::67/128", "2001:4860:0:2001::67", "[2001:4860:0:2001::68]:80"},
+		{
+			name:  "IPv6Addr not equal",
+			input: sockaddr.MustIPv6Addr("2001:4860:0:2001::68/128"),
+			cases: sockaddr.SockAddrs{
+				sockaddr.MustIPv6Addr("2001:DB8::/48"),
+				sockaddr.MustIPv6Addr("2001:4860:0:2001::67/128"),
+				sockaddr.MustIPv6Addr("2001:4860:0:2001::67"),
+				sockaddr.MustIPv6Addr("[2001:4860:0:2001::68]:80"),
+				sockaddr.MustIPv4Addr("1.2.3.4"),
+				sockaddr.MustUnixSock("/tmp/foo"),
+			},
+			fail: true,
+		},
+		{
+			name:  "equal CIDR",
+			input: sockaddr.MustIPv6Addr("2001:4860:0:2001::68/64"),
+			cases: sockaddr.SockAddrs{
+				sockaddr.MustIPv6Addr("2001:4860:0:2001::68/64"),
+			},
+		},
+		{
+			name:  "not equal CIDR",
+			input: sockaddr.MustIPv6Addr("2001:4860:0:2001::68/64"),
+			cases: sockaddr.SockAddrs{
+				sockaddr.MustIPv6Addr("2001:DB8::/48"),
+				sockaddr.MustIPv6Addr("2001:4860:0:2001::67/128"),
+				sockaddr.MustIPv6Addr("2001:4860:0:2001::67"),
+				sockaddr.MustIPv6Addr("[2001:4860:0:2001::68]:80"),
+				sockaddr.MustIPv4Addr("1.2.3.4/32"),
+				sockaddr.MustUnixSock("/tmp/foo"),
+			},
+			fail: true,
 		},
 	}
 
 	for idx, test := range tests {
-		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-			ipv6, err := sockaddr.NewIPv6Addr(test.input)
-			if err != nil {
-				t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, test.input, err)
-			}
+		if test.name == "" {
+			t.Fatalf("test %d needs a name", idx)
+		}
 
-			for goodIdx, passInput := range test.pass {
-				good, err := sockaddr.NewIPv6Addr(passInput)
-				if err != nil {
-					t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, passInput, err)
-				}
-
-				if !ipv6.Equal(good) {
-					t.Errorf("[%d/%d] Expected %s's to be equal to %s", idx, goodIdx, test.input, passInput)
-				}
-			}
-
-			for failIdx, failInput := range test.fail {
-				fail, err := sockaddr.NewIPv6Addr(failInput)
-				if err != nil {
-					t.Fatalf("[%d] Unable to create an IPv6Addr from %+q: %v", idx, failInput, err)
-				}
-
-				if ipv6.Equal(fail) {
-					t.Errorf("[%d/%d] Expected %s's to be not equal to %s", idx, failIdx, test.input, failInput)
+		t.Run(test.name, func(t *testing.T) {
+			ipv6 := test.input
+			for _, tc := range test.cases {
+				if ipv6.Equal(tc) == test.fail {
+					t.Errorf("%s: Expected %s Equal(%q)=%t", test.name, ipv6, tc, test.fail)
 				}
 			}
 		})
+	}
+}
+
+func TestIPv6Addr_CmpRFC(t *testing.T) {
+	tests := []struct {
+		name   string
+		recv   sockaddr.SockAddr
+		arg    sockaddr.SockAddr
+		rfcNum uint
+		want   int
+	}{
+		{
+			name:   "simple in RFC",
+			recv:   sockaddr.MustIPv6Addr("::1"),
+			arg:    sockaddr.MustIPv6Addr("100::"),
+			rfcNum: 6590,
+		},
+		{
+			name:   "ipv6 cmp IPv4",
+			recv:   sockaddr.MustIPv6Addr("2002:c058:6301::/120"),
+			arg:    sockaddr.MustIPv4Addr("192.88.99.0/24"),
+			rfcNum: 3068,
+			want:   -1,
+		},
+		{
+			name:   "ipv6 cmp IPv4 ",
+			recv:   sockaddr.MustIPv6Addr("::1"),
+			arg:    sockaddr.MustIPv4Addr("1.2.3.4"),
+			rfcNum: 1918,
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d needs a name", i)
+		}
+
+		t.Run(test.name, func(t *testing.T) {
+			if cmp := test.recv.CmpRFC(test.rfcNum, test.arg); cmp != test.want {
+				t.Fatalf("%s: want %d got %d", test.name, test.want, cmp)
+			}
+		})
+	}
+}
+
+func TestIPv6Attrs(t *testing.T) {
+	const expectedNumAttrs = 2
+	attrs := sockaddr.IPv6Attrs()
+	if len(attrs) != expectedNumAttrs {
+		t.Fatalf("wrong number of IPv6Attrs: %d vs %d", len(attrs), expectedNumAttrs)
 	}
 }
