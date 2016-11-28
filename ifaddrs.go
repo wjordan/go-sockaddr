@@ -45,8 +45,10 @@ func (ms *multiIfAddrSorter) Len() int {
 }
 
 // Less is part of sort.Interface. It is implemented by looping along the Cmp()
-// functions until it finds a comparison that is either less than, equal to, or
-// greater than.
+// functions until it finds a comparison that is either less than or greater
+// than.  A return value of 0 defers sorting to the next function in the
+// multisorter (which means the results of sorting may leave the resutls in a
+// non-deterministic order).
 func (ms *multiIfAddrSorter) Less(i, j int) bool {
 	p, q := &ms.ifAddrs[i], &ms.ifAddrs[j]
 	// Try all but the last comparison.
@@ -519,33 +521,48 @@ func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 		wantMulticast,
 		wantUnspecified bool
 	var ifFlags net.Flags
+	var checkFlags, checkAttrs bool
 	for _, flagName := range strings.Split(strings.ToLower(inputFlags), "|") {
 		switch flagName {
 		case "broadcast":
+			checkFlags = true
 			ifFlags = ifFlags | net.FlagBroadcast
 		case "down":
+			checkFlags = true
 			ifFlags = (ifFlags &^ net.FlagUp)
 		case "forwardable":
+			checkAttrs = true
 			wantForwardable = true
 		case "global unicast":
+			checkAttrs = true
 			wantGlobalUnicast = true
 		case "interface-local multicast":
+			checkAttrs = true
 			wantInterfaceLocalMulticast = true
 		case "link-local multicast":
+			checkAttrs = true
 			wantLinkLocalMulticast = true
 		case "link-local unicast":
+			checkAttrs = true
 			wantLinkLocalUnicast = true
 		case "loopback":
+			checkAttrs = true
+			checkFlags = true
 			ifFlags = ifFlags | net.FlagLoopback
 			wantLoopback = true
 		case "multicast":
+			checkAttrs = true
+			checkFlags = true
 			ifFlags = ifFlags | net.FlagMulticast
 			wantMulticast = true
 		case "point-to-point":
+			checkFlags = true
 			ifFlags = ifFlags | net.FlagPointToPoint
 		case "unspecified":
+			checkAttrs = true
 			wantUnspecified = true
 		case "up":
+			checkFlags = true
 			ifFlags = ifFlags | net.FlagUp
 		default:
 			return nil, nil, fmt.Errorf("Unknown interface flag: %+q", flagName)
@@ -554,30 +571,32 @@ func IfByFlag(inputFlags string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 
 	for _, ifAddr := range ifAddrs {
 		var matched bool
-		if ifAddr.Interface.Flags&ifFlags == ifFlags {
+		if checkFlags && ifAddr.Interface.Flags&ifFlags == ifFlags {
 			matched = true
-		} else if ip := ToIPAddr(ifAddr.SockAddr); ip != nil {
-			netIP := (*ip).NetIP()
-			switch {
-			case wantGlobalUnicast && netIP.IsGlobalUnicast():
-				matched = true
-			case wantInterfaceLocalMulticast && netIP.IsInterfaceLocalMulticast():
-				matched = true
-			case wantLinkLocalMulticast && netIP.IsLinkLocalMulticast():
-				matched = true
-			case wantLinkLocalUnicast && netIP.IsLinkLocalUnicast():
-				matched = true
-			case wantLoopback && netIP.IsLoopback():
-				matched = true
-			case wantMulticast && netIP.IsMulticast():
-				matched = true
-			case wantUnspecified && netIP.IsUnspecified():
-				matched = true
-			case wantForwardable && !IsRFC(ForwardingBlacklist, ifAddr.SockAddr):
-				matched = true
+		}
+		if checkAttrs {
+			if ip := ToIPAddr(ifAddr.SockAddr); ip != nil {
+				netIP := (*ip).NetIP()
+				switch {
+				case wantGlobalUnicast && netIP.IsGlobalUnicast():
+					matched = true
+				case wantInterfaceLocalMulticast && netIP.IsInterfaceLocalMulticast():
+					matched = true
+				case wantLinkLocalMulticast && netIP.IsLinkLocalMulticast():
+					matched = true
+				case wantLinkLocalUnicast && netIP.IsLinkLocalUnicast():
+					matched = true
+				case wantLoopback && netIP.IsLoopback():
+					matched = true
+				case wantMulticast && netIP.IsMulticast():
+					matched = true
+				case wantUnspecified && netIP.IsUnspecified():
+					matched = true
+				case wantForwardable && !IsRFC(ForwardingBlacklist, ifAddr.SockAddr):
+					matched = true
+				}
 			}
 		}
-
 		if matched {
 			matchedAddrs = append(matchedAddrs, ifAddr)
 		} else {

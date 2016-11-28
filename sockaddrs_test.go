@@ -161,10 +161,111 @@ func TestSockAddr_SockAddrs_AscPrivate(t *testing.T) {
 				// "::",
 			},
 		},
+		{
+			sortFuncs: []sockaddr.CmpAddrFunc{
+				sockaddr.AscType,
+				sockaddr.AscPrivate,
+				sockaddr.AscAddress,
+			},
+			inputAddrs: []string{
+				"1.2.3.4:53",
+				"192.168.1.2",
+				"/tmp/foo",
+				"[cc::1]:8600",
+				"[::1]:53",
+			},
+			sortedAddrs: []string{
+				"/tmp/foo",
+				"192.168.1.2",
+				"1.2.3.4:53",
+				"[::1]:53",
+				"[cc::1]:8600",
+			},
+		},
+		{
+			sortFuncs: []sockaddr.CmpAddrFunc{
+				sockaddr.AscType,
+				sockaddr.AscPrivate,
+				sockaddr.AscAddress,
+			},
+			inputAddrs: []string{
+				"/tmp/foo",
+				"/tmp/bar",
+				"1.2.3.4",
+			},
+			sortedAddrs: []string{
+				"/tmp/bar",
+				"/tmp/foo",
+				"1.2.3.4",
+			},
+		},
 	}
 
 	for idx, test := range testInputs {
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
+
+			inputAddrs := append([]string(nil), test.inputAddrs...)
+			shuffleStrings(inputAddrs)
+			inputSockAddrs := convertToSockAddrs(t, inputAddrs)
+
+			sockaddr.OrderedAddrBy(test.sortFuncs...).Sort(inputSockAddrs)
+
+			for i, sockAddr := range sortedAddrs {
+				if !sockAddr.Equal(inputSockAddrs[i]) {
+					t.Logf("Input Addrs:\t%+v", inputAddrs)
+					t.Logf("Sorted Addrs:\t%+v", inputSockAddrs)
+					t.Logf("Expected Addrs:\t%+v", test.sortedAddrs)
+					t.Fatalf("[%d/%d] Sort AscType/AscAddress failed: expected %+q, received %+q", idx, i, sockAddr, inputSockAddrs[i])
+				}
+			}
+		})
+	}
+}
+
+func TestSockAddr_SockAddrs_AscPort(t *testing.T) {
+	testInputs := []struct {
+		name        string
+		sortFuncs   []sockaddr.CmpAddrFunc
+		inputAddrs  []string
+		sortedAddrs []string
+	}{
+		{
+			name: "simple port test",
+			sortFuncs: []sockaddr.CmpAddrFunc{
+				sockaddr.AscPort,
+				sockaddr.AscType,
+			},
+			inputAddrs: []string{
+				"1.2.3.4:53",
+				"/tmp/foo",
+				"[::1]:53",
+			},
+			sortedAddrs: []string{
+				"/tmp/foo",
+				"1.2.3.4:53",
+				"[::1]:53",
+			},
+		},
+		{
+			name: "simple port test",
+			sortFuncs: []sockaddr.CmpAddrFunc{
+				sockaddr.AscPort,
+				sockaddr.AscType,
+			},
+			inputAddrs: []string{
+				"1.2.3.4:53",
+				"/tmp/foo",
+			},
+			sortedAddrs: []string{
+				"/tmp/foo",
+				"1.2.3.4:53",
+			},
+		},
+	}
+
+	for idx, test := range testInputs {
+		t.Run(test.name, func(t *testing.T) {
 			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 
 			inputAddrs := append([]string(nil), test.inputAddrs...)

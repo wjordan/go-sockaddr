@@ -100,8 +100,11 @@ func AscAddress(p1Ptr, p2Ptr *SockAddr) int {
 		return v.CmpAddress(p2)
 	case IPv6Addr:
 		return v.CmpAddress(p2)
+	case UnixSock:
+		return v.CmpAddress(p2)
+	default:
+		return sortDeferDecision
 	}
-	return sortDeferDecision
 }
 
 // AscPort is a sorting function to sort SockAddrs by their respective address
@@ -115,8 +118,9 @@ func AscPort(p1Ptr, p2Ptr *SockAddr) int {
 		return v.CmpPort(p2)
 	case IPv6Addr:
 		return v.CmpPort(p2)
+	default:
+		return sortDeferDecision
 	}
-	return sortDeferDecision
 }
 
 // AscPrivate is a sorting function to sort "more secure" private values before
@@ -130,8 +134,9 @@ func AscPrivate(p1Ptr, p2Ptr *SockAddr) int {
 	switch v := p1.(type) {
 	case IPv4Addr, IPv6Addr:
 		return v.CmpRFC(6890, p2)
+	default:
+		return sortDeferDecision
 	}
-	return sortDeferDecision
 }
 
 // AscNetworkSize is a sorting function to sort SockAddrs based on their network
@@ -160,14 +165,16 @@ func AscType(p1Ptr, p2Ptr *SockAddr) int {
 	p2 := *p2Ptr
 	p1Type := p1.Type()
 	p2Type := p2.Type()
-	if p1Type < p2Type {
-		return -1
-	} else if p1Type == p2Type {
-		return 0
-	} else if p1Type > p2Type {
-		return 1
+	switch {
+	case p1Type < p2Type:
+		return sortReceiverBeforeArg
+	case p1Type == p2Type:
+		return sortDeferDecision
+	case p1Type > p2Type:
+		return sortArgBeforeReceiver
+	default:
+		return sortDeferDecision
 	}
-	return 0
 }
 
 // FilterByType returns two lists: a list of matched and unmatched SockAddrs

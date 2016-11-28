@@ -1,6 +1,7 @@
 package sockaddr_test
 
 import (
+	"fmt"
 	"net"
 	"reflect"
 	"testing"
@@ -171,6 +172,227 @@ func TestCmpIfAddrFunc(t *testing.T) {
 		if descResult != descExpected {
 			t.Errorf("%s: Unexpected result %d, expected %d when comparing %v and %v using %v", test.name, descResult, descExpected, test.t1, test.t2, test.descOp)
 		}
+	}
+}
+
+func TestFilterIfByFlags(t *testing.T) {
+	tests := []struct {
+		name     string
+		selector string
+		ifAddrs  sockaddr.IfAddrs
+		flags    net.Flags
+		fail     bool
+	}{
+		{
+			name:     "broadcast",
+			selector: "broadcast",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{
+						Flags: net.FlagBroadcast,
+					},
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.1"),
+				},
+			},
+		},
+		{
+			name:     "down",
+			selector: "down",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.2"),
+				},
+			},
+		},
+		{
+			name:     "forwardable IPv4",
+			selector: "forwardable",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.3"),
+				},
+			},
+		},
+		{
+			name:     "forwardable IPv6",
+			selector: "forwardable",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv6Addr("cc::1/128"),
+				},
+			},
+		},
+		{
+			name:     "global unicast",
+			selector: "global unicast",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv6Addr("cc::2"),
+				},
+			},
+		},
+		{
+			name:     "interface-local multicast",
+			selector: "interface-local multicast",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv6Addr("ff01::2"),
+				},
+			},
+		},
+		{
+			name:     "link-local multicast",
+			selector: "link-local multicast",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv6Addr("ff02::3"),
+				},
+			},
+		},
+		{
+			name:     "link-local unicast IPv4",
+			selector: "link-local unicast",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv4Addr("169.254.1.101"),
+				},
+			},
+		},
+		{
+			name:     "link-local unicast IPv6",
+			selector: "link-local unicast",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv6Addr("fe80::3"),
+				},
+			},
+		},
+		{
+			name:     "loopback ipv4",
+			selector: "loopback",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{
+						Flags: net.FlagLoopback,
+					},
+					SockAddr: sockaddr.MustIPv4Addr("127.0.0.1"),
+				},
+			},
+		},
+		{
+			name:     "loopback ipv6",
+			selector: "loopback",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{
+						Flags: net.FlagLoopback,
+					},
+					SockAddr: sockaddr.MustIPv6Addr("::1"),
+				},
+			},
+		},
+		{
+			name:     "multicast IPv4",
+			selector: "multicast",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{
+						Flags: net.FlagMulticast,
+					},
+					SockAddr: sockaddr.MustIPv4Addr("224.0.0.1"),
+				},
+			},
+		},
+		{
+			name:     "multicast IPv6",
+			selector: "multicast",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{
+						Flags: net.FlagMulticast,
+					},
+					SockAddr: sockaddr.MustIPv6Addr("ff05::3"),
+				},
+			},
+		},
+		{
+			name:     "point-to-point",
+			selector: "point-to-point",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{
+						Flags: net.FlagPointToPoint,
+					},
+					SockAddr: sockaddr.MustIPv6Addr("cc::3"),
+				},
+			},
+		},
+		{
+			name:     "unspecified",
+			selector: "unspecified",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv6Addr("::"),
+				},
+			},
+		},
+		{
+			name:     "up",
+			selector: "up",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{
+						Flags: net.FlagUp,
+					},
+					SockAddr: sockaddr.MustIPv6Addr("cc::3"),
+				},
+			},
+		},
+		{
+			name:     "invalid",
+			selector: "foo",
+			fail:     true,
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					Interface: net.Interface{},
+					SockAddr:  sockaddr.MustIPv6Addr("cc::3"),
+				},
+			},
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d needs a name", i)
+		}
+
+		t.Run(test.name, func(t *testing.T) {
+			in, out, err := sockaddr.IfByFlag(test.selector, test.ifAddrs)
+			if test.fail == true && err == nil {
+				t.Fatalf("%s: expected failure", test.name)
+			} else if test.fail == true && err != nil {
+				return
+			}
+
+			if err != nil && test.fail != true {
+				t.Fatalf("%s: failed: %v", test.name, err)
+			}
+			if ilen := len(in); ilen != 1 {
+				t.Fatalf("%s: wrong in length %d, expected 1", test.name, ilen)
+			}
+			if olen := len(out); olen != 0 {
+				t.Fatalf("%s: wrong in length %d, expected 0", test.name, olen)
+			}
+		})
 	}
 }
 
@@ -744,7 +966,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			includeNum:   2,
 		},
 		{
-			name:         "type invalid",
+			name:         "type invalid arg",
 			fail:         true,
 			excludeName:  "type",
 			excludeParam: `*`,
@@ -753,15 +975,24 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			includeParam: `[`,
 			includeNum:   0,
 		},
+		{
+			name:         "type invalid",
+			fail:         true,
+			excludeName:  "foo",
+			excludeParam: `bar`,
+			excludeNum:   0,
+			includeName:  "baz",
+			includeParam: `bur`,
+			includeNum:   0,
+		},
 	}
 
 	for i, test := range tests {
 		if test.name == "" {
 			t.Fatalf("test %d must have a name", i)
 		}
-		t.Run(test.name, func(t *testing.T) {
-
-			ifAddrs, err := sockaddr.IncludeIfs(test.includeName, test.includeParam, test.ifAddrs)
+		t.Run(fmt.Sprintf("%s-%s", test.name, "include"), func(t *testing.T) {
+			inIfAddrs, err := sockaddr.IncludeIfs(test.includeName, test.includeParam, test.ifAddrs)
 			switch {
 			case !test.fail && err != nil:
 				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
@@ -772,16 +1003,25 @@ func TestIncludeExcludeIfs(t *testing.T) {
 				return
 			}
 
-			if len(ifAddrs) != test.includeNum {
-				t.Fatalf("%s: failed include length check. Expected %d, got %d", test.name, test.includeNum, len(ifAddrs))
+			if len(inIfAddrs) != test.includeNum {
+				t.Fatalf("%s: failed include length check. Expected %d, got %d", test.name, test.includeNum, len(inIfAddrs))
+			}
+		})
+
+		t.Run(fmt.Sprintf("%s-%s", test.name, "exclude"), func(t *testing.T) {
+			outIfAddrs, err := sockaddr.ExcludeIfs(test.excludeName, test.includeParam, test.ifAddrs)
+			switch {
+			case !test.fail && err != nil:
+				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
+			case test.fail && err == nil:
+				t.Fatalf("%s: failed to throw an error", test.name)
+			case test.fail && err != nil:
+				// expected test failure
+				return
 			}
 
-			ifAddrs, err = sockaddr.ExcludeIfs(test.excludeName, test.includeParam, test.ifAddrs)
-			if err != nil {
-				t.Fatalf("%s: failed: %v", test.name, err)
-			}
-			if len(ifAddrs) != test.excludeNum {
-				t.Fatalf("%s: failed exclude length check. Expected %d, got %d", test.name, test.excludeNum, len(ifAddrs))
+			if len(outIfAddrs) != test.excludeNum {
+				t.Fatalf("%s: failed exclude length check. Expected %d, got %d", test.name, test.excludeNum, len(outIfAddrs))
 			}
 		})
 	}
@@ -1155,4 +1395,260 @@ func TestLimitOffset(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSortIfBy(t *testing.T) {
+	tests := []struct {
+		name    string
+		sortStr string
+		in      sockaddr.IfAddrs
+		out     sockaddr.IfAddrs
+		fail    bool
+	}{
+		{
+			name:    "sort address",
+			sortStr: "address",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.3")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.3")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4")},
+			},
+		},
+		{
+			name:    "sort +address",
+			sortStr: "+address",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.3")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.3")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4")},
+			},
+		},
+		{
+			name:    "sort -address",
+			sortStr: "-address",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.3")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.3")},
+			},
+		},
+		{
+			name:    "sort name",
+			sortStr: "name",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{Interface: net.Interface{Name: "foo"}},
+				sockaddr.IfAddr{Interface: net.Interface{Name: "bar"}},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{Interface: net.Interface{Name: "bar"}},
+				sockaddr.IfAddr{Interface: net.Interface{Name: "foo"}},
+			},
+		},
+		{
+			name:    "sort +name",
+			sortStr: "+name",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{Interface: net.Interface{Name: "foo"}},
+				sockaddr.IfAddr{Interface: net.Interface{Name: "bar"}},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{Interface: net.Interface{Name: "bar"}},
+				sockaddr.IfAddr{Interface: net.Interface{Name: "foo"}},
+			},
+		},
+		{
+			name:    "sort -name",
+			sortStr: "-name",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{Interface: net.Interface{Name: "bar"}},
+				sockaddr.IfAddr{Interface: net.Interface{Name: "foo"}},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{Interface: net.Interface{Name: "foo"}},
+				sockaddr.IfAddr{Interface: net.Interface{Name: "bar"}},
+			},
+		},
+		{
+			name:    "sort port",
+			sortStr: "port",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("[::1]:53")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("[::1]:53")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+		},
+		{
+			name:    "sort +port",
+			sortStr: "+port",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("[::1]:53")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("[::1]:53")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+		},
+		{
+			name:    "sort -port",
+			sortStr: "-port",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("[::1]:53")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("[::1]:53")},
+			},
+		},
+		{
+			name:    "sort private",
+			sortStr: "private",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+		},
+		{
+			name:    "sort +private",
+			sortStr: "+private",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+		},
+		{
+			name:    "sort -private",
+			sortStr: "-private",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1")},
+			},
+		},
+		{
+			name:    "sort size",
+			sortStr: "size",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+		},
+		{
+			name:    "sort +size",
+			sortStr: "+size",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+		},
+		{
+			name:    "sort -size",
+			sortStr: "-size",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+			},
+		},
+		{
+			name:    "sort type",
+			sortStr: "type",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("::1")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("::1")},
+			},
+		},
+		{
+			name:    "sort +type",
+			sortStr: "+type",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("::1")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("192.168.1.1/27")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("::1")},
+			},
+		},
+		{
+			name:    "sort -type",
+			sortStr: "-type",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("::1")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv6Addr("::1")},
+				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4:80")},
+			},
+		},
+		{
+			name:    "sort invalid",
+			sortStr: "ENOENT",
+			fail:    true,
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %i needs a name", i)
+		}
+
+		t.Run(test.name, func(t *testing.T) {
+			sorted, err := sockaddr.SortIfBy(test.sortStr, test.in)
+			if err != nil && !test.fail {
+				t.Fatalf("%s: sort failed: %v", test.name, err)
+			}
+
+			if len(test.in) != len(sorted) {
+				t.Fatalf("wrong len")
+			}
+
+			for i := 0; i < len(sorted); i++ {
+				if !reflect.DeepEqual(sorted[i], test.out[i]) {
+					t.Errorf("wrong sort order: %d %v %v", i, sorted[i], test.out[i])
+				}
+			}
+		})
+	}
+
 }

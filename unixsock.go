@@ -1,6 +1,9 @@
 package sockaddr
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type UnixSock struct {
 	SockAddr
@@ -22,6 +25,20 @@ func init() {
 func NewUnixSock(s string) (ret UnixSock, err error) {
 	ret.path = s
 	return ret, nil
+}
+
+// CmpAddress follows the Cmp() standard protocol and returns:
+//
+// - -1 If the receiver should sort first because its name lexically sorts before arg
+// - 0 if the SockAddr arg is not a UnixSock, or is a UnixSock with the same path.
+// - 1 If the argument should sort first.
+func (us UnixSock) CmpAddress(sa SockAddr) int {
+	usb, ok := sa.(UnixSock)
+	if !ok {
+		return sortDeferDecision
+	}
+
+	return strings.Compare(us.Path(), usb.Path())
 }
 
 // DialPacketArgs returns the arguments required to be passed to net.DialUnix()
