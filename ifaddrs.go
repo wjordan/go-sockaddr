@@ -400,7 +400,12 @@ func IfByRFC(inputRFC uint, ifAddrs IfAddrs) (matched, remainder IfAddrs, err er
 
 // IfByMaskSize returns a list of matched and non-matched IfAddrs that have the
 // matching mask size.
-func IfByMaskSize(maskSize uint, ifAddrs IfAddrs) (matchedIfs, excludedIfs IfAddrs, err error) {
+func IfByMaskSize(selectorParam string, ifAddrs IfAddrs) (matchedIfs, excludedIfs IfAddrs, err error) {
+	maskSize, err := strconv.ParseUint(selectorParam, 10, 64)
+	if err != nil {
+		return IfAddrs{}, IfAddrs{}, fmt.Errorf("invalid exclude size argument (%q): %v", selectorParam, err)
+	}
+
 	ipIfs, nonIfs := FilterIfByType(ifAddrs, TypeIP)
 	matchedIfs = make(IfAddrs, 0, len(ipIfs))
 	excludedIfs = append(IfAddrs(nil), nonIfs...)
@@ -591,12 +596,7 @@ func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 			includedIfs = append(includedIfs, includedRFCIfs...)
 		}
 	case "size":
-		var maskSize uint64
-		maskSize, err = strconv.ParseUint(selectorParam, 10, 64)
-		if err != nil {
-			return IfAddrs{}, fmt.Errorf("invalid include size argument (%q): %v", selectorParam, err)
-		}
-		includedIfs, _, err = IfByMaskSize(uint(maskSize), inputIfAddrs)
+		includedIfs, _, err = IfByMaskSize(selectorParam, inputIfAddrs)
 	case "type":
 		includedIfs, _, err = IfByType(selectorParam, inputIfAddrs)
 	default:
@@ -641,12 +641,7 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 			excludedIfs = append(excludedIfs, excludedRFCIfs...)
 		}
 	case "size":
-		var maskSize uint64
-		maskSize, err = strconv.ParseUint(selectorParam, 10, 64)
-		if err != nil {
-			return IfAddrs{}, fmt.Errorf("invalid exclude size argument (%q): %v", selectorParam, err)
-		}
-		_, excludedIfs, err = IfByMaskSize(uint(maskSize), inputIfAddrs)
+		_, excludedIfs, err = IfByMaskSize(selectorParam, inputIfAddrs)
 	case "type":
 		_, excludedIfs, err = IfByType(selectorParam, inputIfAddrs)
 	default:
