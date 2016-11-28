@@ -258,18 +258,19 @@ func TestSockAddr_IPAddrs_IPAddrsByNetwork(t *testing.T) {
 			inputAddrs := convertToSockAddrs(t, test.inputAddrs)
 			sortedAddrs := convertToSockAddrs(t, test.sortedAddrs)
 			sockaddrs := append(sockaddr.SockAddrs(nil), inputAddrs...)
-			ipaddrs := sockaddrs.FilterByTypeIPv4Addr()
-			sort.Sort(sockaddr.SortIPAddrsByNetwork{ipaddrs})
+			ipaddrs, _ := sockaddrs.FilterByType(sockaddr.TypeIP)
+			sockaddr.OrderedAddrBy(sockaddr.AscAddress).Sort(ipaddrs)
 
 			var lastIpUint sockaddr.IPv4Address
-			for i, netaddr := range ipaddrs {
-				if lastIpUint > netaddr.Address {
+			for i, sa := range ipaddrs {
+				ipv4 := *sockaddr.ToIPv4Addr(sa)
+				if lastIpUint > ipv4.Address {
 					t.Fatalf("Sort by network failed")
 				}
-				lastIpUint = netaddr.Address
+				lastIpUint = ipv4.Address
 
-				if !netaddr.Equal(sortedAddrs[i]) {
-					t.Errorf("[%d] Sort equality failed: expected %s, received %s", i, sortedAddrs[i], netaddr)
+				if !ipv4.Equal(sortedAddrs[i]) {
+					t.Errorf("[%d] Sort equality failed: expected %s, received %s", i, sortedAddrs[i], ipv4)
 				}
 			}
 		})
