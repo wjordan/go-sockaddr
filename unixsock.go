@@ -36,6 +36,20 @@ func (us UnixSock) DialStreamArgs() (network, dialArgs string) {
 	return "unix", us.path
 }
 
+// Equal returns true if a SockAddr is equal to the receiving UnixSock.
+func (us UnixSock) Equal(sa SockAddr) bool {
+	usb, ok := sa.(UnixSock)
+	if !ok {
+		return false
+	}
+
+	if us.Path() != usb.Path() {
+		return false
+	}
+
+	return true
+}
+
 // ListenPacketArgs returns the arguments required to be passed to
 // net.ListenUnixgram() with the `unixgram` network type.
 func (us UnixSock) ListenPacketArgs() (network, dialArgs string) {

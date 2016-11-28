@@ -52,6 +52,53 @@ func TestUnixSock_impl_SockAddr(t *testing.T) {
 	}
 }
 
+func TestUnixSock_Equal(t *testing.T) {
+	tests := []struct {
+		name  string
+		input sockaddr.UnixSock
+		sa    sockaddr.SockAddr
+		equal bool
+	}{
+		{
+			name:  "equal",
+			input: sockaddr.MustUnixSock("/tmp/foo"),
+			sa:    sockaddr.MustUnixSock("/tmp/foo"),
+			equal: true,
+		},
+		{
+			name:  "not equal",
+			input: sockaddr.MustUnixSock("/tmp/foo"),
+			sa:    sockaddr.MustUnixSock("/tmp/bar"),
+			equal: false,
+		},
+		{
+			name:  "ipv4",
+			input: sockaddr.MustUnixSock("/tmp/foo"),
+			sa:    sockaddr.MustIPv4Addr("1.2.3.4"),
+			equal: false,
+		},
+		{
+			name:  "ipv6",
+			input: sockaddr.MustUnixSock("/tmp/foo"),
+			sa:    sockaddr.MustIPv6Addr("::1"),
+			equal: false,
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d needs a name", i)
+		}
+
+		t.Run(test.name, func(t *testing.T) {
+			us := test.input
+			if ret := us.Equal(test.sa); ret != test.equal {
+				t.Fatalf("%s: equal: %v %q %q", test.name, ret, us, test.sa)
+			}
+		})
+	}
+}
+
 func TestUnixSockAttrs(t *testing.T) {
 	const expectedNumAttrs = 1
 	usa := sockaddr.UnixSockAttrs()
