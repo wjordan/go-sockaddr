@@ -690,9 +690,15 @@ func TestIPv6Addr_CmpRFC(t *testing.T) {
 			want:   -1,
 		},
 		{
-			name:   "ipv6 cmp IPv4 ",
+			name:   "ipv6 cmp IPv4",
 			recv:   sockaddr.MustIPv6Addr("::1"),
 			arg:    sockaddr.MustIPv4Addr("1.2.3.4"),
+			rfcNum: 6590,
+		},
+		{
+			name:   "ipv6 cmp IPv4",
+			recv:   sockaddr.MustIPv6Addr("::1"),
+			arg:    sockaddr.MustIPv4Addr("192.168.1.1"),
 			rfcNum: 1918,
 		},
 	}

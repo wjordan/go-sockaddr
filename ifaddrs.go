@@ -254,7 +254,7 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 
 	OrderedIfAddrBy(AscIfType, AscIfNetworkSize).Sort(privateIfs)
 
-	privateIfs, _, err = IfByRFC(6890, privateIfs)
+	privateIfs, _, err = IfByRFC("6890", privateIfs)
 	if err != nil {
 		return IfAddrs{}, err
 	} else if len(privateIfs) == 0 {
@@ -288,7 +288,7 @@ func GetPublicInterfaces() (IfAddrs, error) {
 
 	OrderedIfAddrBy(AscIfType, AscIfNetworkSize).Sort(publicIfs)
 
-	_, publicIfs, err = IfByRFC(6890, publicIfs)
+	_, publicIfs, err = IfByRFC("6890", publicIfs)
 	if err != nil {
 		return IfAddrs{}, err
 	} else if len(publicIfs) == 0 {
@@ -368,15 +368,19 @@ func IfByPort(inputRe string, ifAddrs IfAddrs) (matchedIfs, excludedIfs IfAddrs,
 	return matchedIfs, excludedIfs, nil
 }
 
-// IfByRFC returns a list of matched and non-matched IfAddrs, or an error if the
-// regexp fails to compile, that contain the relevant RFC-specified traits.  The
-// most common RFC is RFC1918.
-func IfByRFC(inputRFC uint, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
+// IfByRFC returns a list of matched and non-matched IfAddrs that contain the
+// relevant RFC-specified traits.
+func IfByRFC(selectorParam string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
+	inputRFC, err := strconv.ParseUint(selectorParam, 10, 64)
+	if err != nil {
+		return IfAddrs{}, IfAddrs{}, fmt.Errorf("unable to parse RFC number %q: %v", selectorParam, err)
+	}
+
 	matchedIfAddrs := make(IfAddrs, 0, len(ifAddrs))
 	remainingIfAddrs := make(IfAddrs, 0, len(ifAddrs))
 
 	rfcNetMap := KnownRFCs()
-	rfcNets, ok := rfcNetMap[inputRFC]
+	rfcNets, ok := rfcNetMap[uint(inputRFC)]
 	if !ok {
 		return nil, nil, fmt.Errorf("unsupported RFC %d", inputRFC)
 	}
@@ -396,6 +400,24 @@ func IfByRFC(inputRFC uint, ifAddrs IfAddrs) (matched, remainder IfAddrs, err er
 	}
 
 	return matchedIfAddrs, remainingIfAddrs, nil
+}
+
+// IfByRFCs returns a list of matched and non-matched IfAddrs that contain the
+// relevant RFC-specified traits.  Multiple RFCs can be specified and separated
+// by the `|` symbol.  No protection is taken to ensure an IfAddr does not end
+// up in both the included and excluded list.
+func IfByRFCs(selectorParam string, ifAddrs IfAddrs) (matched, remainder IfAddrs, err error) {
+	var includedIfs, excludedIfs IfAddrs
+	for _, rfcStr := range strings.Split(selectorParam, "|") {
+		includedRFCIfs, excludedRFCIfs, err := IfByRFC(rfcStr, ifAddrs)
+		if err != nil {
+			return IfAddrs{}, IfAddrs{}, fmt.Errorf("unable to lookup RFC number %q: %v", rfcStr, err)
+		}
+		includedIfs = append(includedIfs, includedRFCIfs...)
+		excludedIfs = append(excludedIfs, excludedRFCIfs...)
+	}
+
+	return includedIfs, excludedIfs, nil
 }
 
 // IfByMaskSize returns a list of matched and non-matched IfAddrs that have the
@@ -580,21 +602,7 @@ func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 	case "port", "ports":
 		includedIfs, _, err = IfByPort(selectorParam, inputIfAddrs)
 	case "rfc", "rfcs":
-		rfcs := strings.Split(selectorParam, "|")
-		for _, rfcStr := range rfcs {
-			var rfc uint64
-			rfc, err = strconv.ParseUint(rfcStr, 10, 64)
-			if err != nil {
-				return IfAddrs{}, fmt.Errorf("unable to parse RFC number %q: %v", rfcStr, err)
-			}
-
-			var includedRFCIfs IfAddrs
-			includedRFCIfs, _, err = IfByRFC(uint(rfc), inputIfAddrs)
-			if err != nil {
-				return IfAddrs{}, fmt.Errorf("unable to lookup RFC number %q: %v", rfcStr, err)
-			}
-			includedIfs = append(includedIfs, includedRFCIfs...)
-		}
+		includedIfs, _, err = IfByRFCs(selectorParam, inputIfAddrs)
 	case "size":
 		includedIfs, _, err = IfByMaskSize(selectorParam, inputIfAddrs)
 	case "type":
@@ -625,21 +633,7 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 	case "port", "ports":
 		_, excludedIfs, err = IfByPort(selectorParam, inputIfAddrs)
 	case "rfc", "rfcs":
-		rfcs := strings.Split(selectorParam, "|")
-		for _, rfcStr := range rfcs {
-			var rfc uint64
-			rfc, err = strconv.ParseUint(rfcStr, 10, 64)
-			if err != nil {
-				return IfAddrs{}, fmt.Errorf("unable to parse RFC number %q: %v", rfcStr, err)
-			}
-
-			var excludedRFCIfs IfAddrs
-			_, excludedRFCIfs, err = IfByRFC(uint(rfc), inputIfAddrs)
-			if err != nil {
-				return IfAddrs{}, fmt.Errorf("unable to lookup RFC number %q: %v", rfcStr, err)
-			}
-			excludedIfs = append(excludedIfs, excludedRFCIfs...)
-		}
+		_, excludedIfs, err = IfByRFCs(selectorParam, inputIfAddrs)
 	case "size":
 		_, excludedIfs, err = IfByMaskSize(selectorParam, inputIfAddrs)
 	case "type":

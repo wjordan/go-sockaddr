@@ -592,6 +592,100 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			includeParam: `99999999999999`,
 		},
 		{
+			name: "rfc IPv4 exclude",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("192.169.1.1"),
+				},
+			},
+			excludeName:  "rfc",
+			excludeNum:   1,
+			excludeParam: `1918`,
+			includeName:  "rfc",
+			includeNum:   0,
+			includeParam: `1918`,
+		},
+		{
+			name: "rfc IPv4 include",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("192.168.1.1"),
+				},
+			},
+			excludeName:  "rfc",
+			excludeNum:   0,
+			excludeParam: `1918`,
+			includeName:  "rfc",
+			includeNum:   1,
+			includeParam: `1918`,
+		},
+		{
+			name: "rfc IPv4 excluded RFCs",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("192.168.1.1"),
+				},
+			},
+			excludeName:  "rfc",
+			excludeNum:   1,
+			excludeParam: `4291`,
+			includeName:  "rfc",
+			includeNum:   0,
+			includeParam: `4291`,
+		},
+		{
+			name: "rfc IPv6 exclude",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv6Addr("cc::1/127"),
+				},
+			},
+			excludeName:  "rfc",
+			excludeNum:   1,
+			excludeParam: `4291`,
+			includeName:  "rfc",
+			includeNum:   0,
+			includeParam: `4291`,
+		},
+		{
+			name: "rfc IPv6 include",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv6Addr("::1/127"),
+				},
+			},
+			excludeName:  "rfc",
+			excludeNum:   0,
+			excludeParam: `4291`,
+			includeName:  "rfc",
+			includeNum:   1,
+			includeParam: `4291`,
+		},
+		{
+			name: "rfc zero match",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+			},
+			excludeName:  "rfc",
+			excludeNum:   1,
+			excludeParam: `1918`,
+			includeName:  "rfc",
+			includeNum:   0,
+			includeParam: `1918`,
+		},
+		{
+			name:         "rfc empty list",
+			ifAddrs:      sockaddr.IfAddrs{},
+			excludeName:  "rfc",
+			excludeNum:   0,
+			excludeParam: `4291`,
+			includeName:  "rfc",
+			includeNum:   0,
+			includeParam: `1918`,
+		},
+		{
 			name: "size",
 			ifAddrs: sockaddr.IfAddrs{
 				sockaddr.IfAddr{
@@ -670,9 +764,9 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			ifAddrs, err := sockaddr.IncludeIfs(test.includeName, test.includeParam, test.ifAddrs)
 			switch {
 			case !test.fail && err != nil:
-				t.Fatalf("%s failed unexpectedly: %v", test.name, err)
+				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
 			case test.fail && err == nil:
-				t.Fatalf("%s failed to throw an error", test.name)
+				t.Fatalf("%s: failed to throw an error", test.name)
 			case test.fail && err != nil:
 				// expected test failure
 				return
@@ -684,7 +778,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 
 			ifAddrs, err = sockaddr.ExcludeIfs(test.excludeName, test.includeParam, test.ifAddrs)
 			if err != nil {
-				t.Fatalf("%s failed: %v", test.name, err)
+				t.Fatalf("%s: failed: %v", test.name, err)
 			}
 			if len(ifAddrs) != test.excludeNum {
 				t.Fatalf("%s: failed exclude length check. Expected %d, got %d", test.name, test.excludeNum, len(ifAddrs))
@@ -828,9 +922,9 @@ func TestUniqueIfAddrsBy(t *testing.T) {
 			uniqueAddrs, err := sockaddr.UniqueIfAddrsBy(test.selector, test.ifAddrs)
 			switch {
 			case !test.fail && err != nil:
-				t.Fatalf("%s failed unexpectedly: %v", test.name, err)
+				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
 			case test.fail && err == nil:
-				t.Fatalf("%s failed to throw an error", test.name)
+				t.Fatalf("%s: failed to throw an error", test.name)
 			case test.fail && err != nil:
 				// expected test failure
 				return
@@ -937,9 +1031,9 @@ func TestJoinIfAddrsBy(t *testing.T) {
 			result, err := sockaddr.JoinIfAddrs(test.selector, test.joinStr, test.ifAddrs)
 			switch {
 			case !test.fail && err != nil:
-				t.Fatalf("%s failed unexpectedly: %v", test.name, err)
+				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
 			case test.fail && err == nil:
-				t.Fatalf("%s failed to throw an error", test.name)
+				t.Fatalf("%s: failed to throw an error", test.name)
 			case test.fail && err != nil:
 				// expected test failure
 				return
@@ -1031,9 +1125,9 @@ func TestLimitOffset(t *testing.T) {
 			offsetResults, err := sockaddr.OffsetIfAddrs(test.offset, test.ifAddrs)
 			switch {
 			case !test.fail && err != nil:
-				t.Fatalf("%s failed unexpectedly: %v", test.name, err)
+				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
 			case test.fail && err == nil:
-				t.Fatalf("%s failed to throw an error", test.name)
+				t.Fatalf("%s: failed to throw an error", test.name)
 			case test.fail && err != nil:
 				// expected test failure
 				return
@@ -1042,9 +1136,9 @@ func TestLimitOffset(t *testing.T) {
 			limitResults, err := sockaddr.LimitIfAddrs(test.limit, offsetResults)
 			switch {
 			case !test.fail && err != nil:
-				t.Fatalf("%s failed unexpectedly: %v", test.name, err)
+				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
 			case test.fail && err == nil:
-				t.Fatalf("%s failed to throw an error", test.name)
+				t.Fatalf("%s: failed to throw an error", test.name)
 			case test.fail && err != nil:
 				// expected test failure
 				return

@@ -31,6 +31,18 @@ func TestIsRFC(t *testing.T) {
 			result: true,
 		},
 		{
+			name:   "rfc1918 fail",
+			sa:     sockaddr.MustIPv4Addr("1.2.3.4"),
+			rfcNum: 1918,
+			result: false,
+		},
+		{
+			name:   "rfc1918 pass",
+			sa:     sockaddr.MustIPv4Addr("192.168.1.1"),
+			rfcNum: 1918,
+			result: true,
+		},
+		{
 			name:   "invalid rfc",
 			sa:     sockaddr.MustIPv4Addr("192.168.0.0/16"),
 			rfcNum: 999999999999,

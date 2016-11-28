@@ -840,19 +840,22 @@ func TestSockAddr_IPv4Addr_CmpPort(t *testing.T) {
 
 func TestSockAddr_IPv4Addr_Equal(t *testing.T) {
 	tests := []struct {
+		name  string
 		input string
 		pass  []string
 		fail  []string
 	}{
-		{ // 0
+		{
+			name:  "passing",
 			input: "208.67.222.222/32",
 			pass:  []string{"208.67.222.222", "208.67.222.222/32", "208.67.222.222:0"},
 			fail:  []string{"208.67.222.222/31", "208.67.220.220", "208.67.220.220/32", "208.67.222.222:5432"},
 		},
-		{ // 1
+		{
+			name:  "failing",
 			input: "4.2.2.1",
 			pass:  []string{"4.2.2.1", "4.2.2.1/32"},
-			fail:  []string{"4.2.2.1/0", "4.2.2.2", "4.2.2.2/32"},
+			fail:  []string{"4.2.2.1/0", "4.2.2.2", "4.2.2.2/32", "::1"},
 		},
 	}
 
@@ -875,7 +878,7 @@ func TestSockAddr_IPv4Addr_Equal(t *testing.T) {
 			}
 
 			for failIdx, failInput := range test.fail {
-				fail, err := sockaddr.NewIPv4Addr(failInput)
+				fail, err := sockaddr.NewIPAddr(failInput)
 				if err != nil {
 					t.Fatalf("[%d] Unable to create an IPv4Addr from %+q: %v", idx, failInput, err)
 				}
@@ -885,5 +888,78 @@ func TestSockAddr_IPv4Addr_Equal(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestIPv4CmpRFC(t *testing.T) {
+	tests := []struct {
+		name string
+		ipv4 sockaddr.IPv4Addr
+		rfc  uint
+		sa   sockaddr.SockAddr
+		ret  int
+	}{
+		{
+			name: "ipv4 rfc cmp recv match not arg",
+			ipv4: sockaddr.MustIPv4Addr("192.168.1.10"),
+			rfc:  1918,
+			sa:   sockaddr.MustIPv6Addr("::1"),
+			ret:  -1,
+		},
+		{
+			name: "ipv4 rfc cmp recv match",
+			ipv4: sockaddr.MustIPv4Addr("192.168.1.2"),
+			rfc:  1918,
+			sa:   sockaddr.MustIPv4Addr("203.1.2.3"),
+			ret:  -1,
+		},
+		{
+			name: "ipv4 rfc cmp defer",
+			ipv4: sockaddr.MustIPv4Addr("192.168.1.3"),
+			rfc:  1918,
+			sa:   sockaddr.MustIPv4Addr("192.168.1.4"),
+			ret:  0,
+		},
+		{
+			name: "ipv4 rfc cmp recv not match",
+			ipv4: sockaddr.MustIPv4Addr("1.2.3.4"),
+			rfc:  1918,
+			sa:   sockaddr.MustIPv4Addr("203.1.2.3"),
+			ret:  0,
+		},
+		{
+			name: "ipv4 rfc cmp recv not match arg",
+			ipv4: sockaddr.MustIPv4Addr("1.2.3.4"),
+			rfc:  1918,
+			sa:   sockaddr.MustIPv6Addr("::1"),
+			ret:  0,
+		},
+		{
+			name: "ipv4 rfc cmp arg match",
+			ipv4: sockaddr.MustIPv4Addr("1.2.3.4"),
+			rfc:  1918,
+			sa:   sockaddr.MustIPv4Addr("192.168.1.5"),
+			ret:  1,
+		},
+	}
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d must have a name", i)
+		}
+
+		t.Run(test.name, func(t *testing.T) {
+			ipv4 := test.ipv4
+			if ret := ipv4.CmpRFC(test.rfc, test.sa); ret != test.ret {
+				t.Errorf("%s: unexpected ret: wanted %d got %d", test.name, test.ret, ret)
+			}
+		})
+	}
+}
+
+func TestIPv4Attrs(t *testing.T) {
+	const expectedNumAttrs = 3
+	attrs := sockaddr.IPv4Attrs()
+	if len(attrs) != expectedNumAttrs {
+		t.Fatalf("wrong number of IPv4Attrs: %d vs %d", len(attrs), expectedNumAttrs)
 	}
 }
