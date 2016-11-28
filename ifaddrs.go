@@ -232,13 +232,13 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 	return defaultIfs, nil
 }
 
-// GetPrivateInterfaces returns an IfAddrs that is part of RFC 6890 and has a
+// GetPrivateInterfaces returns an IfAddrs that are part of RFC 6890 and have a
 // default route.  If the system can't determine its IP address or find an RFC
 // 6890 IP address, an empty IfAddrs will be returned instead.  This function is
 // the `eval` equivilant of:
 //
 // ```
-// $ sockaddr eval -r '{{GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | limit 1 | join "address" " "}}'
+// $ sockaddr eval -r '{{GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" }}'
 /// ```
 func GetPrivateInterfaces() (IfAddrs, error) {
 	privateIfs, err := GetDefaultInterfaces()
@@ -266,7 +266,7 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 	return privateIfs, nil
 }
 
-// GetPublicInterfaces returns an IfAddrs that is NOT part of RFC 6890 and has a
+// GetPublicInterfaces returns an IfAddrs that are NOT part of RFC 6890 and has a
 // default route.  If the system can't determine its IP address or find a non
 // RFC 6890 IP address, an empty IfAddrs will be returned instead.  This
 // function is the `eval` equivilant of:
@@ -618,7 +618,7 @@ func IncludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 		includedIfs, _, err = IfByFlag(selectorParam, inputIfAddrs)
 	case "name":
 		includedIfs, _, err = IfByName(selectorParam, inputIfAddrs)
-	case "port", "ports":
+	case "port":
 		includedIfs, _, err = IfByPort(selectorParam, inputIfAddrs)
 	case "rfc", "rfcs":
 		includedIfs, _, err = IfByRFCs(selectorParam, inputIfAddrs)
@@ -649,7 +649,7 @@ func ExcludeIfs(selectorName, selectorParam string, inputIfAddrs IfAddrs) (IfAdd
 		_, excludedIfs, err = IfByFlag(selectorParam, inputIfAddrs)
 	case "name":
 		_, excludedIfs, err = IfByName(selectorParam, inputIfAddrs)
-	case "port", "ports":
+	case "port":
 		_, excludedIfs, err = IfByPort(selectorParam, inputIfAddrs)
 	case "rfc", "rfcs":
 		_, excludedIfs, err = IfByRFCs(selectorParam, inputIfAddrs)
@@ -677,7 +677,7 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 	sortFuncs := make([]CmpIfAddrFunc, len(clauses))
 
 	for i, clause := range clauses {
-		switch strings.ToLower(clause) {
+		switch strings.TrimSpace(strings.ToLower(clause)) {
 		case "address", "+address":
 			// The "address" selector returns an array of IfAddrs
 			// ordered by the network address.  IfAddrs that are not

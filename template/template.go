@@ -26,21 +26,28 @@ var (
 
 func init() {
 	SourceFuncs = template.FuncMap{
-		// Generates a set of IfAddr inputs for the rest of the template
-		// pipeline.  `GetAllInterfaces` is the default input and
-		// original "dot" in the pipeline.
-		//
+		// GetAllInterfaces - Returns an exhaustive set of IfAddr
+		// structs available on the host.  `GetAllInterfaces` is the
+		// initial input and accessible as the initial "dot" in the
+		// pipeline.
 		"GetAllInterfaces": sockaddr.GetAllInterfaces,
 
-		// Return an IfAddr that is attached to the default route.
+		// GetDefaultInterfaces - Returns one IfAddr for every IP that
+		// is on the interface containing the default route for the
+		// host.
 		"GetDefaultInterfaces": sockaddr.GetDefaultInterfaces,
 
-		// Return a single IfAddr that represents a Private RFC 6890 IP
-		// address that is attached to the default route.
+		// GetPrivateInterfaces - Returns one IfAddr for every IP that
+		// matches RFC 6890and attached to the interface with the
+		// default route.  NOTE: RFC 6890 is a moreexhaustive version of
+		// RFC1918 because it spans IPv4 and IPv6, however it doespermit
+		// the inclusion of likely undesired addresses such as
+		// multicast, therefore it may be prudent to use this in
+		// conjunction with additional filtering.
 		"GetPrivateInterfaces": sockaddr.GetPrivateInterfaces,
 
-		// Return a single IfAddr that represents a Public RFC 6890 IP
-		// address that is attached to the default route.
+		// GetPublicInterfaces - Returns a list of IfAddr that do not
+		// match RFC 6890 and is attached to the default route.
 		"GetPublicInterfaces": sockaddr.GetPublicInterfaces,
 	}
 

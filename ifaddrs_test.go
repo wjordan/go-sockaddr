@@ -769,7 +769,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			excludeName:  "port",
 			excludeNum:   1,
 			excludeParam: `0$`,
-			includeName:  "ports",
+			includeName:  "port",
 			includeNum:   2,
 			includeParam: `^46[\d]{2}$`,
 		},

@@ -10,15 +10,21 @@ is available
 at
 [https://godoc.org/github.com/hashicorp/go-sockaddr](https://godoc.org/github.com/hashicorp/go-sockaddr).
 The primary intent of the library was to make it possible to define heuristics
-for selecting IP addresses at process initialization time.  See the docs, tests,
-and CLI utility for details and hints as to how to use this library.
+for selecting IP addresses at process initialization time.  See
+the
+[docs](https://godoc.org/github.com/hashicorp/go-sockaddr),
+[`template` package](https://godoc.org/github.com/hashicorp/go-sockaddr/template),
+tests,
+and
+[CLI utility](https://github.com/hashicorp/go-sockaddr/tree/master/cmd/sockaddr)
+for details and hints as to how to use this library.
 
 With this library it is possible to find an IP address that:
 
 * is attached to a default route
   ([`GetDefaultInterfaces()`](https://godoc.org/github.com/hashicorp/go-sockaddr#GetDefaultInterfaces))
 * is an RFC1918 address
-  ([`IfByRFC(1918)`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByRFC))
+  ([`IfByRFC("1918")`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByRFC))
 * ordered
   ([`OrderedIfAddrBy(args)`](https://godoc.org/github.com/hashicorp/go-sockaddr#OrderedIfAddrBy) where
   `args` includes, but is not limited
@@ -38,7 +44,7 @@ or:
   ([`SortIfByType()`](https://godoc.org/github.com/hashicorp/go-sockaddr#SortIfByType) +
   [`ReverseIfAddrs()`](https://godoc.org/github.com/hashicorp/go-sockaddr#ReverseIfAddrs))
 * and excluding any IP in RFC6890 address
-  ([`IfByRFC(6890)`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByRFC))
+  ([`IfByRFC("6890")`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByRFC))
 
 There are also a few simple helper functions such as `GetPublicIP` and
 `GetPrivateIP` which both return strings and select the first public or private

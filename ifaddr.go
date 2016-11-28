@@ -14,7 +14,7 @@ func init() {
 // This function is the `eval` equivilant of:
 //
 // ```
-// $ sockaddr eval -r '{{GetPrivateInterfaces | limit 1 | join "address" " "}}'
+// $ sockaddr eval -r '{{GetPrivateInterfaces | attr "address"}}'
 /// ```
 func GetPrivateIP() (string, error) {
 	privateIfs, err := GetPrivateInterfaces()
@@ -36,7 +36,7 @@ func GetPrivateIP() (string, error) {
 // This function is the `eval` equivilant of:
 //
 // ```
-// $ sockaddr eval -r '{{GetPublicInterfaces | limit 1 | join "address" " "}}'
+// $ sockaddr eval -r '{{GetPublicInterfaces | attr "address"}}'
 /// ```
 func GetPublicIP() (string, error) {
 	publicIfs, err := GetPublicInterfaces()

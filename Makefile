@@ -46,3 +46,7 @@ dev::
 install::
 	@go install
 	@make -C cmd/sockaddr install
+
+doc::
+	echo Visit: http://127.0.0.1:6060/pkg/github.com/hashicorp/go-sockaddr/
+	godoc -http=:6060 -goroot $GOROOT
