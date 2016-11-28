@@ -171,8 +171,12 @@ func (ipv6 IPv6Addr) AddressHexString() string {
 	return fmt.Sprintf("%032s", bi.Text(16))
 }
 
-// Cmp returns 0 if a SockAddr is equal to the receiving IPv6Addr, -1 if it
-// should sort first, or 1 if it should sort after.
+// CmpAddress follows the Cmp() standard protocol and returns:
+//
+// - -1 If the receiver should sort first because its address is lower than arg
+// - 0 if the SockAddr arg equal to the receiving IPv6Addr or the argument is of a
+//   different type.
+// - 1 If the argument should sort first.
 func (ipv6 IPv6Addr) CmpAddress(sa SockAddr) int {
 	ipv6b, ok := sa.(IPv6Addr)
 	if !ok {
@@ -187,8 +191,12 @@ func (ipv6 IPv6Addr) CmpAddress(sa SockAddr) int {
 	return ipv6aBigInt.Cmp(ipv6bBigInt)
 }
 
-// CmpPort returns 0 if a SockAddr is equal to the receiving IPv6Addr, -1
-// if it should sort first, or 1 if it should sort after.
+// CmpPort follows the Cmp() standard protocol and returns:
+//
+// - -1 If the receiver should sort first because its port is lower than arg
+// - 0 if the SockAddr arg's port number is equal to the receiving IPv6Addr,
+//   regardless of type.
+// - 1 If the argument should sort first.
 func (ipv6 IPv6Addr) CmpPort(sa SockAddr) int {
 	var saPort IPPort
 	switch v := sa.(type) {
@@ -210,8 +218,12 @@ func (ipv6 IPv6Addr) CmpPort(sa SockAddr) int {
 	}
 }
 
-// CmpRFC returns 0 if SockAddr is one of the RFC networks, -1 if it is
-// contained within an RFC network, or 1 if not.
+// CmpRFC follows the Cmp() standard protocol and returns:
+//
+// - -1 If the receiver should sort first because it belongs to the RFC and its
+//   arg does not
+// - 0 if the receiver and arg both belong to the same RFC or neither do.
+// - 1 If the arg belongs to the RFC but receiver does not.
 func (ipv6 IPv6Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
 	recvInRFC := IsRFC(rfcNum, ipv6)
 	ipv6b, ok := sa.(IPv6Addr)
@@ -328,8 +340,6 @@ func (ipv6a IPv6Addr) Equal(sa SockAddr) bool {
 		return false
 	}
 
-	// Now that the type conversion checks are complete, verify the data
-	// is equal.
 	if ipv6a.NetIP().String() != ipv6b.NetIP().String() {
 		return false
 	}
@@ -371,7 +381,7 @@ func (ipv6 IPv6Addr) Host() IPAddr {
 	}
 }
 
-// IPPort returns the Port number as a uint16
+// IPPort returns the Port number attached to the IPv6Addr
 func (ipv6 IPv6Addr) IPPort() IPPort {
 	return ipv6.Port
 }
@@ -459,8 +469,7 @@ func (ipv6 IPv6Addr) NetIPNet() *net.IPNet {
 	return ipv6net
 }
 
-// NetworkPrefix returns the network prefix or network address for a given
-// network.
+// Network returns the network prefix or network address for a given network.
 func (ipv6 IPv6Addr) Network() IPAddr {
 	return IPv6Addr{
 		Address: IPv6Address(ipv6.NetworkAddress()),

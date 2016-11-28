@@ -152,8 +152,12 @@ func (ipv4 IPv4Addr) BroadcastAddress() IPv4Network {
 	return IPv4Network(uint32(ipv4.Address)&uint32(ipv4.Mask) | ^uint32(ipv4.Mask))
 }
 
-// CmpAddress returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1
-// if it should sort first, or 1 if it should sort after.
+// CmpAddress follows the Cmp() standard protocol and returns:
+//
+// - -1 If the receiver should sort first because its address is lower than arg
+// - 0 if the SockAddr arg is equal to the receiving IPv4Addr or the argument is
+//   of a different type.
+// - 1 If the argument should sort first.
 func (ipv4 IPv4Addr) CmpAddress(sa SockAddr) int {
 	ipv4b, ok := sa.(IPv4Addr)
 	if !ok {
@@ -170,8 +174,12 @@ func (ipv4 IPv4Addr) CmpAddress(sa SockAddr) int {
 	}
 }
 
-// CmpPort returns 0 if a SockAddr is equal to the receiving IPv4Addr, -1
-// if it should sort first, or 1 if it should sort after.
+// CmpPort follows the Cmp() standard protocol and returns:
+//
+// - -1 If the receiver should sort first because its port is lower than arg
+// - 0 if the SockAddr arg's port number is equal to the receiving IPv4Addr,
+//   regardless of type.
+// - 1 If the argument should sort first.
 func (ipv4 IPv4Addr) CmpPort(sa SockAddr) int {
 	var saPort IPPort
 	switch v := sa.(type) {
@@ -193,8 +201,12 @@ func (ipv4 IPv4Addr) CmpPort(sa SockAddr) int {
 	}
 }
 
-// CmpRFC returns 0 if SockAddr is one of the RFC networks, -1 if it is
-// contained within an RFC network, or 1 if not.
+// CmpRFC follows the Cmp() standard protocol and returns:
+//
+// - -1 If the receiver should sort first because it belongs to the RFC and its
+//   arg does not
+// - 0 if the receiver and arg both belong to the same RFC or neither do.
+// - 1 If the arg belongs to the RFC but receiver does not.
 func (ipv4 IPv4Addr) CmpRFC(rfcNum uint, sa SockAddr) int {
 	recvInRFC := IsRFC(rfcNum, ipv4)
 	ipv4b, ok := sa.(IPv4Addr)
@@ -281,8 +293,6 @@ func (ipv4 IPv4Addr) Equal(sa SockAddr) bool {
 		return false
 	}
 
-	// Now that the type conversion checks are complete, verify the data
-	// is equal.
 	if ipv4.Address != ipv4b.Address {
 		return false
 	}
@@ -328,7 +338,7 @@ func (ipv4 IPv4Addr) Host() IPAddr {
 	}
 }
 
-// IPPort returns the Port number as a uint16
+// IPPort returns the Port number attached to the IPv4Addr
 func (ipv4 IPv4Addr) IPPort() IPPort {
 	return ipv4.Port
 }
