@@ -52,35 +52,36 @@ Example:
 
     {{ GetDefaultInterfaces }}
 
-`GetPrivateInterfaces` - Returns one IfAddr for every IP that matches RFC 6890
-and attached to the interface with the default route.  NOTE: RFC 6890 is a more
-exhaustive version of RFC1918 because it spans IPv4 and IPv6, however it does
-permit the inclusion of likely undesired addresses such as multicast, therefore
-it may be prudent to use this in conjunction with additional filtering.
+`GetPrivateInterfaces` - Returns one IfAddr for every forwardable IP address
+that is included in RFC 6890, is attached to the interface with the default
+route, and whose interface is marked as up.  NOTE: RFC 6890 is a more exhaustive
+version of RFC1918 because it spans IPv4 and IPv6, however it does permit the
+inclusion of likely undesired addresses such as multicast, therefore our version
+of "private" also filters out non-forwardable addresses.
 
 Example:
 
-    {{ GetPrivateInterfaces | include "flags" "forwardable" }}
+    {{ GetPrivateInterfaces | include "flags" "up" }}
 
 
-`GetPublicInterfaces` - Returns a list of IfAddr that do not match RFC 6890 and
-is attached to the default route.
+`GetPublicInterfaces` - Returns a list of IfAddr that do not match RFC 6890, is
+attached to the default route, and whose interface is marked as up.
 
 Example:
 
-    {{ GetPublicInterfaces | include "flags" "forwardable" }}
+    {{ GetPublicInterfaces | include "flags" "up" }}
 
 
-`GetPrivateIP` - Helper function that returns a string of the private IP address
-(RFC 6890) that is attached to the default route.
+`GetPrivateIP` - Helper function that returns a string of the first IP address
+from GetPrivateInterfaces.
 
 Example:
 
     {{ GetPrivateIP }}
 
 
-`GetPublicIP` - Helper function that returns a string of the public IP (non-RFC
-6890) that is attached to the default route.
+`GetPublicIP` - Helper function that returns a string of the first IP from
+GetPublicInterfaces.
 
 Example:
 
