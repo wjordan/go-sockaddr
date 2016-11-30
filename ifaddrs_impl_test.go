@@ -72,3 +72,80 @@ func Test_parseLinuxDefaultIfName(t *testing.T) {
 		})
 	}
 }
+
+func Test_parseWindowsDefaultIfName(t *testing.T) {
+	testCases := []struct {
+		name     string
+		routeOut string
+		want     string
+	}{
+		{
+			name: "Windows 10 - Enterprise",
+			routeOut: `===========================================================================
+Interface List
+ 10...08 00 27 a2 e9 51 ......Intel(R) PRO/1000 MT Desktop Adapter
+ 13...08 00 27 35 02 ed ......Intel(R) PRO/1000 MT Desktop Adapter #2
+  1...........................Software Loopback Interface 1
+  5...00 00 00 00 00 00 00 e0 Microsoft ISATAP Adapter
+  8...00 00 00 00 00 00 00 e0 Microsoft ISATAP Adapter #3
+===========================================================================
+
+IPv4 Route Table
+===========================================================================
+Active Routes:
+Network Destination        Netmask          Gateway       Interface  Metric
+          0.0.0.0          0.0.0.0         10.0.2.2        10.0.2.15     25
+         10.0.2.0    255.255.255.0         On-link         10.0.2.15    281
+        10.0.2.15  255.255.255.255         On-link         10.0.2.15    281
+       10.0.2.255  255.255.255.255         On-link         10.0.2.15    281
+        127.0.0.0        255.0.0.0         On-link         127.0.0.1    331
+        127.0.0.1  255.255.255.255         On-link         127.0.0.1    331
+  127.255.255.255  255.255.255.255         On-link         127.0.0.1    331
+     192.168.56.0    255.255.255.0         On-link    192.168.56.100    281
+   192.168.56.100  255.255.255.255         On-link    192.168.56.100    281
+   192.168.56.255  255.255.255.255         On-link    192.168.56.100    281
+        224.0.0.0        240.0.0.0         On-link         127.0.0.1    331
+        224.0.0.0        240.0.0.0         On-link    192.168.56.100    281
+        224.0.0.0        240.0.0.0         On-link         10.0.2.15    281
+  255.255.255.255  255.255.255.255         On-link         127.0.0.1    331
+  255.255.255.255  255.255.255.255         On-link    192.168.56.100    281
+  255.255.255.255  255.255.255.255         On-link         10.0.2.15    281
+===========================================================================
+Persistent Routes:
+  None
+
+IPv6 Route Table
+===========================================================================
+Active Routes:
+ If Metric Network Destination      Gateway
+  1    331 ::1/128                  On-link
+ 13    281 fe80::/64                On-link
+ 10    281 fe80::/64                On-link
+ 13    281 fe80::60cc:155f:77a4:ab99/128
+                                    On-link
+ 10    281 fe80::cccc:710e:f5bb:3088/128
+                                    On-link
+  1    331 ff00::/8                 On-link
+ 13    281 ff00::/8                 On-link
+ 10    281 ff00::/8                 On-link
+===========================================================================
+Persistent Routes:
+  None
+`,
+			want: "10.0.2.15",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parseDefaultIfNameFromWindowsNetstatRN(tc.routeOut)
+			if err != nil {
+				t.Fatalf("unable to parse default interface from route output: %v", err)
+			}
+
+			if got != tc.want {
+				t.Errorf("got %s; want %s", got, tc.want)
+			}
+		})
+	}
+}

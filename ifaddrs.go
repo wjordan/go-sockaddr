@@ -869,3 +869,23 @@ func parseDefaultIfNameFromIPCmd(routeOut string) (string, error) {
 
 	return "", errors.New("No default interface found")
 }
+
+// parseDefaultIfNameFromWindowsNetstatRN parses the default interface from
+// `netstat -rn` on Windows.
+func parseDefaultIfNameFromWindowsNetstatRN(routeOut string) (string, error) {
+	lines := strings.Split(routeOut, "\n")
+	re := regexp.MustCompile(`[\s]+`)
+	for _, line := range lines {
+		kvs := re.Split(strings.TrimSpace(line), -1)
+		if len(kvs) < 3 {
+			continue
+		}
+
+		if kvs[0] == "0.0.0.0" && kvs[1] == "0.0.0.0" {
+			ifName := strings.TrimSpace(kvs[3])
+			return ifName, nil
+		}
+	}
+
+	return "", errors.New("No default interface found")
+}
