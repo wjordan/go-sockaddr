@@ -75,9 +75,10 @@ func Test_parseLinuxDefaultIfName(t *testing.T) {
 
 func Test_parseWindowsDefaultIfName(t *testing.T) {
 	testCases := []struct {
-		name     string
-		routeOut string
-		want     string
+		name        string
+		routeOut    string
+		ipconfigOut string
+		want        string
 	}{
 		{
 			name: "Windows 10 - Enterprise",
@@ -132,13 +133,42 @@ Active Routes:
 Persistent Routes:
   None
 `,
-			want: "10.0.2.15",
+			ipconfigOut: `Windows IP Configuration
+
+
+Ethernet adapter Ethernet:
+
+   Connection-specific DNS Suffix  . : host.example.org
+   Link-local IPv6 Address . . . . . : fe80::cccc:710e:f5bb:3088%10
+   IPv4 Address. . . . . . . . . . . : 10.0.2.15
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 10.0.2.2
+
+Ethernet adapter Ethernet 2:
+
+   Connection-specific DNS Suffix  . : 
+   Link-local IPv6 Address . . . . . : fe80::60cc:155f:77a4:ab99%13
+   IPv4 Address. . . . . . . . . . . : 192.168.56.100
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 
+
+Tunnel adapter isatap.host.example.org:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+
+Tunnel adapter Reusable ISATAP Interface {F3F2E4A5-8823-40E5-87EA-1F6881BACC95}:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : host.example.org
+`,
+			want: "Ethernet",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := parseDefaultIfNameFromWindowsNetstatRN(tc.routeOut)
+			got, err := parseDefaultIfNameWindows(tc.routeOut, tc.ipconfigOut)
 			if err != nil {
 				t.Fatalf("unable to parse default interface from route output: %v", err)
 			}
