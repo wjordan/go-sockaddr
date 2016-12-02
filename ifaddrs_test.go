@@ -481,10 +481,13 @@ func TestGetIfAddrs(t *testing.T) {
 		val := sockaddr.IfAddrAttr(ifAddr, "name")
 		if val == "" {
 			t.Fatalf("name failed")
-		} else if val == "lo0" {
+		} else if val == "lo0" || val == "Loopback Pseudo-Interface 1" {
 			loInt = &ifAddr
 			break
 		}
+	}
+	if loInt == nil {
+		t.Fatalf("No loopback interfaces found, loInt nil")
 	}
 
 	if val := sockaddr.IfAddrAttr(*loInt, "flags"); val != "up|loopback|multicast" {
@@ -509,7 +512,7 @@ func TestGetIfAddrs(t *testing.T) {
 		}
 	case sockaddr.IPv6Addr:
 		haveIPv6 = true
-		if loInt.String() == "::1" {
+		if loInt.SockAddr.String() == "::1" {
 			foundIPv6lo = true
 		}
 	default:
