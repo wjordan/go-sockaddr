@@ -87,6 +87,13 @@ Example:
 
     {{ GetPublicIP }}
 
+`GetInterfaceIP` - Helper function that returns a string of the first IP from
+the named interface.
+
+Example:
+
+    {{ GetInterfaceIP }}
+
 
 `sort` - Sorts the IfAddrs result based on its arguments.  `sort` takes one
 argument, a list of ways to sort its IfAddrs argument.  The list of sort

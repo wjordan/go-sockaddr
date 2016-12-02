@@ -77,6 +77,10 @@ func init() {
 		// Return a Public RFC 6890 IP address string that is attached
 		// to the default route and a forwardable address.
 		"GetPublicIP": sockaddr.GetPublicIP,
+
+		// Return the first IP address of the named interface, sorted by
+		// the largest network size.
+		"GetInterfaceIP": sockaddr.GetInterfaceIP,
 	}
 }
 

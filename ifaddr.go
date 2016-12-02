@@ -51,6 +51,46 @@ func GetPublicIP() (string, error) {
 	return ip.NetIP().String(), nil
 }
 
+// GetInterfaceIP returns a string with a single IP address sorted by the size
+// of the network (i.e. IP addresses with a smaller netmask, larger network
+// size, are sorted first).  This function is the `eval` equivilant of:
+//
+// ```
+// $ sockaddr eval -r '{{GetAllInterfaces | include "name" <<ARG>> | sort "type,size" | include "flag" "forwardable" | attr "address" }}'
+/// ```
+func GetInterfaceIP(namedIfRE string) (string, error) {
+	ifAddrs, err := GetAllInterfaces()
+	if err != nil {
+		return "", err
+	}
+
+	ifAddrs, _, err = IfByName(namedIfRE, ifAddrs)
+	if err != nil {
+		return "", err
+	}
+
+	ifAddrs, _, err = IfByFlag("forwardable", ifAddrs)
+	if err != nil {
+		return "", err
+	}
+
+	ifAddrs, err = SortIfBy("+type,+size", ifAddrs)
+	if err != nil {
+		return "", err
+	}
+
+	if len(ifAddrs) == 0 {
+		return "", err
+	}
+
+	ip := ToIPAddr(ifAddrs[0].SockAddr)
+	if ip == nil {
+		return "", err
+	}
+
+	return IPAddrAttr(*ip, "address"), nil
+}
+
 // IfAddrAttrs returns a list of attributes supported by the IfAddr type
 func IfAddrAttrs() []AttrName {
 	return ifAddrAttrs

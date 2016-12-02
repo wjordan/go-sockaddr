@@ -694,7 +694,7 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 
 	for i, clause := range clauses {
 		switch strings.TrimSpace(strings.ToLower(clause)) {
-		case "address", "+address":
+		case "+address", "address":
 			// The "address" selector returns an array of IfAddrs
 			// ordered by the network address.  IfAddrs that are not
 			// comparable will be at the end of the list and in a
@@ -702,13 +702,13 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 			sortFuncs[i] = AscIfAddress
 		case "-address":
 			sortFuncs[i] = DescIfAddress
-		case "name", "+name":
+		case "+name", "name":
 			// The "name" selector returns an array of IfAddrs
 			// ordered by the interface name.
 			sortFuncs[i] = AscIfName
 		case "-name":
 			sortFuncs[i] = DescIfName
-		case "port", "+port":
+		case "+port", "port":
 			// The "port" selector returns an array of IfAddrs
 			// ordered by the port, if included in the IfAddr.
 			// IfAddrs that are not comparable will be at the end of
@@ -716,7 +716,7 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 			sortFuncs[i] = AscIfPort
 		case "-port":
 			sortFuncs[i] = DescIfPort
-		case "private", "+private":
+		case "+private", "private":
 			// The "private" selector returns an array of IfAddrs
 			// ordered by private addresses first.  IfAddrs that are
 			// not comparable will be at the end of the list and in
@@ -724,15 +724,15 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 			sortFuncs[i] = AscIfPrivate
 		case "-private":
 			sortFuncs[i] = DescIfPrivate
-		case "size", "+size":
+		case "+size", "size":
 			// The "size" selector returns an array of IfAddrs
-			// ordered by the size of the network mask, largest mask
-			// (larger number of hosts per network) to smallest
+			// ordered by the size of the network mask, smaller mask
+			// (larger number of hosts per network) to largest
 			// (e.g. a /24 sorts before a /32).
 			sortFuncs[i] = AscIfNetworkSize
 		case "-size":
 			sortFuncs[i] = DescIfNetworkSize
-		case "type", "+type":
+		case "+type", "type":
 			// The "type" selector returns an array of IfAddrs
 			// ordered by the type of the IfAddr.  The sort order is
 			// Unix, IPv4, then IPv6.

@@ -48,7 +48,9 @@ or:
 
 There are also a few simple helper functions such as `GetPublicIP` and
 `GetPrivateIP` which both return strings and select the first public or private
-IP address on the default interface, respectively.
+IP address on the default interface, respectively.  Similarly, there is also a
+helper function called `GetInterfaceIP` which returns the first usable IP
+address on the named interface.
 
 ## `sockaddr` CLI
 

@@ -126,9 +126,11 @@ $ sockaddr eval 'GetPublicIP'
 203.0.113.4
 $ sockaddr eval 'GetPrivateIP'
 172.14.6.167
+$ sockaddr eval 'GetInterfaceIP "eth0"'
+172.14.6.167
 $ sockaddr eval 'GetPrivateInterfaces | join "type" " "'
 IPv4 IPv6
-$ sockaddr eval 'GetPublicInterfaces | join "address" " "'
+$ sockaddr eval 'GetPublicInterfaces | include "flags" "up|forwardable" | join "address" " "'
 203.0.113.4 2001:0DB8::1
 $ sockaddr eval 'GetAllInterfaces | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "'
 100:: fe80::1
