@@ -23,6 +23,7 @@ With this library it is possible to find an IP address that:
 
 * is attached to a default route
   ([`GetDefaultInterfaces()`](https://godoc.org/github.com/hashicorp/go-sockaddr#GetDefaultInterfaces))
+* is contained within a CIDR block (['IfByNetwork()'](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByNetwork))
 * is an RFC1918 address
   ([`IfByRFC("1918")`](https://godoc.org/github.com/hashicorp/go-sockaddr#IfByRFC))
 * ordered

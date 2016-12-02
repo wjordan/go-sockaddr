@@ -396,6 +396,140 @@ func TestFilterIfByFlags(t *testing.T) {
 	}
 }
 
+func TestIfByNetwork(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    sockaddr.IfAddrs
+		selector string
+		matched  sockaddr.IfAddrs
+		excluded sockaddr.IfAddrs
+		fail     bool
+	}{
+		{
+			name: "exact match",
+			input: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+			},
+			selector: "1.2.3.4",
+			matched: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+			},
+		},
+		{
+			name: "exact match plural",
+			input: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.0/24"),
+				},
+			},
+			selector: "1.2.3.0/24",
+			matched: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.0/24"),
+				},
+			},
+		},
+		{
+			name: "split plural",
+			input: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("12.2.3.0/24"),
+				},
+			},
+			selector: "1.2.3.0/24",
+			excluded: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("12.2.3.0/24"),
+				},
+			},
+			matched: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+			},
+		},
+		{
+			name: "excluded plural",
+			input: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("12.2.3.0/24"),
+				},
+			},
+			selector: "10.0.0.0/8",
+			excluded: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("12.2.3.0/24"),
+				},
+			},
+		},
+		{
+			name: "invalid selector",
+			input: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("1.2.3.4"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("12.2.3.0/24"),
+				},
+			},
+			selector: "[:]",
+			fail:     true,
+		},
+	}
+
+	for i, test := range tests {
+		if test.name == "" {
+			t.Fatalf("test %d needs a name", i)
+		}
+
+		t.Run(test.name, func(t *testing.T) {
+			matched, excluded, err := sockaddr.IfByNetwork(test.selector, test.input)
+			if err != nil && !test.fail {
+				t.Fatal("bad")
+			} else if err == nil && test.fail {
+				t.Fatal("bad")
+			}
+
+			if len(test.matched) != len(matched) {
+				t.Fatal("bad")
+			} else if len(test.excluded) != len(excluded) {
+				t.Fatal("bad")
+			}
+
+			for i := 0; i < len(test.excluded); i++ {
+				if !reflect.DeepEqual(test.excluded[i], excluded[i]) {
+					t.Errorf("wrong excluded: %d %v %v", i, test.excluded[i], excluded[i])
+				}
+			}
+
+			for i := 0; i < len(test.matched); i++ {
+				if !reflect.DeepEqual(test.matched[i], matched[i]) {
+					t.Errorf("wrong matched: %d %v %v", i, test.matched[i], matched[i])
+				}
+			}
+		})
+	}
+}
+
 func TestFilterIfByType(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -755,6 +889,26 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			includeName:  "name",
 			includeNum:   0,
 			includeParam: `[`,
+		},
+		{
+			name: "network",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("10.2.3.4/24"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("10.255.255.4/24"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPAddr("::1"),
+				},
+			},
+			excludeName:  "network",
+			excludeNum:   1,
+			excludeParam: `10.0.0.0/8`,
+			includeName:  "network",
+			includeNum:   1,
+			includeParam: `::/127`,
 		},
 		{
 			name: "port",

@@ -128,6 +128,8 @@ $ sockaddr eval 'GetPrivateIP'
 172.14.6.167
 $ sockaddr eval 'GetInterfaceIP "eth0"'
 172.14.6.167
+$ sockaddr eval 'GetAllInterfaces | include "network" "172.14.6.0/24" | attr "address"'
+172.14.6.167
 $ sockaddr eval 'GetPrivateInterfaces | join "type" " "'
 IPv4 IPv6
 $ sockaddr eval 'GetPublicInterfaces | include "flags" "up|forwardable" | join "address" " "'

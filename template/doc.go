@@ -128,6 +128,9 @@ available filtering criteria is:
     flags can be passed together using the pipe character (`|`) to create an inclusive
     bitmask of flags.  The list of flags is included below.
   - "name": Filter IfAddrs based on a regexp matching the interface name.
+  - "network": Filter IfAddrs based on whether a netowkr is included in a given
+    CIDR.  More than one CIDR can be passed in if each network is separated by
+    the pipe character (`|`).
   - "port": Filter IfAddrs based on an exact match of the port number (number must
     be expressed as a string)
   - "rfc", "rfcs": Filter IfAddrs based on the matching RFC.  If more than one RFC
