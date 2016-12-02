@@ -803,7 +803,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			},
 			excludeName:  "address",
 			excludeNum:   2,
-			excludeParam: `^1\..*\.6$`,
+			excludeParam: `^1\..*\.4$`,
 			includeName:  "address",
 			includeNum:   1,
 			includeParam: `^1\.2\.3\.`,
@@ -838,7 +838,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 				},
 			},
 			excludeName:  "flags",
-			excludeNum:   1,
+			excludeNum:   2,
 			excludeParam: `up|loopback`,
 			includeName:  "flags",
 			includeNum:   2,
@@ -874,7 +874,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 				},
 			},
 			excludeName:  "name",
-			excludeNum:   1,
+			excludeNum:   2,
 			excludeParam: `^docker[\d]+$`,
 			includeName:  "name",
 			includeNum:   2,
@@ -924,7 +924,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 				},
 			},
 			excludeName:  "port",
-			excludeNum:   1,
+			excludeNum:   2,
 			excludeParam: `0$`,
 			includeName:  "port",
 			includeNum:   2,
@@ -947,7 +947,12 @@ func TestIncludeExcludeIfs(t *testing.T) {
 					SockAddr: sockaddr.MustIPv4Addr("10.2.3.4/24"),
 				},
 				sockaddr.IfAddr{
+					// Excluded (/127 vs /128)
 					SockAddr: sockaddr.MustIPv6Addr("::1/127"),
+				},
+				sockaddr.IfAddr{
+					// Excluded (/127 vs /128)
+					SockAddr: sockaddr.MustIPv6Addr("::/127"),
 				},
 				sockaddr.IfAddr{
 					SockAddr: sockaddr.MustIPAddr("203.0.113.0/24"),
@@ -955,7 +960,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			},
 			excludeName:  "rfc",
 			excludeNum:   2,
-			excludeParam: `6580`,
+			excludeParam: `6890`,
 			includeName:  "rfc",
 			includeNum:   1,
 			includeParam: `3330`,
@@ -965,7 +970,7 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			fail:         true,
 			excludeName:  "rfc",
 			excludeNum:   0,
-			excludeParam: `rfc123`,
+			excludeParam: `rfcOneTwoThree`,
 			includeName:  "rfc",
 			includeNum:   0,
 			includeParam: `99999999999999`,
@@ -1117,10 +1122,30 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			},
 			excludeName:  "type",
 			excludeParam: `ipv6`,
-			excludeNum:   1,
+			excludeNum:   2,
 			includeName:  "type",
 			includeParam: `ipv4`,
 			includeNum:   2,
+		},
+		{
+			name: "type",
+			ifAddrs: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPv4Addr("10.2.3.4/24"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustIPAddr("::1"),
+				},
+				sockaddr.IfAddr{
+					SockAddr: sockaddr.MustUnixSock("/tmp/foo"),
+				},
+			},
+			excludeName:  "type",
+			excludeParam: `ip`,
+			excludeNum:   1,
+			includeName:  "type",
+			includeParam: `unix`,
+			includeNum:   1,
 		},
 		{
 			name:         "type invalid arg",
@@ -1149,36 +1174,42 @@ func TestIncludeExcludeIfs(t *testing.T) {
 			t.Fatalf("test %d must have a name", i)
 		}
 		t.Run(fmt.Sprintf("%s-%s", test.name, "include"), func(t *testing.T) {
+			t.Logf("test.ifAddrs: %v", test.ifAddrs)
 			inIfAddrs, err := sockaddr.IncludeIfs(test.includeName, test.includeParam, test.ifAddrs)
+			t.Logf("inIfAddrs: %v", inIfAddrs)
+
 			switch {
 			case !test.fail && err != nil:
-				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
+				t.Errorf("%s: failed unexpectedly: %v", test.name, err)
 			case test.fail && err == nil:
-				t.Fatalf("%s: failed to throw an error", test.name)
+				t.Errorf("%s: failed to throw an error", test.name)
 			case test.fail && err != nil:
 				// expected test failure
 				return
 			}
 
 			if len(inIfAddrs) != test.includeNum {
-				t.Fatalf("%s: failed include length check. Expected %d, got %d", test.name, test.includeNum, len(inIfAddrs))
+				t.Errorf("%s: failed include length check. Expected %d, got %d. Input: %q", test.name, test.includeNum, len(inIfAddrs), test.includeParam)
 			}
 		})
 
 		t.Run(fmt.Sprintf("%s-%s", test.name, "exclude"), func(t *testing.T) {
-			outIfAddrs, err := sockaddr.ExcludeIfs(test.excludeName, test.includeParam, test.ifAddrs)
+			t.Logf("test.ifAddrs: %v", test.ifAddrs)
+			outIfAddrs, err := sockaddr.ExcludeIfs(test.excludeName, test.excludeParam, test.ifAddrs)
+			t.Logf("outIfAddrs: %v", outIfAddrs)
+
 			switch {
 			case !test.fail && err != nil:
-				t.Fatalf("%s: failed unexpectedly: %v", test.name, err)
+				t.Errorf("%s: failed unexpectedly: %v", test.name, err)
 			case test.fail && err == nil:
-				t.Fatalf("%s: failed to throw an error", test.name)
+				t.Errorf("%s: failed to throw an error", test.name)
 			case test.fail && err != nil:
 				// expected test failure
 				return
 			}
 
 			if len(outIfAddrs) != test.excludeNum {
-				t.Fatalf("%s: failed exclude length check. Expected %d, got %d", test.name, test.excludeNum, len(outIfAddrs))
+				t.Errorf("%s: failed exclude length check. Expected %d, got %d. Input: %q", test.name, test.excludeNum, len(outIfAddrs), test.excludeParam)
 			}
 		})
 	}

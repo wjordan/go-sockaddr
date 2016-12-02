@@ -486,7 +486,10 @@ func IfByType(inputTypes string, ifAddrs IfAddrs) (matched, remainder IfAddrs, e
 
 	ifTypes := strings.Split(strings.ToLower(inputTypes), "|")
 	for _, ifType := range ifTypes {
-		if ifType != "ip" && ifType != "ipv4" && ifType != "ipv6" && ifType != "unix" {
+		switch ifType {
+		case "ip", "ipv4", "ipv6", "unix":
+			// Valid types
+		default:
 			return nil, nil, fmt.Errorf("unsupported type %q %q", ifType, inputTypes)
 		}
 	}

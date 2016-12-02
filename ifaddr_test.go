@@ -18,6 +18,17 @@ func TestGetPublicIP(t *testing.T) {
 	}
 }
 
+func TestGetInterfaceIP(t *testing.T) {
+	ip, err := sockaddr.GetInterfaceIP(`^.*[\d]$`)
+	if err != nil {
+		t.Fatalf("regexp failed: %v", err)
+	}
+
+	if ip == "" {
+		t.Skip("it's hard to test this reliably")
+	}
+}
+
 func TestIfAddrAttr(t *testing.T) {
 	tests := []struct {
 		name     string
