@@ -1,13 +1,14 @@
-Usage: sockaddr dump [options] address [...]
+Usage: sockaddr dump [options] input [...]
 
-  Parse address(es) and dumps various output.
+  Parse address(es) or interface and dumps various output.
 
 Options:
 
-  -4  Parse the address as IPv4 only
-  -6  Parse the address as IPv6 only
+  -4  Parse the input as IPv4 only
+  -6  Parse the input as IPv6 only
   -H  Machine readable output
-  -i  Parse the address as IP address (either IPv4 or IPv6)
+  -I  Parse the argument as an interface name
+  -i  Parse the input as IP address (either IPv4 or IPv6)
   -n  Show only the value
   -o  Name of an attribute to pass through
-  -u  Parse the address as a UNIX Socket only
+  -u  Parse the input as a UNIX Socket only

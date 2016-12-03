@@ -26,6 +26,9 @@ type DumpCommand struct {
 	// valueOnly changes the output format to include only values
 	valueOnly bool
 
+	// ifOnly parses the input as an interface name
+	ifOnly bool
+
 	// ipOnly parses the input as an IP address (either IPv4 or IPv6)
 	ipOnly bool
 
@@ -41,7 +44,7 @@ type DumpCommand struct {
 
 // Description is the long-form command help.
 func (c *DumpCommand) Description() string {
-	return `Parse address(es) and dumps various output.`
+	return `Parse address(es) or interface and dumps various output.`
 }
 
 // Help returns the full help output expected by `sockaddr -h cmd`
@@ -56,10 +59,11 @@ func (c *DumpCommand) InitOpts() {
 	c.flags.Usage = func() { c.Ui.Output(c.Help()) }
 	c.flags.BoolVar(&c.machineMode, "H", false, "Machine readable output")
 	c.flags.BoolVar(&c.valueOnly, "n", false, "Show only the value")
-	c.flags.BoolVar(&c.v4Only, "4", false, "Parse the address as IPv4 only")
-	c.flags.BoolVar(&c.v6Only, "6", false, "Parse the address as IPv6 only")
-	c.flags.BoolVar(&c.ipOnly, "i", false, "Parse the address as IP address (either IPv4 or IPv6)")
-	c.flags.BoolVar(&c.unixOnly, "u", false, "Parse the address as a UNIX Socket only")
+	c.flags.BoolVar(&c.v4Only, "4", false, "Parse the input as IPv4 only")
+	c.flags.BoolVar(&c.v6Only, "6", false, "Parse the input as IPv6 only")
+	c.flags.BoolVar(&c.ifOnly, "I", false, "Parse the argument as an interface name")
+	c.flags.BoolVar(&c.ipOnly, "i", false, "Parse the input as IP address (either IPv4 or IPv6)")
+	c.flags.BoolVar(&c.unixOnly, "u", false, "Parse the input as a UNIX Socket only")
 	c.flags.Var((*MultiArg)(&c.attrNames), "o", "Name of an attribute to pass through")
 }
 
@@ -80,6 +84,7 @@ func (c *DumpCommand) Run(args []string) int {
 	}
 	for _, addr := range addrs {
 		var sa sockaddr.SockAddr
+		var ifAddrs sockaddr.IfAddrs
 		var err error
 		switch {
 		case c.v4Only:
@@ -90,6 +95,13 @@ func (c *DumpCommand) Run(args []string) int {
 			sa, err = sockaddr.NewUnixSock(addr)
 		case c.ipOnly:
 			sa, err = sockaddr.NewIPAddr(addr)
+		case c.ifOnly:
+			ifAddrs, err = sockaddr.GetAllInterfaces()
+			if err != nil {
+				break
+			}
+
+			ifAddrs, _, err = sockaddr.IfByName(addr, ifAddrs)
 		default:
 			sa, err = sockaddr.NewSockAddr(addr)
 		}
@@ -97,24 +109,36 @@ func (c *DumpCommand) Run(args []string) int {
 			c.Ui.Error(fmt.Sprintf("Unable to parse %+q: %v", addr, err))
 			return 1
 		}
-		c.dumpSockAddr(sa)
+		if sa != nil {
+			c.dumpSockAddr(sa)
+		} else if ifAddrs != nil {
+			c.dumpIfAddrs(ifAddrs)
+		} else {
+			panic("bad")
+		}
 	}
 	return 0
 }
 
 // Synopsis returns a terse description used when listing sub-commands.
 func (c *DumpCommand) Synopsis() string {
-	return `Parses IP addresses`
+	return `Parses input as an IP or interface name(s) and dumps various information`
 }
 
 // Usage is the one-line usage description
 func (c *DumpCommand) Usage() string {
-	return `sockaddr dump [options] address [...]`
+	return `sockaddr dump [options] input [...]`
 }
 
 // VisitAllFlags forwards the visitor function to the FlagSet
 func (c *DumpCommand) VisitAllFlags(fn func(*flag.Flag)) {
 	c.flags.VisitAll(fn)
+}
+
+func (c *DumpCommand) dumpIfAddrs(ifAddrs sockaddr.IfAddrs) {
+	for _, ifAddr := range ifAddrs {
+		c.dumpSockAddr(ifAddr.SockAddr)
+	}
 }
 
 func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
@@ -250,6 +274,9 @@ func (c *DumpCommand) parseOpts(args []string) ([]string, error) {
 		conflictingOptsCount++
 	}
 	if c.unixOnly {
+		conflictingOptsCount++
+	}
+	if c.ifOnly {
 		conflictingOptsCount++
 	}
 	if c.ipOnly {
