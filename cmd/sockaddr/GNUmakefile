@@ -12,7 +12,8 @@ $(BIN): $(SRCS)
 
 .PHONY: clean
 clean::
-	rm -f $(BIN) regression/*.diff
+	rm -f $(BIN) bin/* regression/*.diff
+	rmdir bin/ || true
 
 .PHONY: install
 install:: $(BIN)
@@ -21,3 +22,8 @@ install:: $(BIN)
 .PHONY: test
 test::	$(BIN)
 	@make -C regression
+
+.PHONY: world
+world::
+	mkdir -p bin
+	gox -os="solaris darwin freebsd linux windows" -arch="386 amd64 arm" -output="bin/sockaddr_{{.OS}}_{{.Arch}}" .

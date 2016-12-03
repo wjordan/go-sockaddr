@@ -50,3 +50,14 @@ install::
 doc::
 	echo Visit: http://127.0.0.1:6060/pkg/github.com/hashicorp/go-sockaddr/
 	godoc -http=:6060 -goroot $GOROOT
+
+world::
+	@set -e; \
+	for os in solaris darwin freebsd linux windows; do \
+		for arch in amd64; do \
+			printf "Building on %s-%s\n" "$${os}" "$${arch}" ; \
+			env GOOS="$${os}" GOARCH="$${arch}" go build -o /dev/null; \
+		done; \
+	done
+
+	make -C cmd/sockaddr world
