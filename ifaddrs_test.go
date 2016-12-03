@@ -669,28 +669,43 @@ func TestGetIfAddrs(t *testing.T) {
 // TestGetDefaultIfName tests to make sure a default interface name is always
 // returned from getDefaultIfName().
 func TestGetDefaultInterface(t *testing.T) {
+	reportOnDefault := func(args ...interface{}) {
+		if havePublicIP() || havePrivateIP() {
+			t.Fatalf(args[0].(string), args[1:]...)
+		} else {
+			t.Skipf(args[0].(string), args[1:]...)
+		}
+	}
+
 	ifAddrs, err := sockaddr.GetDefaultInterfaces()
 	if err != nil {
 		switch {
 		case len(ifAddrs) == 0:
-			t.Fatal(err)
+			reportOnDefault("bad: %v", err)
 		case ifAddrs[0].Flags&net.FlagUp == 0:
-			// if the first IfAddr isn't up, skip.
-			t.Skip(err)
+			reportOnDefault("bad: %v", err)
 		default:
-			t.Fatal(err)
+			reportOnDefault("bad: %v", err)
 		}
 	}
 }
 
 func TestGetPrivateIP(t *testing.T) {
+	reportOnPrivate := func(args ...interface{}) {
+		if havePrivateIP() {
+			t.Fatalf(args[0].(string), args[1:]...)
+		} else {
+			t.Skipf(args[0].(string), args[1:]...)
+		}
+	}
+
 	ip, err := sockaddr.GetPrivateIP()
 	if err != nil {
-		t.Fatalf("private IP failed: %v", err)
+		reportOnPrivate("private IP failed: %v", err)
 	}
 
 	if len(ip) == 0 {
-		t.Fatalf("no private IP found")
+		reportOnPrivate("no private IP found", nil)
 	}
 }
 
@@ -740,39 +755,63 @@ func TestGetAllInterfaces(t *testing.T) {
 }
 
 func TestGetDefaultInterfaces(t *testing.T) {
+	reportOnDefault := func(args ...interface{}) {
+		if havePublicIP() || havePrivateIP() {
+			t.Fatalf(args[0].(string), args[1:]...)
+		} else {
+			t.Skipf(args[0].(string), args[1:]...)
+		}
+	}
+
 	ifAddrs, err := sockaddr.GetDefaultInterfaces()
 	if err != nil {
-		t.Fatalf("unable to gather default interfaces: %v", err)
+		reportOnDefault("unable to gather default interfaces: %v", err)
 	}
 
 	if len(ifAddrs) == 0 {
-		t.Fatalf("no default interfaces available")
+		reportOnDefault("no default interfaces available", nil)
 	}
 }
 
 func TestGetPrivateInterfaces(t *testing.T) {
+	reportOnPrivate := func(args ...interface{}) {
+		if havePrivateIP() {
+			t.Fatalf(args[0].(string), args[1:]...)
+		} else {
+			t.Skipf(args[0].(string), args[1:]...)
+		}
+	}
+
 	ifAddrs, err := sockaddr.GetPrivateInterfaces()
 	if err != nil {
-		t.Fatalf("failed: %v", err)
+		reportOnPrivate("failed: %v", err)
 	}
 
 	if len(ifAddrs) == 0 {
-		t.Skip("no public IPs found")
+		reportOnPrivate("no public IPs found", nil)
 	}
 
 	if len(ifAddrs[0].String()) == 0 {
-		t.Fatalf("no string representation of private IP found")
+		reportOnPrivate("no string representation of private IP found")
 	}
 }
 
 func TestGetPublicInterfaces(t *testing.T) {
+	reportOnPublic := func(args ...interface{}) {
+		if havePublicIP() {
+			t.Fatalf(args[0].(string), args[1:]...)
+		} else {
+			t.Skipf(args[0].(string), args[1:]...)
+		}
+	}
+
 	ifAddrs, err := sockaddr.GetPublicInterfaces()
 	if err != nil {
-		t.Fatalf("failed: %v", err)
+		reportOnPublic("failed: %v", err)
 	}
 
 	if len(ifAddrs) == 0 {
-		t.Skip("no public IPs found")
+		reportOnPublic("no public IPs found")
 	}
 }
 
