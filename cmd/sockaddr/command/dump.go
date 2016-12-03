@@ -241,22 +241,6 @@ func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
 
 	result := columnize.SimpleFormat(output)
 	c.Ui.Output(result)
-
-	// fmt.Printf("SockAddr.Address.IsGlobalUnicast(): %v\n", na.Address.IsGlobalUnicast())
-	// fmt.Printf("SockAddr.Address.IsInterfaceLocalMulticast(): %v\n", na.Address.IsInterfaceLocalMulticast())
-	// fmt.Printf("SockAddr.Address.IsLinkLocalMulticast(): %v\n", na.Address.IsLinkLocalMulticast())
-	// fmt.Printf("SockAddr.Address.IsLinkLocalUnicast(): %v\n", na.Address.IsLinkLocalUnicast())
-	// fmt.Printf("SockAddr.Address.IsLoopback(): %v\n", na.Address.IsLoopback())
-	// fmt.Printf("SockAddr.Address.IsMulticast(): %v\n", na.Address.IsMulticast())
-	// fmt.Printf("SockAddr.Address.IsUnspecified(): %v\n", na.Address.IsUnspecified())
-	// fmt.Printf("SockAddr.Address.To16(): %s\n", na.Address.To16())
-	// fmt.Printf("SockAddr.Address.To4(): %s\n", na.Address.To4())
-	// ipuint, ok := na.ToUint32()
-	// if !ok {
-	// 	panic("Unable to uint32")
-	// }
-
-	// fmt.Printf("SockAddr.ToUint32(): %d\n", ipuint)
 }
 
 // parseOpts is responsible for parsing the options set in InitOpts().  Returns
