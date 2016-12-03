@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/go-sockaddr/template"
 	"github.com/mitchellh/cli"
 )
@@ -67,7 +68,13 @@ func (c *EvalCommand) Run(args []string) int {
 	}
 
 	c.InitOpts()
-	tmpls := c.parseOpts(args)
+	tmpls, err := c.parseOpts(args)
+	if err != nil {
+		if !errwrap.Contains(err, "flag: help requested") {
+			c.Ui.Error(fmt.Sprintf("error parsing args: %v", err))
+		}
+		return 1
+	}
 	inputs, outputs := make([]string, len(tmpls)), make([]string, len(tmpls))
 	var rawInput, readStdin bool
 	for i, in := range tmpls {
@@ -142,10 +149,10 @@ func (c *EvalCommand) VisitAllFlags(fn func(*flag.Flag)) {
 
 // parseOpts is responsible for parsing the options set in InitOpts().  Returns
 // a list of non-parsed flags.
-func (c *EvalCommand) parseOpts(args []string) []string {
+func (c *EvalCommand) parseOpts(args []string) ([]string, error) {
 	if err := c.flags.Parse(args); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return c.flags.Args()
+	return c.flags.Args(), nil
 }

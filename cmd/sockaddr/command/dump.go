@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/hashicorp/errwrap"
 	sockaddr "github.com/hashicorp/go-sockaddr"
 	"github.com/mitchellh/cli"
 	"github.com/ryanuber/columnize"
@@ -70,7 +71,13 @@ func (c *DumpCommand) Run(args []string) int {
 	}
 
 	c.InitOpts()
-	addrs := c.parseOpts(args)
+	addrs, err := c.parseOpts(args)
+	if err != nil {
+		if !errwrap.Contains(err, "flag: help requested") {
+			c.Ui.Error(fmt.Sprintf("error parsing args: %v", err))
+		}
+		return 1
+	}
 	for _, addr := range addrs {
 		var sa sockaddr.SockAddr
 		var err error
@@ -230,9 +237,9 @@ func (c *DumpCommand) dumpSockAddr(sa sockaddr.SockAddr) {
 
 // parseOpts is responsible for parsing the options set in InitOpts().  Returns
 // a list of non-parsed flags.
-func (c *DumpCommand) parseOpts(args []string) []string {
+func (c *DumpCommand) parseOpts(args []string) ([]string, error) {
 	if err := c.flags.Parse(args); err != nil {
-		return nil
+		return nil, err
 	}
 
 	conflictingOptsCount := 0
@@ -249,9 +256,8 @@ func (c *DumpCommand) parseOpts(args []string) []string {
 		conflictingOptsCount++
 	}
 	if conflictingOptsCount > 1 {
-		c.Ui.Error("Conflicting options specified, only one parsing mode may be specified at a time")
-		return nil
+		return nil, fmt.Errorf("Conflicting options specified, only one parsing mode may be specified at a time")
 	}
 
-	return c.flags.Args()
+	return c.flags.Args(), nil
 }

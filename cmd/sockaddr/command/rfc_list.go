@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/hashicorp/errwrap"
 	sockaddr "github.com/hashicorp/go-sockaddr"
 	"github.com/mitchellh/cli"
 )
@@ -47,7 +48,13 @@ func (c *RFCListCommand) Run(args []string) int {
 	}
 
 	c.InitOpts()
-	c.parseOpts(args)
+	_, err := c.parseOpts(args)
+	if err != nil {
+		if !errwrap.Contains(err, "flag: help requested") {
+			c.Ui.Error(fmt.Sprintf("error parsing args: %v", err))
+		}
+		return 1
+	}
 
 	var rfcs rfcNums
 	sockaddr.VisitAllRFCs(func(rfcNum uint, sas sockaddr.SockAddrs) {
@@ -78,10 +85,10 @@ func (c *RFCListCommand) VisitAllFlags(fn func(*flag.Flag)) {
 	c.flags.VisitAll(fn)
 }
 
-func (c *RFCListCommand) parseOpts(args []string) []string {
+func (c *RFCListCommand) parseOpts(args []string) ([]string, error) {
 	if err := c.flags.Parse(args); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return c.flags.Args()
+	return c.flags.Args(), nil
 }

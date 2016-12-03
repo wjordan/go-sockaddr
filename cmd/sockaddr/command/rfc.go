@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/errwrap"
 	sockaddr "github.com/hashicorp/go-sockaddr"
 	"github.com/mitchellh/cli"
 )
@@ -47,7 +48,13 @@ func (c *RFCCommand) Run(args []string) int {
 	}
 
 	c.InitOpts()
-	unprocessedArgs := c.parseOpts(args)
+	unprocessedArgs, err := c.parseOpts(args)
+	if err != nil {
+		if !errwrap.Contains(err, "flag: help requested") {
+			c.Ui.Error(fmt.Sprintf("error parsing args: %v", err))
+		}
+		return 1
+	}
 
 	switch numArgs := len(unprocessedArgs); {
 	case numArgs != 2 && numArgs != 0:
@@ -105,10 +112,10 @@ func (c *RFCCommand) VisitAllFlags(fn func(*flag.Flag)) {
 
 // parseOpts is responsible for parsing the options set in InitOpts().  Returns
 // a list of non-parsed flags.
-func (c *RFCCommand) parseOpts(args []string) []string {
+func (c *RFCCommand) parseOpts(args []string) ([]string, error) {
 	if err := c.flags.Parse(args); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return c.flags.Args()
+	return c.flags.Args(), nil
 }
