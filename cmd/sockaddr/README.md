@@ -197,6 +197,32 @@ $ sockaddr rfc list
 7335
 ```
 
+## `sockaddr tech-support`
+
+If one of the helper methods that derives its output from `GetDefaultInterfaces`
+is misbehaving, submit the output from this command as an issue along with
+any miscelaneous details that are specific to your environment.
+
+```text
+Usage: sockaddr tech-support [options]
+
+  Print out network diagnostic information that can be used by
+  support.
+  
+  The `sockaddr` library relies on OS-specific commands and
+  output which can potentially be brittle.  The `tech-support`
+  subcommand emits all of the platform-specific network
+  details required to debug why a given `sockaddr` API call is
+  behaving differently than expected.  The `-output` flag
+  controls the output format. The default output mode is
+  Markdown (`md`) however a raw mode (`raw`) is available to
+  obtain the original output.
+
+Options:
+
+  -output  Encode the output using one of Markdown ("md") or Raw ("raw")
+```
+
 ## `sockaddr version`
 
 The lowly version stub.

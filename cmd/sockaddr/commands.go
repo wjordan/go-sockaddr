@@ -34,6 +34,11 @@ func init() {
 				Ui: ui,
 			}, nil
 		},
+		"tech-support": func() (cli.Command, error) {
+			return &command.TechSupportCommand{
+				Ui: ui,
+			}, nil
+		},
 		"version": func() (cli.Command, error) {
 			return &command.VersionCommand{
 				HumanVersion: GetHumanVersion(),
