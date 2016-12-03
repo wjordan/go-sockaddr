@@ -93,7 +93,7 @@ ListenStream  "unix" "/tmp/example.sock"
 
 ## `sockaddr eval`
 
-```
+```text
 Usage: sockaddr eval [options] [template ...]
 
   Parse the sockaddr template and evaluates the output.
