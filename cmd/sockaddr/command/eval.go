@@ -70,8 +70,8 @@ func (c *EvalCommand) Run(args []string) int {
 	c.InitOpts()
 	tmpls, err := c.parseOpts(args)
 	if err != nil {
-		if !errwrap.Contains(err, "flag: help requested") {
-			c.Ui.Error(fmt.Sprintf("error parsing args: %v", err))
+		if errwrap.Contains(err, "flag: help requested") {
+			return 0
 		}
 		return 1
 	}
