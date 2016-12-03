@@ -179,3 +179,18 @@ Tunnel adapter Reusable ISATAP Interface {F3F2E4A5-8823-40E5-87EA-1F6881BACC95}:
 		})
 	}
 }
+
+func Test_VisitComands(t *testing.T) {
+	ri, err := NewRouteInfo()
+	if err != nil {
+		t.Fatalf("bad: %v", err)
+	}
+
+	var count int
+	ri.VisitCommands(func(name string, cmd []string) {
+		count++
+	})
+	if count == 0 {
+		t.Fatalf("Expected more than 0 items")
+	}
+}

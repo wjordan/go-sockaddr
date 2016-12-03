@@ -216,7 +216,12 @@ func GetAllInterfaces() (IfAddrs, error) {
 // GetDefaultInterfaces returns IfAddrs of the addresses attached to the default
 // route.
 func GetDefaultInterfaces() (IfAddrs, error) {
-	defaultIfName, err := getDefaultIfName()
+	ri, err := NewRouteInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	defaultIfName, err := ri.GetDefaultInterfaceName()
 	if err != nil {
 		return nil, err
 	}
