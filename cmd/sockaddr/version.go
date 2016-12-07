@@ -1,14 +1,14 @@
 package main
 
 import (
-        "fmt"
-        "strings"
+	"fmt"
+	"strings"
 )
 
 // The git commit that was compiled. This will be filled in by the compiler.
 var (
-        GitCommit   string
-        GitDescribe string
+	GitCommit   string
+	GitDescribe string
 )
 
 // The main version number that is being run at the moment.
@@ -22,22 +22,22 @@ const VersionPrerelease = "dev"
 // GetHumanVersion composes the parts of the version in a way that's suitable
 // for displaying to humans.
 func GetHumanVersion() string {
-        version := Version
-        if GitDescribe != "" {
-                version = GitDescribe
-        }
+	version := Version
+	if GitDescribe != "" {
+		version = GitDescribe
+	}
 
-        release := VersionPrerelease
-        if GitDescribe == "" && release == "" {
-                release = "dev"
-        }
-        if release != "" {
-                version += fmt.Sprintf("-%s", release)
-                if GitCommit != "" {
-                        version += fmt.Sprintf(" (%s)", GitCommit)
-                }
-        }
+	release := VersionPrerelease
+	if GitDescribe == "" && release == "" {
+		release = "dev"
+	}
+	if release != "" {
+		version += fmt.Sprintf("-%s", release)
+		if GitCommit != "" {
+			version += fmt.Sprintf(" (%s)", GitCommit)
+		}
+	}
 
-        // Strip off any single quotes added by the git information.
-        return strings.Replace(version, "'", "", -1)
+	// Strip off any single quotes added by the git information.
+	return strings.Replace(version, "'", "", -1)
 }
