@@ -854,9 +854,9 @@ func OffsetIfAddrs(off int, in IfAddrs) (IfAddrs, error) {
 	}
 
 	if end {
-		return in[len(in)-off : len(in)], nil
+		return in[len(in)-off:], nil
 	}
-	return in[off:len(in)], nil
+	return in[off:], nil
 }
 
 func (ifAddr IfAddr) String() string {

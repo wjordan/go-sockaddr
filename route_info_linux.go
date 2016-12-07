@@ -6,7 +6,7 @@ import (
 )
 
 var cmds map[string][]string = map[string][]string{
-	"ip": []string{"/sbin/ip", "route"},
+	"ip": {"/sbin/ip", "route"},
 }
 
 type routeInfo struct {

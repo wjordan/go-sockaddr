@@ -5,7 +5,7 @@ package sockaddr
 import "os/exec"
 
 var cmds map[string][]string = map[string][]string{
-	"route": []string{"/sbin/route", "-n", "get", "default"},
+	"route": {"/sbin/route", "-n", "get", "default"},
 }
 
 type routeInfo struct {

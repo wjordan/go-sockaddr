@@ -3,8 +3,8 @@ package sockaddr
 import "os/exec"
 
 var cmds map[string][]string = map[string][]string{
-	"netstat":  []string{"netstat", "-rn"},
-	"ipconfig": []string{"ipconfig"},
+	"netstat":  {"netstat", "-rn"},
+	"ipconfig": {"ipconfig"},
 }
 
 type routeInfo struct {
