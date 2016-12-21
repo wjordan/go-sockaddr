@@ -50,7 +50,7 @@ string        127.0.0.2/8
 host          127.0.0.2
 address       127.0.0.2
 port          0
-netmask       ff000000
+netmask       255.0.0.0
 network       127.0.0.0/8
 mask_bits     8
 binary        01111111000000000000000000000010
