@@ -4,7 +4,7 @@ string        0.0.0.0/1
 host          0.0.0.0
 address       0.0.0.0
 port          0
-netmask       80000000
+netmask       128.0.0.0
 network       0.0.0.0/1
 mask_bits     1
 binary        00000000000000000000000000000000
@@ -26,7 +26,7 @@ string        ::/97
 host          ::
 address       ::
 port          0
-netmask       ffffffffffffffffffffffff80000000
+netmask       ffff:ffff:ffff:ffff:ffff:ffff:8000:0
 network       ::/97
 mask_bits     97
 binary        00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -46,7 +46,7 @@ string        ::/97
 host          ::
 address       ::
 port          0
-netmask       ffffffffffffffffffffffff80000000
+netmask       ffff:ffff:ffff:ffff:ffff:ffff:8000:0
 network       ::/97
 mask_bits     97
 binary        00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

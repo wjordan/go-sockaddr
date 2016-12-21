@@ -615,7 +615,7 @@ func TestGetIfAddrs(t *testing.T) {
 		val := sockaddr.IfAddrAttr(ifAddr, "name")
 		if val == "" {
 			t.Fatalf("name failed")
-		} else if val == "lo0" || val == "Loopback Pseudo-Interface 1" {
+		} else if val == "lo0" || val == "lo" || val == "Loopback Pseudo-Interface 1" {
 			loInt = &ifAddr
 			break
 		}
@@ -624,8 +624,8 @@ func TestGetIfAddrs(t *testing.T) {
 		t.Fatalf("No loopback interfaces found, loInt nil")
 	}
 
-	if val := sockaddr.IfAddrAttr(*loInt, "flags"); val != "up|loopback|multicast" {
-		t.Fatalf("expected different flags from lo0: %q", val)
+	if val := sockaddr.IfAddrAttr(*loInt, "flags"); !(val == "up|loopback|multicast" || val == "up|loopback") {
+		t.Fatalf("expected different flags from loopback: %q", val)
 	}
 
 	if loInt == nil {

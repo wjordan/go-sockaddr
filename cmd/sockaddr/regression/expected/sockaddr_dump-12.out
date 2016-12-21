@@ -4,7 +4,7 @@ string        192.168.0.1/16
 host          192.168.0.1
 address       192.168.0.1
 port          0
-netmask       ffff0000
+netmask       255.255.0.0
 network       192.168.0.0/16
 mask_bits     16
 binary        11000000101010000000000000000001
@@ -25,7 +25,7 @@ string        192.168.0.1/16
 host          192.168.0.1
 address       192.168.0.1
 port          0
-netmask       ffff0000
+netmask       255.255.0.0
 network       192.168.0.0/16
 mask_bits     16
 binary        11000000101010000000000000000001
@@ -46,7 +46,7 @@ string        192.168.0.1/16
 host          192.168.0.1
 address       192.168.0.1
 port          0
-netmask       ffff0000
+netmask       255.255.0.0
 network       192.168.0.0/16
 mask_bits     16
 binary        11000000101010000000000000000001
