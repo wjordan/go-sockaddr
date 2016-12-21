@@ -152,7 +152,7 @@ func ipAddrInit() {
 			}
 		},
 		"network": func(ip IPAddr) string {
-			return ip.Network().String()
+			return ip.Network().NetIP().String()
 		},
 		"octets": func(ip IPAddr) string {
 			octets := ip.Octets()
