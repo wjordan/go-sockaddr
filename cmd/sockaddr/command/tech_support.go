@@ -91,7 +91,7 @@ func (c *TechSupportCommand) Run(args []string) int {
 	switch c.outputMode {
 	case "md":
 		intFmt = "%02d."
-		keyFmt = "%s"
+		keyFmt = "s"
 		fmtMap = map[string]string{
 			"s":  "`%s`",
 			"-s": "%s",
