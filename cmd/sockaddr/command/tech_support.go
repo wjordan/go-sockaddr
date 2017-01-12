@@ -86,49 +86,7 @@ func (c *TechSupportCommand) Run(args []string) int {
 		}
 	})
 
-	var intFmt, keyFmt string
-	var fmtMap map[string]string
-	switch c.outputMode {
-	case "md":
-		intFmt = "%02d."
-		keyFmt = "s"
-		fmtMap = map[string]string{
-			"s":  "`%s`",
-			"-s": "%s",
-			"v":  "`%v`",
-			"+v": "`%#v`",
-		}
-	case "raw":
-		intFmt = "%02d:"
-		keyFmt = "-s"
-		fmtMap = map[string]string{
-			"s":  "%q",
-			"-s": "%s",
-			"v":  "%v",
-			"+v": "%#v",
-		}
-	default:
-		c.Ui.Error(fmt.Sprintf("Unsupported output type: %q", c.outputMode))
-		return 1
-	}
-
-	var count int
-	out := func(fmtType, k string, v interface{}) {
-		count++
-
-		fmtStr, ok := fmtMap[fmtType]
-		if !ok {
-			panic(fmt.Sprintf("Invalid fmtType: %v", fmtType))
-		}
-
-		strFmt, ok := fmtMap[keyFmt]
-		if !ok {
-			panic(fmt.Sprintf("Invalid strFmt: %v", keyFmt))
-		}
-
-		outFmt := fmt.Sprintf("%s %s:\t%s", intFmt, strFmt, fmtStr)
-		c.Ui.Output(fmt.Sprintf(outFmt, count, k, v))
-	}
+	out := c.rowWriterOutputFactory()
 
 	for cmdName, result := range output {
 		switch c.outputMode {
@@ -207,4 +165,52 @@ func (c *TechSupportCommand) parseOpts(args []string) ([]string, error) {
 		return nil, fmt.Errorf(`Invalid output mode %q, supported output types are "md" (default) and "raw"`, c.outputMode)
 	}
 	return c.flags.Args(), nil
+}
+
+func (c *TechSupportCommand) rowWriterOutputFactory() func(valueVerb, key string, val interface{}) {
+	type _Fmt string
+	type _Verb string
+	var lineNoFmt string
+	var keyVerb _Verb
+	var fmtMap map[_Verb]_Fmt
+	switch c.outputMode {
+	case "md":
+		lineNoFmt = "%02d."
+		keyVerb = "s"
+		fmtMap = map[_Verb]_Fmt{
+			"s":  "`%s`",
+			"-s": "%s",
+			"v":  "`%v`",
+			"+v": "`%#v`",
+		}
+	case "raw":
+		lineNoFmt = "%02d:"
+		keyVerb = "-s"
+		fmtMap = map[_Verb]_Fmt{
+			"s":  "%q",
+			"-s": "%s",
+			"v":  "%v",
+			"+v": "%#v",
+		}
+	default:
+		panic(fmt.Sprintf("Unsupported output type: %q", c.outputMode))
+	}
+
+	var count int
+	return func(valueVerb, key string, val interface{}) {
+		count++
+
+		keyFmt, ok := fmtMap[keyVerb]
+		if !ok {
+			panic(fmt.Sprintf("Invalid key verb: %q", keyVerb))
+		}
+
+		valFmt, ok := fmtMap[_Verb(valueVerb)]
+		if !ok {
+			panic(fmt.Sprintf("Invalid value verb: %q", valueVerb))
+		}
+
+		outputModeFmt := fmt.Sprintf("%s %s:\t%s", lineNoFmt, keyFmt, valFmt)
+		c.Ui.Output(fmt.Sprintf(outputModeFmt, count, key, val))
+	}
 }
