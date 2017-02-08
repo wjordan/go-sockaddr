@@ -61,7 +61,7 @@ called
 [`sockaddr`](https://github.com/hashicorp/go-sockaddr/tree/master/cmd/sockaddr).
 The
 [`sockaddr`](https://github.com/hashicorp/go-sockaddr/tree/master/cmd/sockaddr)
-utility exposes nearly all of the functionailty of the library and can be used
+utility exposes nearly all of the functionality of the library and can be used
 either as an administrative tool or testing tool.  To install
 the
 [`sockaddr`](https://github.com/hashicorp/go-sockaddr/tree/master/cmd/sockaddr),

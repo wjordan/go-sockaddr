@@ -202,7 +202,7 @@ $ sockaddr rfc list
 
 If one of the helper methods that derives its output from `GetDefaultInterfaces`
 is misbehaving, submit the output from this command as an issue along with
-any miscelaneous details that are specific to your environment.
+any miscellaneous details that are specific to your environment.
 
 ```text
 Usage: sockaddr tech-support [options]
