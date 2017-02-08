@@ -25,7 +25,7 @@ import (
 //
 //   * We use longest prefix matching to find a matching subcommand. This
 //     means if you register "foo bar" and the user executes "cli foo qux",
-//     the "foo" commmand will be executed with the arg "qux". It is up to
+//     the "foo" command will be executed with the arg "qux". It is up to
 //     you to handle these args. One option is to just return the special
 //     help return code `RunResultHelp` to display help and exit.
 //
@@ -388,14 +388,20 @@ func (c *CLI) helpCommands(prefix string) map[string]CommandFactory {
 
 func (c *CLI) processArgs() {
 	for i, arg := range c.Args {
+		if arg == "--" {
+			break
+		}
+
+		// Check for help flags.
+		if arg == "-h" || arg == "-help" || arg == "--help" {
+			c.isHelp = true
+			continue
+		}
+
 		if c.subcommand == "" {
-			// Check for version and help flags if not in a subcommand
+			// Check for version flags if not in a subcommand.
 			if arg == "-v" || arg == "-version" || arg == "--version" {
 				c.isVersion = true
-				continue
-			}
-			if arg == "-h" || arg == "-help" || arg == "--help" {
-				c.isHelp = true
 				continue
 			}
 
