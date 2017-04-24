@@ -167,6 +167,14 @@ func FilterIfByType(ifAddrs IfAddrs, type_ SockAddrType) (matchedIfs, excludedIf
 	return matchedIfs, excludedIfs
 }
 
+// IfAttr forwards the selector to IfAttr.Attr() for resolution.  If there is
+// more than one IfAddr, only the first IfAddr is used.
+func IfAttr(selectorName string, ifAddr IfAddr) (string, error) {
+	attrName := AttrName(strings.ToLower(selectorName))
+	attrVal, err := ifAddr.Attr(attrName)
+	return attrVal, err
+}
+
 // IfAttrs forwards the selector to IfAttrs.Attr() for resolution.  If there is
 // more than one IfAddr, only the first IfAddr is used.
 func IfAttrs(selectorName string, ifAddrs IfAddrs) (string, error) {

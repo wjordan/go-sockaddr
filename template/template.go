@@ -70,6 +70,9 @@ func init() {
 		"offset": sockaddr.OffsetIfAddrs,
 		"unique": sockaddr.UniqueIfAddrsBy,
 
+		// Misc functions that operate on IfAddr input
+		"Attr": sockaddr.IfAttr,
+
 		// Return a Private RFC 6890 IP address string that is attached
 		// to the default route and a forwardable address.
 		"GetPrivateIP": sockaddr.GetPrivateIP,

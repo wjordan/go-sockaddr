@@ -180,6 +180,18 @@ Example:
     {{ GetPrivateInterfaces | include "flags" "forwardable|up" | attr "address" }}
 
 
+`Attr`: Extracts a single attribute from an `IfAttr` and in every other way
+performs the same as the `attr`.
+
+Example:
+
+    {{ with $ifAddrs := GetAllInterfaces | include "type" "IP" | sort "+type,+address" -}}
+      {{- range $ifAddrs -}}
+        {{- Attr "address" . }} -- {{ Attr "network" . }}/{{ Attr "size" . -}}
+      {{- end -}}
+    {{- end }}
+
+
 `join`: Similar to `attr`, `join` extracts all matching attributes of the list
 and returns them as a string joined by the separator, the second argument to
 `join`.  The list of available attributes is type-specific and shared between
@@ -205,7 +217,7 @@ Example:
   - `up`: Is the interface up?
 
 
-Attributes for `attr` and `join`:
+Attributes for `attr`, `Attr`, and `join`:
 
 SockAddr Type:
   - `string`
