@@ -98,7 +98,7 @@ func TestIfAddrAttr(t *testing.T) {
 			t.Fatalf("test %d must have a name", i)
 		}
 
-		result, err := sockaddr.IfAttr(test.attr, sockaddr.IfAddrs{test.ifAddr})
+		result, err := sockaddr.IfAttrs(test.attr, sockaddr.IfAddrs{test.ifAddr})
 		if err != nil {
 			t.Errorf("failed to get attr %q from %v", test.name, test.ifAddr)
 		}
@@ -109,7 +109,7 @@ func TestIfAddrAttr(t *testing.T) {
 	}
 
 	// Test an empty array
-	result, err := sockaddr.IfAttr("name", sockaddr.IfAddrs{})
+	result, err := sockaddr.IfAttrs("name", sockaddr.IfAddrs{})
 	if err != nil {
 		t.Error(`failed to get attr "name" from an empty array`)
 	}
