@@ -70,6 +70,9 @@ func init() {
 		"offset": sockaddr.OffsetIfAddrs,
 		"unique": sockaddr.UniqueIfAddrsBy,
 
+		// Misc math functions that operate on a single IfAddr input
+		"math": sockaddr.IfAddrsMath,
+
 		// Misc functions that operate on IfAddr input
 		"Attr": sockaddr.IfAttr,
 

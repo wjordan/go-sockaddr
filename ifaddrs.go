@@ -3,6 +3,7 @@ package sockaddr
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"regexp"
 	"sort"
@@ -658,6 +659,171 @@ func IfByNetwork(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, IfAddrs, 
 	}
 
 	return includedIfs, excludedIfs, nil
+}
+
+// IfAddrMath will return a new IfAddr struct with a mutaterd value.
+func IfAddrMath(operation, value string, inputIfAddr IfAddr) (IfAddr, error) {
+	// Regexp used to enforce the sign being a required part of the grammar for
+	// some values.
+	signRe := regexp.MustCompile(`^[\s]*[+-]`)
+
+	switch strings.ToLower(operation) {
+	case "address":
+		// "address" operates on the IP address and is allowed to overflow or
+		// underflow networks, however it will wrap along the underlying address's
+		// underlying type.
+
+		if !signRe.MatchString(value) {
+			return IfAddr{}, fmt.Errorf("sign (+/-) is required operation %q", operation)
+		}
+
+		switch sockType := inputIfAddr.SockAddr.Type(); sockType {
+		case TypeIPv4:
+			// 33 == Accept any uint32 value
+			// TODO(seanc@): Add the ability to parse hex
+			i, err := strconv.ParseInt(value, 10, 33)
+			if err != nil {
+				return IfAddr{}, fmt.Errorf("unable to convert %q to int for operation %q: %v", value, operation, err)
+			}
+
+			ipv4 := *ToIPv4Addr(inputIfAddr.SockAddr)
+			ipv4Uint32 := uint32(ipv4.Address)
+			ipv4Uint32 += uint32(i)
+			return IfAddr{
+				SockAddr: IPv4Addr{
+					Address: IPv4Address(ipv4Uint32),
+					Mask:    ipv4.Mask,
+				},
+				Interface: inputIfAddr.Interface,
+			}, nil
+		case TypeIPv6:
+			// 64 == Accept any int32 value
+			// TODO(seanc@): Add the ability to parse hex.  Also parse a bignum int.
+			i, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return IfAddr{}, fmt.Errorf("unable to convert %q to int for operation %q: %v", value, operation, err)
+			}
+
+			ipv6 := *ToIPv6Addr(inputIfAddr.SockAddr)
+			ipv6BigIntA := new(big.Int)
+			ipv6BigIntA.Set(ipv6.Address)
+			ipv6BigIntB := big.NewInt(i)
+
+			ipv6Addr := ipv6BigIntA.Add(ipv6BigIntA, ipv6BigIntB)
+			ipv6Addr.And(ipv6Addr, ipv6HostMask)
+
+			return IfAddr{
+				SockAddr: IPv6Addr{
+					Address: IPv6Address(ipv6Addr),
+					Mask:    ipv6.Mask,
+				},
+				Interface: inputIfAddr.Interface,
+			}, nil
+		default:
+			return IfAddr{}, fmt.Errorf("unsupported type for operation %q: %T", operation, sockType)
+		}
+	case "network":
+		// "network" operates on the network address.  Positive values start at the
+		// network address and negative values wrap at the network address, which
+		// means a "-1" value on a network will be the broadcast address after
+		// wrapping is applied.
+
+		if !signRe.MatchString(value) {
+			return IfAddr{}, fmt.Errorf("sign (+/-) is required operation %q", operation)
+		}
+
+		switch sockType := inputIfAddr.SockAddr.Type(); sockType {
+		case TypeIPv4:
+			// 33 == Accept any uint32 value
+			// TODO(seanc@): Add the ability to parse hex
+			i, err := strconv.ParseInt(value, 10, 33)
+			if err != nil {
+				return IfAddr{}, fmt.Errorf("unable to convert %q to int for operation %q: %v", value, operation, err)
+			}
+
+			ipv4 := *ToIPv4Addr(inputIfAddr.SockAddr)
+			ipv4Uint32 := uint32(ipv4.NetworkAddress())
+
+			// Wrap along network mask boundaries.  EZ-mode wrapping made possible by
+			// use of int64 vs a uint.
+			var wrappedMask int64
+			if i >= 0 {
+				wrappedMask = i
+			} else {
+				wrappedMask = 1 + i + int64(^uint32(ipv4.Mask))
+			}
+
+			ipv4Uint32 = ipv4Uint32 + (uint32(wrappedMask) &^ uint32(ipv4.Mask))
+
+			return IfAddr{
+				SockAddr: IPv4Addr{
+					Address: IPv4Address(ipv4Uint32),
+					Mask:    ipv4.Mask,
+				},
+				Interface: inputIfAddr.Interface,
+			}, nil
+		case TypeIPv6:
+			// 64 == Accept any int32 value
+			// TODO(seanc@): Add the ability to parse hex.  Also parse a bignum int.
+			i, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return IfAddr{}, fmt.Errorf("unable to convert %q to int for operation %q: %v", value, operation, err)
+			}
+
+			ipv6 := *ToIPv6Addr(inputIfAddr.SockAddr)
+			ipv6BigInt := new(big.Int)
+			ipv6BigInt.Set(ipv6.NetworkAddress())
+
+			mask := new(big.Int)
+			mask.Set(ipv6.Mask)
+			if i > 0 {
+				wrappedMask := new(big.Int)
+				wrappedMask.SetInt64(i)
+
+				wrappedMask.AndNot(wrappedMask, mask)
+				ipv6BigInt.Add(ipv6BigInt, wrappedMask)
+			} else {
+				// Mask off any bits that exceed the network size.  Subtract the
+				// wrappedMask from the last usable - 1
+				wrappedMask := new(big.Int)
+				wrappedMask.SetInt64(-1 * i)
+				wrappedMask.Sub(wrappedMask, big.NewInt(1))
+
+				wrappedMask.AndNot(wrappedMask, mask)
+
+				lastUsable := new(big.Int)
+				lastUsable.Set(ipv6.LastUsable().(IPv6Addr).Address)
+
+				ipv6BigInt = lastUsable.Sub(lastUsable, wrappedMask)
+			}
+
+			return IfAddr{
+				SockAddr: IPv6Addr{
+					Address: IPv6Address(ipv6BigInt),
+					Mask:    ipv6.Mask,
+				},
+				Interface: inputIfAddr.Interface,
+			}, nil
+		default:
+			return IfAddr{}, fmt.Errorf("unsupported type for operation %q: %T", operation, sockType)
+		}
+	default:
+		return IfAddr{}, fmt.Errorf("unsupported math operation: %q", operation)
+	}
+}
+
+// IfAddrsMath will apply an IfAddrMath operation each IfAddr struct.  Any
+// failure will result in zero results.
+func IfAddrsMath(operation, value string, inputIfAddrs IfAddrs) (IfAddrs, error) {
+	outputAddrs := make(IfAddrs, 0, len(inputIfAddrs))
+	for _, ifAddr := range inputIfAddrs {
+		result, err := IfAddrMath(operation, value, ifAddr)
+		if err != nil {
+			return IfAddrs{}, fmt.Errorf("unable to perform an IPMath operation on %s: %v", ifAddr, err)
+		}
+		outputAddrs = append(outputAddrs, result)
+	}
+	return outputAddrs, nil
 }
 
 // IncludeIfs returns an IfAddrs based on the passed in selector.

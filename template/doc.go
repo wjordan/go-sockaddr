@@ -170,6 +170,31 @@ Example:
     {{ GetPrivateInterfaces | include "flags" "forwardable|up" | offset "-2" | limit 1 }}
 
 
+`math`: Perform a "math" operation on each member of the list and return new
+values.  `math` takes two arguments, the attribute to operate on and the
+operation's value.
+
+Supported operations include:
+
+  - `address`: Adds the value, a positive or negative value expressed as a
+    decimal string, to the address.  The sign is required.  This value is
+    allowed to over or underflow networks (e.g. 127.255.255.255 `"address" "+1"`
+    will return "128.0.0.0").  Addresses will wrap at IPv4 or IPv6 boundaries.
+  - `network`: Add the value, a positive or negative value expressed as a
+    decimal string, to the network address.  The sign is required.  Positive
+    values are added to the network address.  Negative values are subtracted
+    from the network's broadcast address (e.g. 127.0.0.1 `"network" "-1"` will
+    return "127.255.255.255").  Values that overflow the network size will
+    safely wrap.
+
+Example:
+
+    {{ GetPrivateInterfaces | include "type" "IP" | math "address" "+256" | attr "address" }}
+    {{ GetPrivateInterfaces | include "type" "IP" | math "address" "-256" | attr "address" }}
+    {{ GetPrivateInterfaces | include "type" "IP" | math "network" "+2" | attr "address" }}
+    {{ GetPrivateInterfaces | include "type" "IP" | math "network" "-2" | attr "address" }}
+
+
 `attr`: Extracts a single attribute of the first member of the list and returns
 it as a string.  `attr` takes a single attribute name.  The list of available
 attributes is type-specific and shared between `join`.  See below for a list of
