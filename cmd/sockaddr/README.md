@@ -147,6 +147,8 @@ $ cat <<'EOF' | sockaddr eval -
 {{. | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "}}
 EOF
 100:: fe80::1
+$ sockaddr eval 'GetPrivateInterfaces | include "flags" "forwardable|up" | include "type" "IPv4" | math "network" "+2" | attr "address"'
+172.14.6.2
 ```
 
 ## `sockaddr rfc`

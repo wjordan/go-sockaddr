@@ -193,6 +193,7 @@ Example:
     {{ GetPrivateInterfaces | include "type" "IP" | math "address" "-256" | attr "address" }}
     {{ GetPrivateInterfaces | include "type" "IP" | math "network" "+2" | attr "address" }}
     {{ GetPrivateInterfaces | include "type" "IP" | math "network" "-2" | attr "address" }}
+    {{ GetPrivateInterfaces | include "flags" "forwardable|up" | include "type" "IPv4" | math "network" "+2" | attr "address" }}
 
 
 `attr`: Extracts a single attribute of the first member of the list and returns
