@@ -11,6 +11,14 @@ import (
 	"strings"
 )
 
+var (
+	// Centralize all regexps and regexp.Copy() where necessary.
+	signRE       *regexp.Regexp = regexp.MustCompile(`^[\s]*[+-]`)
+	whitespaceRE *regexp.Regexp = regexp.MustCompile(`[\s]+`)
+	ifNameRE     *regexp.Regexp = regexp.MustCompile(`^Ethernet adapter ([^\s:]+):`)
+	ipAddrRE     *regexp.Regexp = regexp.MustCompile(`^   IPv[46] Address\. \. \. \. \. \. \. \. \. \. \. : ([^\s]+)`)
+)
+
 // IfAddrs is a slice of IfAddr
 type IfAddrs []IfAddr
 
@@ -665,7 +673,7 @@ func IfByNetwork(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, IfAddrs, 
 func IfAddrMath(operation, value string, inputIfAddr IfAddr) (IfAddr, error) {
 	// Regexp used to enforce the sign being a required part of the grammar for
 	// some values.
-	signRe := regexp.MustCompile(`^[\s]*[+-]`)
+	signRe := signRE.Copy()
 
 	switch strings.ToLower(operation) {
 	case "address":
@@ -1060,7 +1068,7 @@ func parseDefaultIfNameFromRoute(routeOut string) (string, error) {
 // Linux.
 func parseDefaultIfNameFromIPCmd(routeOut string) (string, error) {
 	lines := strings.Split(routeOut, "\n")
-	re := regexp.MustCompile(`[\s]+`)
+	re := whitespaceRE.Copy()
 	for _, line := range lines {
 		kvs := re.Split(line, -1)
 		if len(kvs) < 5 {
@@ -1103,7 +1111,7 @@ func parseDefaultIfNameWindows(routeOut, ipconfigOut string) (string, error) {
 // support added.
 func parseDefaultIPAddrWindowsRoute(routeOut string) (string, error) {
 	lines := strings.Split(routeOut, "\n")
-	re := regexp.MustCompile(`[\s]+`)
+	re := whitespaceRE.Copy()
 	for _, line := range lines {
 		kvs := re.Split(strings.TrimSpace(line), -1)
 		if len(kvs) < 3 {
@@ -1123,17 +1131,17 @@ func parseDefaultIPAddrWindowsRoute(routeOut string) (string, error) {
 // interface name forwarding traffic to the default gateway.
 func parseDefaultIfNameWindowsIPConfig(defaultIPAddr, routeOut string) (string, error) {
 	lines := strings.Split(routeOut, "\n")
-	ifNameRE := regexp.MustCompile(`^Ethernet adapter ([^\s:]+):`)
-	ipAddrRE := regexp.MustCompile(`^   IPv[46] Address\. \. \. \. \. \. \. \. \. \. \. : ([^\s]+)`)
+	ifNameRe := ifNameRE.Copy()
+	ipAddrRe := ipAddrRE.Copy()
 	var ifName string
 	for _, line := range lines {
-		switch ifNameMatches := ifNameRE.FindStringSubmatch(line); {
+		switch ifNameMatches := ifNameRe.FindStringSubmatch(line); {
 		case len(ifNameMatches) > 1:
 			ifName = ifNameMatches[1]
 			continue
 		}
 
-		switch ipAddrMatches := ipAddrRE.FindStringSubmatch(line); {
+		switch ipAddrMatches := ipAddrRe.FindStringSubmatch(line); {
 		case len(ipAddrMatches) > 1 && ipAddrMatches[1] == defaultIPAddr:
 			return ifName, nil
 		}
