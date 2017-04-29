@@ -119,7 +119,7 @@ Options:
 Here are a few impractical examples to get you started:
 
 ```text
-$ sockaddr eval 'GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | attr "address"'
+$ sockaddr eval 'GetAllInterfaces | include "flags" "forwardable" | include "up" | sort "default,type,size" | include "RFC" "6890" | attr "address"'
 172.14.6.167
 $ sockaddr eval 'GetDefaultInterfaces | sort "type,size" | include "RFC" "6890" | limit 1 | join "address" " "'
 172.14.6.167
@@ -133,7 +133,7 @@ $ sockaddr eval 'GetAllInterfaces | include "network" "172.14.6.0/24" | attr "ad
 172.14.6.167
 $ sockaddr eval 'GetPrivateInterfaces | join "type" " "'
 IPv4 IPv6
-$ sockaddr eval 'GetPublicInterfaces | include "flags" "up|forwardable" | join "address" " "'
+$ sockaddr eval 'GetAllInterfaces | include "flags" "forwardable" | join "address" " "'
 203.0.113.4 2001:0DB8::1
 $ sockaddr eval 'GetAllInterfaces | include "name" "lo0" | include "type" "IPv6" | sort "address" | join "address" " "'
 100:: fe80::1
