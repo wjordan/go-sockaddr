@@ -100,6 +100,8 @@ argument, a list of ways to sort its IfAddrs argument.  The list of sort
 criteria is comma separated (`,`):
   - `address`, `+address`: Ascending sort of IfAddrs by Address
   - `-address`: Descending sort of IfAddrs by Address
+  - `default`, `+default`: Ascending sort of IfAddrs, IfAddr with a default route first
+  - `-default`: Descending sort of IfAddrs, IfAttr with default route last
   - `name`, `+name`: Ascending sort of IfAddrs by lexical ordering of interface name
   - `-name`: Descending sort of IfAddrs by lexical ordering of interface name
   - `port`, `+port`: Ascending sort of IfAddrs by port number

@@ -91,6 +91,40 @@ func AscIfAddress(p1Ptr, p2Ptr *IfAddr) int {
 	return AscAddress(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
 }
 
+// AscIfDefault is a sorting function to sort IfAddrs by whether or not they
+// have a default route or not.  Non-equal types are deferred in the sort.
+//
+// FIXME: This is a particularly expensive sorting operation because of the
+// non-memoized calls to NewRouteInfo().  In an ideal world the routeInfo data
+// once at the start of the sort and pass it along as a context or by wrapping
+// the IfAddr type with this information (this would also solve the inability to
+// return errors and the possibility of failing silently).  Fortunately,
+// N*log(N) where N = 3 is only ~6.2 invocations.  Not ideal, but not worth
+// optimizing today.  The common case is this gets called once or twice.
+// Patches welcome.
+func AscIfDefault(p1Ptr, p2Ptr *IfAddr) int {
+	ri, err := NewRouteInfo()
+	if err != nil {
+		return sortDeferDecision
+	}
+
+	defaultIfName, err := ri.GetDefaultInterfaceName()
+	if err != nil {
+		return sortDeferDecision
+	}
+
+	switch {
+	case p1Ptr.Interface.Name == defaultIfName && p2Ptr.Interface.Name == defaultIfName:
+		return sortDeferDecision
+	case p1Ptr.Interface.Name == defaultIfName:
+		return sortReceiverBeforeArg
+	case p2Ptr.Interface.Name == defaultIfName:
+		return sortArgBeforeReceiver
+	default:
+		return sortDeferDecision
+	}
+}
+
 // AscIfName is a sorting function to sort IfAddrs by their interface names.
 func AscIfName(p1Ptr, p2Ptr *IfAddr) int {
 	return strings.Compare(p1Ptr.Name, p2Ptr.Name)
@@ -125,6 +159,11 @@ func AscIfType(p1Ptr, p2Ptr *IfAddr) int {
 // DescIfAddress is identical to AscIfAddress but reverse ordered.
 func DescIfAddress(p1Ptr, p2Ptr *IfAddr) int {
 	return -1 * AscAddress(&p1Ptr.SockAddr, &p2Ptr.SockAddr)
+}
+
+// DescIfDefault is identical to AscIfDefault but reverse ordered.
+func DescIfDefault(p1Ptr, p2Ptr *IfAddr) int {
+	return -1 * AscIfDefault(p1Ptr, p2Ptr)
 }
 
 // DescIfName is identical to AscIfName but reverse ordered.
@@ -243,7 +282,7 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 // the `eval` equivalent of:
 //
 // ```
-// $ sockaddr eval -r '{{GetAllInterfaces | include "type" "ip" | include "flags" "forwardable" | include "flags" "up" | sort "type,size" | include "RFC" "6890" }}'
+// $ sockaddr eval -r '{{GetAllInterfaces | include "type" "ip" | include "flags" "forwardable" | include "flags" "up" | sort "default,type,size" | include "RFC" "6890" }}'
 /// ```
 func GetPrivateInterfaces() (IfAddrs, error) {
 	privateIfs, err := GetAllInterfaces()
@@ -273,7 +312,7 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 		return IfAddrs{}, nil
 	}
 
-	OrderedIfAddrBy(AscIfType, AscIfNetworkSize).Sort(privateIfs)
+	OrderedIfAddrBy(AscIfDefault, AscIfType, AscIfNetworkSize).Sort(privateIfs)
 
 	privateIfs, _, err = IfByRFC("6890", privateIfs)
 	if err != nil {
@@ -291,7 +330,7 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 // function is the `eval` equivalent of:
 //
 // ```
-// $ sockaddr eval -r '{{GetAllInterfaces | include "type" "ip" | include "flags" "forwardable" | include "flags" "up" | sort "type,size" | exclude "RFC" "6890" }}'
+// $ sockaddr eval -r '{{GetAllInterfaces | include "type" "ip" | include "flags" "forwardable" | include "flags" "up" | sort "default,type,size" | exclude "RFC" "6890" }}'
 /// ```
 func GetPublicInterfaces() (IfAddrs, error) {
 	publicIfs, err := GetAllInterfaces()
@@ -321,7 +360,7 @@ func GetPublicInterfaces() (IfAddrs, error) {
 		return IfAddrs{}, nil
 	}
 
-	OrderedIfAddrBy(AscIfType, AscIfNetworkSize).Sort(publicIfs)
+	OrderedIfAddrBy(AscIfDefault, AscIfType, AscIfNetworkSize).Sort(publicIfs)
 
 	_, publicIfs, err = IfByRFC("6890", publicIfs)
 	if err != nil {
@@ -748,6 +787,10 @@ func SortIfBy(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, error) {
 			sortFuncs[i] = AscIfAddress
 		case "-address":
 			sortFuncs[i] = DescIfAddress
+		case "+default", "default":
+			sortFuncs[i] = AscIfDefault
+		case "-default":
+			sortFuncs[i] = DescIfDefault
 		case "+name", "name":
 			// The "name" selector returns an array of IfAddrs
 			// ordered by the interface name.

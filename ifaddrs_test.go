@@ -9,6 +9,13 @@ import (
 	sockaddr "github.com/hashicorp/go-sockaddr"
 )
 
+const (
+	// NOTE(seanc@): Assume "en0" is the interface with a default route attached
+	// to it.  When this is not the case, change this one constant and tests
+	// should pass (i.e. "net0").
+	ifNameWithDefault = "en0"
+)
+
 // NOTE: A number of these code paths are exercised in template/ and
 // cmd/sockaddr/.
 //
@@ -1666,6 +1673,82 @@ func TestSortIfBy(t *testing.T) {
 			out: sockaddr.IfAddrs{
 				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.4")},
 				sockaddr.IfAddr{SockAddr: sockaddr.MustIPv4Addr("1.2.3.3")},
+			},
+		},
+		{
+			// NOTE(seanc@): This test requires macOS, or at least a computer where
+			// en0 has the default route.
+			name:    "sort default",
+			sortStr: "default",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.4"),
+					Interface: net.Interface{Name: ifNameWithDefault},
+				},
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.3"),
+					Interface: net.Interface{Name: "other0"},
+				},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.4"),
+					Interface: net.Interface{Name: ifNameWithDefault},
+				},
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.3"),
+					Interface: net.Interface{Name: "other0"},
+				},
+			},
+		},
+		{
+			// NOTE(seanc@): This test requires macOS, or at least a computer where
+			// en0 has the default route.
+			name:    "sort +default",
+			sortStr: "+default",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.4"),
+					Interface: net.Interface{Name: "other0"},
+				},
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.3"),
+					Interface: net.Interface{Name: ifNameWithDefault},
+				},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.3"),
+					Interface: net.Interface{Name: ifNameWithDefault},
+				},
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.4"),
+					Interface: net.Interface{Name: "other0"},
+				},
+			},
+		},
+		{
+			name:    "sort -default",
+			sortStr: "-default",
+			in: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.3"),
+					Interface: net.Interface{Name: ifNameWithDefault},
+				},
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.4"),
+					Interface: net.Interface{Name: "other0"},
+				},
+			},
+			out: sockaddr.IfAddrs{
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.4"),
+					Interface: net.Interface{Name: "other0"},
+				},
+				sockaddr.IfAddr{
+					SockAddr:  sockaddr.MustIPv4Addr("1.2.3.3"),
+					Interface: net.Interface{Name: ifNameWithDefault},
+				},
 			},
 		},
 		{
