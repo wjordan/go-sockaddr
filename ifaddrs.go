@@ -243,10 +243,10 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 // the `eval` equivalent of:
 //
 // ```
-// $ sockaddr eval -r '{{GetDefaultInterfaces | include "type" "ip" | include "flags" "forwardable|up" | sort "type,size" | include "RFC" "6890" }}'
+// $ sockaddr eval -r '{{GetAllInterfaces | include "type" "ip" | include "flags" "forwardable" | include "flags" "up" | sort "type,size" | include "RFC" "6890" }}'
 /// ```
 func GetPrivateInterfaces() (IfAddrs, error) {
-	privateIfs, err := GetDefaultInterfaces()
+	privateIfs, err := GetAllInterfaces()
 	if err != nil {
 		return IfAddrs{}, err
 	}
@@ -259,10 +259,16 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 		return IfAddrs{}, nil
 	}
 
-	privateIfs, _, err = IfByFlag("forwardable|up", privateIfs)
+	privateIfs, _, err = IfByFlag("forwardable", privateIfs)
 	if err != nil {
 		return IfAddrs{}, err
 	}
+
+	privateIfs, _, err = IfByFlag("up", privateIfs)
+	if err != nil {
+		return IfAddrs{}, err
+	}
+
 	if len(privateIfs) == 0 {
 		return IfAddrs{}, nil
 	}
@@ -285,10 +291,10 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 // function is the `eval` equivalent of:
 //
 // ```
-// $ sockaddr eval -r '{{GetDefaultInterfaces | include "type" "ip" | include "flags" "forwardable|up" | sort "type,size" | exclude "RFC" "6890" }}'
+// $ sockaddr eval -r '{{GetAllInterfaces | include "type" "ip" | include "flags" "forwardable" | include "flags" "up" | sort "type,size" | exclude "RFC" "6890" }}'
 /// ```
 func GetPublicInterfaces() (IfAddrs, error) {
-	publicIfs, err := GetDefaultInterfaces()
+	publicIfs, err := GetAllInterfaces()
 	if err != nil {
 		return IfAddrs{}, err
 	}
@@ -301,10 +307,16 @@ func GetPublicInterfaces() (IfAddrs, error) {
 		return IfAddrs{}, nil
 	}
 
-	publicIfs, _, err = IfByFlag("forwardable|up", publicIfs)
+	publicIfs, _, err = IfByFlag("forwardable", publicIfs)
 	if err != nil {
 		return IfAddrs{}, err
 	}
+
+	publicIfs, _, err = IfByFlag("up", publicIfs)
+	if err != nil {
+		return IfAddrs{}, err
+	}
+
 	if len(publicIfs) == 0 {
 		return IfAddrs{}, nil
 	}
