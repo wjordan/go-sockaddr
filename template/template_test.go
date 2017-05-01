@@ -190,7 +190,7 @@ func TestSockAddr_Parse(t *testing.T) {
 			name: "math address + overflow",
 			input: `|{{- with $ifAddrs := GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "address" "+16777217" | sort "+type,+address" -}}
   {{- range $ifAddrs -}}
-    {{- Attr "address" . }} -- {{ Attr "network" . }}/{{ Attr "size" . }}|{{ end -}}
+    {{- attr "address" . }} -- {{ attr "network" . }}/{{ attr "size" . }}|{{ end -}}
 {{- end -}}`,
 			output: `|128.0.0.2 -- 128.0.0.0/16777216|::100:2 -- ::100:2/1|fe80::100:2 -- fe80::/18446744073709551616|`,
 		},

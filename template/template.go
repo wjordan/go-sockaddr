@@ -64,7 +64,7 @@ func init() {
 
 	HelperFuncs = template.FuncMap{
 		// Misc functions that operate on IfAddrs inputs
-		"attr":   sockaddr.IfAttrs,
+		"attr":   Attr,
 		"join":   sockaddr.JoinIfAddrs,
 		"limit":  sockaddr.LimitIfAddrs,
 		"offset": sockaddr.OffsetIfAddrs,
@@ -72,9 +72,6 @@ func init() {
 
 		// Misc math functions that operate on a single IfAddr input
 		"math": sockaddr.IfAddrsMath,
-
-		// Misc functions that operate on IfAddr input
-		"Attr": sockaddr.IfAttr,
 
 		// Return a Private RFC 6890 IP address string that is attached
 		// to the default route and a forwardable address.
@@ -87,6 +84,19 @@ func init() {
 		// Return the first IP address of the named interface, sorted by
 		// the largest network size.
 		"GetInterfaceIP": sockaddr.GetInterfaceIP,
+	}
+}
+
+// Attr returns the attribute from the ifAddrRaw argument.  If the argument is
+// an IfAddrs, only the first elemntt will be evaluated for resolution.
+func Attr(selectorName string, ifAddrsRaw interface{}) (string, error) {
+	switch v := ifAddrsRaw.(type) {
+	case sockaddr.IfAddr:
+		return sockaddr.IfAttr(selectorName, v)
+	case sockaddr.IfAddrs:
+		return sockaddr.IfAttrs(selectorName, v)
+	default:
+		return "", fmt.Errorf("unable to obtain attribute %s from type %T (%v)", selectorName, ifAddrsRaw, ifAddrsRaw)
 	}
 }
 
