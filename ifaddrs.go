@@ -669,7 +669,7 @@ func IfByNetwork(selectorParam string, inputIfAddrs IfAddrs) (IfAddrs, IfAddrs, 
 	return includedIfs, excludedIfs, nil
 }
 
-// IfAddrMath will return a new IfAddr struct with a mutaterd value.
+// IfAddrMath will return a new IfAddr struct with a mutated value.
 func IfAddrMath(operation, value string, inputIfAddr IfAddr) (IfAddr, error) {
 	// Regexp used to enforce the sign being a required part of the grammar for
 	// some values.
@@ -682,7 +682,7 @@ func IfAddrMath(operation, value string, inputIfAddr IfAddr) (IfAddr, error) {
 		// underlying type.
 
 		if !signRe.MatchString(value) {
-			return IfAddr{}, fmt.Errorf("sign (+/-) is required operation %q", operation)
+			return IfAddr{}, fmt.Errorf("sign (+/-) is required for operation %q", operation)
 		}
 
 		switch sockType := inputIfAddr.SockAddr.Type(); sockType {
@@ -737,7 +737,7 @@ func IfAddrMath(operation, value string, inputIfAddr IfAddr) (IfAddr, error) {
 		// wrapping is applied.
 
 		if !signRe.MatchString(value) {
-			return IfAddr{}, fmt.Errorf("sign (+/-) is required operation %q", operation)
+			return IfAddr{}, fmt.Errorf("sign (+/-) is required for operation %q", operation)
 		}
 
 		switch sockType := inputIfAddr.SockAddr.Type(); sockType {
