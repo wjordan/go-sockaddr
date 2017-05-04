@@ -149,6 +149,9 @@ EOF
 100:: fe80::1
 $ sockaddr eval 'GetPrivateInterfaces | include "flags" "forwardable|up" | include "type" "IPv4" | math "network" "+2" | attr "address"'
 172.14.6.2
+$ cat <<'EOF' | sudo tee -a /etc/profile
+export CONSUL_HTTP_ADDR="http://`sockaddr eval 'GetInterfaceIP \"eth0\"'`:8500"
+EOF
 ```
 
 ## `sockaddr rfc`
