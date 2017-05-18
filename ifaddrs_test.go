@@ -697,25 +697,6 @@ func TestGetDefaultInterface(t *testing.T) {
 	}
 }
 
-func TestGetPrivateIP(t *testing.T) {
-	reportOnPrivate := func(args ...interface{}) {
-		if havePrivateIP() {
-			t.Fatalf(args[0].(string), args[1:]...)
-		} else {
-			t.Skipf(args[0].(string), args[1:]...)
-		}
-	}
-
-	ip, err := sockaddr.GetPrivateIP()
-	if err != nil {
-		reportOnPrivate("private IP failed: %v", err)
-	}
-
-	if len(ip) == 0 {
-		reportOnPrivate("no private IP found", nil)
-	}
-}
-
 func TestIfAddrAttrs(t *testing.T) {
 	const expectedNumAttrs = 2
 	attrs := sockaddr.IfAddrAttrs()
@@ -838,7 +819,7 @@ func TestGetPrivateInterfaces(t *testing.T) {
 	}
 
 	if len(ifAddrs) == 0 {
-		reportOnPrivate("no public IPs found", nil)
+		reportOnPrivate("no public IPs found")
 	}
 
 	if len(ifAddrs[0].String()) == 0 {
