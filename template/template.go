@@ -88,7 +88,7 @@ func init() {
 }
 
 // Attr returns the attribute from the ifAddrRaw argument.  If the argument is
-// an IfAddrs, only the first elemntt will be evaluated for resolution.
+// an IfAddrs, only the first element will be evaluated for resolution.
 func Attr(selectorName string, ifAddrsRaw interface{}) (string, error) {
 	switch v := ifAddrsRaw.(type) {
 	case sockaddr.IfAddr:
