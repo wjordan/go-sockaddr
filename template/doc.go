@@ -53,23 +53,22 @@ Example:
     {{ GetDefaultInterfaces }}
 
 `GetPrivateInterfaces` - Returns one IfAddr for every forwardable IP address
-that is included in RFC 6890, is attached to the interface with the default
-route, and whose interface is marked as up.  NOTE: RFC 6890 is a more exhaustive
-version of RFC1918 because it spans IPv4 and IPv6, however it does permit the
+that is included in RFC 6890 and whose interface is marked as up.  NOTE: RFC 6890 is a more exhaustive
+version of RFC1918 because it spans IPv4 and IPv6, however, RFC6890 does permit the
 inclusion of likely undesired addresses such as multicast, therefore our version
 of "private" also filters out non-forwardable addresses.
 
 Example:
 
-    {{ GetPrivateInterfaces | include "flags" "up" }}
+    {{ GetPrivateInterfaces | sort "default" | join "address" " " }}
 
 
-`GetPublicInterfaces` - Returns a list of IfAddr that do not match RFC 6890, is
-attached to the default route, and whose interface is marked as up.
+`GetPublicInterfaces` - Returns a list of IfAddr structs whos IPs are
+forwardable, do not match RFC 6890, and whose interface is marked up.
 
 Example:
 
-    {{ GetPublicInterfaces | include "flags" "up" }}
+    {{ GetPublicInterfaces | sort "default" | join "name" " " }}
 
 
 `GetPrivateIP` - Helper function that returns a string of the first IP address
@@ -92,7 +91,7 @@ the named interface.
 
 Example:
 
-    {{ GetInterfaceIP }}
+    {{ GetInterfaceIP "eth1" }}
 
 
 `sort` - Sorts the IfAddrs result based on its arguments.  `sort` takes one
@@ -100,6 +99,8 @@ argument, a list of ways to sort its IfAddrs argument.  The list of sort
 criteria is comma separated (`,`):
   - `address`, `+address`: Ascending sort of IfAddrs by Address
   - `-address`: Descending sort of IfAddrs by Address
+  - `default`, `+default`: Ascending sort of IfAddrs, IfAddr with a default route first
+  - `-default`: Descending sort of IfAddrs, IfAttr with default route last
   - `name`, `+name`: Ascending sort of IfAddrs by lexical ordering of interface name
   - `-name`: Descending sort of IfAddrs by lexical ordering of interface name
   - `port`, `+port`: Ascending sort of IfAddrs by port number
@@ -116,7 +117,7 @@ criteria is comma separated (`,`):
 
 Example:
 
-    {{ GetPrivateInterfaces | sort "type,size,address" }}
+    {{ GetPrivateInterfaces | sort "default,-type,size,+address" }}
 
 
 `exclude` and `include`: Filters IfAddrs based on the selector criteria and its
@@ -142,7 +143,7 @@ available filtering criteria is:
 
 Example:
 
-    {{ GetPrivateInterfaces | exclude "type" "IPv6" | include "flag" "up|forwardable" }}
+    {{ GetPrivateInterfaces | exclude "type" "IPv6" }}
 
 
 `unique`: Removes duplicate entries from the IfAddrs list, assuming the list has
@@ -152,14 +153,14 @@ already been sorted.  `unique` only takes one argument:
 
 Example:
 
-    {{ GetPrivateInterfaces | sort "type,address" | unique "name" }}
+    {{ GetAllInterfaces | sort "default,-type,address" | unique "name" }}
 
 
 `limit`: Reduces the size of the list to the specified value.
 
 Example:
 
-    {{ GetPrivateInterfaces | include "flags" "forwardable|up" | limit 1 }}
+    {{ GetPrivateInterfaces | limit 1 }}
 
 
 `offset`: Seeks into the list by the specified value.  A negative value can be
@@ -167,7 +168,7 @@ used to seek from the end of the list.
 
 Example:
 
-    {{ GetPrivateInterfaces | include "flags" "forwardable|up" | offset "-2" | limit 1 }}
+    {{ GetPrivateInterfaces | offset "-2" | limit 1 }}
 
 
 `math`: Perform a "math" operation on each member of the list and return new
@@ -203,7 +204,7 @@ supported attributes.
 
 Example:
 
-    {{ GetPrivateInterfaces | include "flags" "forwardable|up" | attr "address" }}
+    {{ GetAllInterfaces | exclude "flags" "up" | attr "address" }}
 
 
 `Attr`: Extracts a single attribute from an `IfAttr` and in every other way
@@ -225,7 +226,7 @@ and returns them as a string joined by the separator, the second argument to
 
 Example:
 
-    {{ GetPrivateInterfaces | include "flags" "forwardable|up" | join "address" " " }}
+    {{ GetAllInterfaces | include "flags" "forwardable" | join "address" " " }}
 
 
 `exclude` and `include` flags:
