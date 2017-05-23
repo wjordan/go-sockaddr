@@ -79,6 +79,14 @@ Example:
     {{ GetPrivateIP }}
 
 
+`GetPrivateIPs` - Helper function that returns a string of the all private IP
+addresses on the host.
+
+Example:
+
+    {{ GetPrivateIPs }}
+
+
 `GetPublicIP` - Helper function that returns a string of the first IP from
 GetPublicInterfaces.
 
@@ -86,12 +94,29 @@ Example:
 
     {{ GetPublicIP }}
 
+`GetPublicIPs` - Helper function that returns a space-delimited string of the
+all public IP addresses on the host.
+
+Example:
+
+    {{ GetPrivateIPs }}
+
+
 `GetInterfaceIP` - Helper function that returns a string of the first IP from
 the named interface.
 
 Example:
 
-    {{ GetInterfaceIP "eth1" }}
+    {{ GetInterfaceIP "en0" }}
+
+
+
+`GetInterfaceIPs` - Helper function that returns a space-delimited list of all
+IPs on a given interface.
+
+Example:
+
+    {{ GetInterfaceIPs "en0" }}
 
 
 `sort` - Sorts the IfAddrs result based on its arguments.  `sort` takes one

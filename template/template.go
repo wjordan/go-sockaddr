@@ -77,13 +77,27 @@ func init() {
 		// to the default route and a forwardable address.
 		"GetPrivateIP": sockaddr.GetPrivateIP,
 
+		// Return all Private RFC 6890 IP addresses as a space-delimited string of
+		// IP addresses.  Addresses returned do not have to be on the interface with
+		// a default route.
+		"GetPrivateIPs": sockaddr.GetPrivateIPs,
+
 		// Return a Public RFC 6890 IP address string that is attached
 		// to the default route and a forwardable address.
 		"GetPublicIP": sockaddr.GetPublicIP,
 
+		// Return allPublic RFC 6890 IP addresses as a space-delimited string of IP
+		// addresses.  Addresses returned do not have to be on the interface with a
+		// default route.
+		"GetPublicIPs": sockaddr.GetPublicIPs,
+
 		// Return the first IP address of the named interface, sorted by
 		// the largest network size.
 		"GetInterfaceIP": sockaddr.GetInterfaceIP,
+
+		// Return all IP addresses on the named interface, sorted by the largest
+		// network size.
+		"GetInterfaceIPs": sockaddr.GetInterfaceIPs,
 	}
 }
 

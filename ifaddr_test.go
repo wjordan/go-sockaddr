@@ -45,6 +45,42 @@ func havePublicIP() bool {
 	return boolEnvVar("SOCKADDR_HAVE_PUBLIC_IP", false)
 }
 
+func TestGetPrivateIP(t *testing.T) {
+	reportOnPrivate := func(args ...interface{}) {
+		if havePrivateIP() {
+			t.Fatalf(args[0].(string), args[1:]...)
+		} else {
+			t.Skipf(args[0].(string), args[1:]...)
+		}
+	}
+	ip, err := sockaddr.GetPrivateIP()
+	if err != nil {
+		reportOnPrivate("unable to get a private IP: %v", err)
+	}
+
+	if ip == "" {
+		reportOnPrivate("it's hard to test this reliably")
+	}
+}
+
+func TestGetPrivateIPs(t *testing.T) {
+	reportOnPrivate := func(args ...interface{}) {
+		if havePrivateIP() {
+			t.Fatalf(args[0].(string), args[1:]...)
+		} else {
+			t.Skipf(args[0].(string), args[1:]...)
+		}
+	}
+	ips, err := sockaddr.GetPrivateIPs()
+	if err != nil {
+		reportOnPrivate("unable to get a private IPs: %v", err)
+	}
+
+	if ips == "" {
+		reportOnPrivate("it's hard to test this reliably")
+	}
+}
+
 func TestGetPublicIP(t *testing.T) {
 	reportOnPublic := func(args ...interface{}) {
 		if havePublicIP() {
@@ -59,6 +95,24 @@ func TestGetPublicIP(t *testing.T) {
 	}
 
 	if ip == "" {
+		reportOnPublic("it's hard to test this reliably")
+	}
+}
+
+func TestGetPublicIPs(t *testing.T) {
+	reportOnPublic := func(args ...interface{}) {
+		if havePublicIP() {
+			t.Fatalf(args[0].(string), args[1:]...)
+		} else {
+			t.Skipf(args[0].(string), args[1:]...)
+		}
+	}
+	ips, err := sockaddr.GetPublicIPs()
+	if err != nil {
+		reportOnPublic("unable to get a public IPs: %v", err)
+	}
+
+	if ips == "" {
 		reportOnPublic("it's hard to test this reliably")
 	}
 }

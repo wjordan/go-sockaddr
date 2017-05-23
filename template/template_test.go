@@ -236,6 +236,26 @@ func TestSockAddr_Parse(t *testing.T) {
 			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | sort "+type,+address" | math "network" "-4278190088" | join "address" " " }}`,
 			output: `127.255.255.248 ::1 fe80::ffff:ffff:ff:fff8`,
 		},
+		{
+			// Assume the private IPs available on the host are: 10.1.2.3
+			// fe80::1025:f732:1001:203
+			name:   "GetPrivateIPs",
+			input:  `{{GetPrivateIPs}}`,
+			output: `10.1.2.3 fe80::1025:f732:1001:203`,
+		},
+		{
+			// Assume the public IPs available on the host are: 1.2.3.4 6.7.8.9
+			name:   "GetPublicIPs",
+			input:  `{{GetPublicIPs}}`,
+			output: `1.2.3.4 6.7.8.9`,
+		},
+		{
+			// Assume the private IPs on this host are just the IPv4 addresses:
+			// 10.1.2.3 and 172.16.4.6
+			name:   "GetInterfaceIPs",
+			input:  `{{GetInterfaceIPs "en0"}}`,
+			output: `10.1.2.3 and 172.16.4.6`,
+		},
 	}
 
 	for i, test := range tests {
