@@ -181,6 +181,61 @@ func TestSockAddr_Parse(t *testing.T) {
 {{- end -}}`,
 			output: `true`,
 		},
+		{
+			name:   "math address +",
+			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "address" "+2" | sort "+type,+address" | join "address" " " }}`,
+			output: `127.0.0.3 ::3 fe80::3`,
+		},
+		{
+			name: "math address + overflow",
+			input: `|{{- with $ifAddrs := GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "address" "+16777217" | sort "+type,+address" -}}
+  {{- range $ifAddrs -}}
+    {{- attr "address" . }} -- {{ attr "network" . }}/{{ attr "size" . }}|{{ end -}}
+{{- end -}}`,
+			output: `|128.0.0.2 -- 128.0.0.0/16777216|::100:2 -- ::100:2/1|fe80::100:2 -- fe80::/18446744073709551616|`,
+		},
+		{
+			name:   "math address + overflow+wrap",
+			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "address" "+4294967294" | sort "+type,+address" | join "address" " " }}`,
+			output: `126.255.255.255 ::ffff:ffff fe80::ffff:ffff`,
+		},
+		{
+			name:   "math address -",
+			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "address" "-256" | sort "+type,+address" | join "address" " " }}`,
+			output: `126.255.255.1 fe7f:ffff:ffff:ffff:ffff:ffff:ffff:ff01 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff01`,
+		},
+		{
+			name:   "math address - underflow",
+			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "address" "-4278190082" | sort "+type,+address" | join "address" " " }}`,
+			output: `127.255.255.255 fe7f:ffff:ffff:ffff:ffff:ffff:ff:ffff ffff:ffff:ffff:ffff:ffff:ffff:ff:ffff`,
+		},
+		{
+			// Note to readers: lo0's link-local address (::1) address has a mask of
+			// /128 which means its value never changes and this is expected.  lo0's
+			// site-local address has a /64 address and is expected to change.
+			name:   "math network",
+			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "network" "+2" | sort "+type,+address" | join "address" " " }}`,
+			output: `127.0.0.2 ::1 fe80::2`,
+		},
+		{
+			// Assume an IPv4 input of 127.0.0.1.  With a value of 0xff00ff01, we wrap once on purpose.
+			name:   "math network + wrap",
+			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "network" "+4278255368" | sort "+type,+address" | join "address" " " }}`,
+			output: `127.0.255.8 ::1 fe80::ff00:ff08`,
+		},
+		{
+			name:   "math network -",
+			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | math "network" "-2" | sort "+type,+address" | join "address" " " }}`,
+			output: `127.255.255.254 ::1 fe80::ffff:ffff:ffff:fffe`,
+		},
+		{
+			// Assume an IPv4 input of 127.0.0.1.  With a value of 0xff000008 it
+			// should wrap and underflow by 8.  Assume an IPv6 input of ::1.  With a
+			// value of -0xff000008 the value underflows and wraps.
+			name:   "math network - underflow+wrap",
+			input:  `{{GetAllInterfaces | include "name" "^lo0$" | include "type" "IP" | sort "+type,+address" | math "network" "-4278190088" | join "address" " " }}`,
+			output: `127.255.255.248 ::1 fe80::ffff:ffff:ff:fff8`,
+		},
 	}
 
 	for i, test := range tests {
