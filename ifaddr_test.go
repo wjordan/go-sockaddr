@@ -411,6 +411,102 @@ func TestIfAddrMath(t *testing.T) {
 			wantFail:  true,
 		},
 		{
+			// Subnet of input IPv4Addr is equal to mask operation parameter subnet
+			name: "ipv4 mask equal",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("10.20.30.40/8"),
+			},
+			operation: "mask",
+			value:     "8",
+			expected:  "10.0.0.0/8",
+		},
+		{
+			// Subnet of input IPv4Addr is smaller than mask operation parameter subnet
+			name: "ipv4 mask larger parameter subnet",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("192.168.10.20/24"),
+			},
+			operation: "mask",
+			value:     "16",
+			expected:  "192.168.0.0/16",
+		},
+		{
+			// Subnet of input IPv4Addr is larger than mask operation parameter subnet
+			name: "ipv4 mask larger parameter subnet",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("192.168.10.20/8"),
+			},
+			operation: "mask",
+			value:     "16",
+			expected:  "192.168.0.0/8",
+		},
+		{
+			name: "ipv4 mask bad value upper bound",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("127.0.0.1/8"),
+			},
+			operation: "mask",
+			value:     "33",
+			wantFail:  true,
+		},
+		{
+			name: "ipv4 mask bad value lower bound",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv4Addr("127.0.0.1/8"),
+			},
+			operation: "mask",
+			value:     "-1",
+			wantFail:  true,
+		},
+		{
+			// Subnet of input IPv6Addr is equal to mask operation parameter subnet
+			name: "ipv6 mask equal",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv6Addr("2001:0db8:85a3::8a2e:0370:7334/64"),
+			},
+			operation: "mask",
+			value:     "64",
+			expected:  "2001:db8:85a3::/64",
+		},
+		{
+			// Subnet of input IPv6Addr is smaller than mask operation parameter subnet
+			name: "ipv6 mask larger parameter subnet",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv6Addr("2001:0db8:85a3::8a2e:0370:7334/64"),
+			},
+			operation: "mask",
+			value:     "32",
+			expected:  "2001:db8::/32",
+		},
+		{
+			// Subnet of input IPv4Addr is larger than mask operation parameter subnet
+			name: "ipv6 mask larger parameter subnet",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv6Addr("2001:0db8:85a3::8a2e:0370:7334/64"),
+			},
+			operation: "mask",
+			value:     "96",
+			expected:  "2001:db8:85a3::8a2e:0:0/64",
+		},
+		{
+			name: "ipv6 mask bad value upper bound",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv6Addr("::1/128"),
+			},
+			operation: "mask",
+			value:     "129",
+			wantFail:  true,
+		},
+		{
+			name: "ipv6 mask bad value lower bound",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustIPv6Addr("::1/128"),
+			},
+			operation: "mask",
+			value:     "-1",
+			wantFail:  true,
+		},
+		{
 			name: "unix unsupported operation",
 			ifAddr: sockaddr.IfAddr{
 				SockAddr: sockaddr.MustUnixSock("/tmp/bar"),
@@ -426,6 +522,15 @@ func TestIfAddrMath(t *testing.T) {
 			},
 			operation: "network",
 			value:     "+123",
+			wantFail:  true,
+		},
+		{
+			name: "unix unsupported operation",
+			ifAddr: sockaddr.IfAddr{
+				SockAddr: sockaddr.MustUnixSock("/tmp/foo"),
+			},
+			operation: "mask",
+			value:     "8",
 			wantFail:  true,
 		},
 	}
