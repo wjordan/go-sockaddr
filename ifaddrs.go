@@ -879,7 +879,7 @@ func IfAddrMath(operation, value string, inputIfAddr IfAddr) (IfAddr, error) {
 				return IfAddr{}, fmt.Errorf("unable to convert %q to int for operation %q: %v", value, operation, err)
 			}
 
-			if i < 0 || i > 32 {
+			if i > 32 {
 				return IfAddr{}, fmt.Errorf("parameter for operation %q on ipv4 addresses must be between 0 and 32", operation)
 			}
 
@@ -905,12 +905,12 @@ func IfAddrMath(operation, value string, inputIfAddr IfAddr) (IfAddr, error) {
 				Interface: inputIfAddr.Interface,
 			}, nil
 		case TypeIPv6:
-			i, err := strconv.ParseInt(value, 10, 32)
+			i, err := strconv.ParseUint(value, 10, 32)
 			if err != nil {
 				return IfAddr{}, fmt.Errorf("unable to convert %q to int for operation %q: %v", value, operation, err)
 			}
 
-			if i < 0 || i > 128 {
+			if i > 128 {
 				return IfAddr{}, fmt.Errorf("parameter for operation %q on ipv6 addresses must be between 0 and 64", operation)
 			}
 
