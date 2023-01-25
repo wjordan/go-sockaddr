@@ -250,9 +250,9 @@ func GetAllInterfaces() (IfAddrs, error) {
 	// large number of interfaces: https://github.com/golang/go/issues/53660
 	// Instead, get all addresses in a single netlink call and map them to
 	// their associated interfaces.
-	ifMap := make(map[int]*net.Interface)
+	ifMap := make(map[int]net.Interface)
 	for _, intf := range ifs {
-		ifMap[intf.Index] = &intf
+		ifMap[intf.Index] = intf
 	}
 
 	tab, err := syscall.NetlinkRIB(syscall.RTM_GETADDR, syscall.AF_UNSPEC)
@@ -280,7 +280,7 @@ func GetAllInterfaces() (IfAddrs, error) {
 			if intf, ok := ifMap[int(ifam.Index)]; ok {
 				ifAddrs = append(ifAddrs, IfAddr{
 					SockAddr:  ipAddr,
-					Interface: *intf,
+					Interface: intf,
 				})
 			}
 		}
