@@ -3,6 +3,7 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/hashicorp/errwrap"
@@ -117,6 +118,10 @@ func Attr(selectorName string, ifAddrsRaw interface{}) (string, error) {
 // Parse parses input as template input using the addresses available on the
 // host, then returns the string output if there are no errors.
 func Parse(input string) (string, error) {
+	// Skip if input doesn't contain any template tags.
+	if !strings.Contains(input, "{{") {
+		return input, nil
+	}
 	addrs, err := sockaddr.GetAllInterfaces()
 	if err != nil {
 		return "", errwrap.Wrapf("unable to query interface addresses: {{err}}", err)
